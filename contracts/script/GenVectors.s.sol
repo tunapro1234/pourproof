@@ -61,8 +61,9 @@ contract GenVectors is Script {
         json = string.concat(
             json,
             '  "readingsSource": "Box 1, first 36 half-hour readings, Mendeley Data nmr8pjx8d8 v1 (CC BY 4.0); t_unix = pourStart + t_h * 3600",\n',
-            '  "leaf": "keccak256(abi.encode(uint64 t_unix, int32 temp_milliC))",\n',
-            '  "root": "pairs hashed sorted (OpenZeppelin Hashes.commutativeKeccak256), leaves in reading order, odd last node carried up",\n',
+            '  "leaf": "keccak256(bytes.concat(0x00, abi.encode(uint64 t_unix, int32 temp_milliC)))",\n',
+            '  "node": "keccak256(bytes.concat(0x01, min(a, b), max(a, b)))",\n',
+            '  "root": "leaves in reading order, pairs hashed with node(), odd last node carried up; proofs verify with OpenZeppelin MerkleProof.verify(proof, root, leaf, node)",\n',
             '  "digest": "sha256(abi.encode(string domain, uint256 chainId, address ledger, bytes32 pourId, uint64 counter, uint64 fromTs, uint64 toTs, bytes32 root))",\n',
             '  "signature": "P-256 ECDSA over digest (no extra hashing), RFC 6979 nonce, low-s (s <= n/2)",\n',
             '  "batchCount": ', vm.toString(BATCHES), ",\n",

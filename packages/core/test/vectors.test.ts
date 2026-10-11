@@ -18,6 +18,7 @@ import {
   publicKeyOf,
   signBatch,
   signDigest,
+  fromHex,
   toHex,
   verifyDigest,
   verifyProof,
@@ -88,10 +89,10 @@ describe("TypeScript rebuilds contracts/test/vectors.json exactly", () => {
 
 describe("message encoding details", () => {
   it("encodes negative temperatures as int32 two's complement", () => {
-    // abi.encode(uint64(1), int32(-1)) = 0x..01 || 0xff..ff
-    const enc = new Uint8Array(64);
-    enc[31] = 1;
-    enc.fill(0xff, 32);
+    // 0x00 || abi.encode(uint64(1), int32(-1)) = 0x00 || 0x..01 || 0xff..ff
+    const enc = new Uint8Array(65);
+    enc[32] = 1;
+    enc.fill(0xff, 33);
     expect(leafHash({ t_unix: 1, temp_milliC: -1 })).toBe(toHex(keccak_256(enc)));
     expect(leafHash({ t_unix: 1, temp_milliC: -1 })).not.toBe(leafHash({ t_unix: 1, temp_milliC: 1 }));
     expect(() => leafHash({ t_unix: 1, temp_milliC: 2 ** 31 })).toThrow();
@@ -136,11 +137,24 @@ function fromBig(x: bigint): Uint8Array {
   return out;
 }
 
-describe("Merkle proofs (OpenZeppelin MerkleProof compatible)", () => {
+describe("Merkle proofs (OpenZeppelin MerkleProof with the prefixed node hash)", () => {
   const leaves = v.batches[0].readings.map((r) => r.leaf);
 
   it("contracts/test/proofs.json is current (Solidity checks it with MerkleProof.verify)", () => {
     expect(readFileSync(PROOFS, "utf8")).toBe(buildProofsJson(vectorsJson));
+  });
+
+  it("leaf and node hashes are domain separated (0x00 / 0x01 prefix)", () => {
+    const [a, b] = [leaves[0], leaves[1]];
+    const [lo, hi] = a.toLowerCase() < b.toLowerCase() ? [a, b] : [b, a];
+    const pair = new Uint8Array(64);
+    pair.set(fromHex(lo), 0);
+    pair.set(fromHex(hi), 32);
+    expect(hashPair(a, b)).toBe(toHex(keccak_256(new Uint8Array([0x01, ...pair]))));
+    expect(hashPair(a, b)).toBe(hashPair(b, a));
+    // Without the prefix a node would be keccak of 64 bytes, the same shape as an unprefixed leaf.
+    expect(hashPair(a, b)).not.toBe(toHex(keccak_256(pair)));
+    expect(toHex(keccak_256(new Uint8Array([0x00, ...pair])))).not.toBe(hashPair(a, b));
   });
 
   it("hand-built root for 3 leaves: the odd one is carried up", () => {

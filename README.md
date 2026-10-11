@@ -68,7 +68,7 @@ apps/web          pour passport and in-browser verification
 | `createPour` | supplier | ticket hash, EPD hash, volume (dm3), GWP range of the delivered mix, pour start |
 | `acceptPour` | contractor | if a baseline exists, only the contractor who declared it |
 | `registerDevice` / `replaceDevice` | inspector only | one P-256 key per pour, kind `esp32` or `simulated` (carried in the event) |
-| `appendBatch` | anyone (relay) | device signature checked on chain (`BadSignature`), counter must be the next one (`CounterGap`) |
+| `appendBatch` | anyone (relay) | device signature checked on chain (`BadSignature`), counter must be the next one (`CounterGap`), batch window inside the pour (`BadBatchWindow`), last reading not after the block time (`FutureBatch`) |
 | `approveStrength` | inspector | evidence hash (maturity calculation, break tests if any); needs at least one batch |
 | `claimSaving` | the pour's supplier, its contractor, or an owner | needs approval (`StrengthNotApproved`); once per pour, every later call reverts `AlreadyClaimed(pourId, firstClaimant)` |
 
@@ -78,8 +78,10 @@ so the screen can show when the ranges overlap.
 
 Device message (same in Solidity and TypeScript):
 
-- reading leaf: `keccak256(abi.encode(uint64 t_unix, int32 temp_milliC))`
-- batch root: OpenZeppelin `MerkleProof`-compatible tree (pairs hashed sorted), leaves in reading order, an odd last node is carried up
+- reading leaf: `keccak256(bytes.concat(0x00, abi.encode(uint64 t_unix, int32 temp_milliC)))`
+- internal node: `keccak256(bytes.concat(0x01, min(a, b), max(a, b)))`; leaves in reading order, an odd last node is carried up.
+  Proofs verify with OpenZeppelin `MerkleProof.verify(proof, root, leaf, BatchMessage.node)`.
+  Why the 0x00 / 0x01 prefixes (as in RFC 6962): without them a leaf and an internal node are both keccak of 64 bytes, so an internal node could be presented as a reading.
 - signed digest: `sha256(abi.encode("POURPROOF_BATCH_V1", chainId, ledger, pourId, counter, fromTs, toTs, root))`, P-256, low-s.
   The chain id, ledger address and pour id are inside the digest, so a batch signed for one pour or chain is rejected on another.
 
@@ -102,25 +104,25 @@ at 0x100 where the chain has one; we have not measured that path yet.
 | acceptPour | 35,587 | 35,587 |
 | registerDevice | 98,756 | 98,756 |
 | replaceDevice | 45,721 | 45,721 |
-| appendBatch (12 readings, Solidity P-256) | 312,753 | 332,279 |
+| appendBatch (12 readings, Solidity P-256) | 312,446 | 333,022 |
 | approveStrength | 55,940 | 55,940 |
 | claimSaving | 40,429 | 40,429 |
 
-Contract size: PourLedger 10,866 bytes.
+Contract size: PourLedger 10,603 bytes runtime, 10,893 bytes initcode.
 
 ## Simulated device
 
 `packages/core/src/batch.ts` builds the same bytes as `contracts/src/BatchMessage.sol`: reading leaf, batch Merkle root, per-reading
 Merkle proof and the signed digest. `packages/core/test/vectors.test.ts` rebuilds `contracts/test/vectors.json` (written by the
 Solidity side) value for value, and `contracts/test/proofs.json` (written by the TypeScript side) is checked in Solidity with
-OpenZeppelin `MerkleProof.verify`.
+OpenZeppelin `MerkleProof.verify` and the prefixed node hash.
 
 `packages/device` is the software device. It does not measure anything; it replays a series from the published dataset.
 
 ```sh
 npm run keygen -w packages/device -- P-001     # P-256 key -> $POURPROOF_SECRETS/devices/P-001.json, mode 600
 npm run keygen -w packages/device -- P-002
-npm run replay -w packages/device               # options: --chain-id --ledger --pour-start
+npm run replay -w packages/device               # options: --chain-id --ledger --block-time | --pour-start
 ```
 
 `replay` writes:
@@ -131,7 +133,10 @@ npm run replay -w packages/device               # options: --chain-id --ledger -
 | `data/pours/P-002/batches.json` | the ambient air series replayed as if it were concrete; signatures are valid, the curing check flags `no_hydration_signature` |
 | `data/pours/P-002/tamper.json` | two attempts against P-002: batch 1 withheld so batch 2 follows batch 0 (`CounterGap`), and batch 1 signed by the P-001 device (`BadSignature`) |
 
-Each reading's time is `pourStart + dataset hour x 3600` and its temperature is in milli-degC. Every file carries
+Each reading's time is `pourStart + dataset hour x 3600` and its temperature is in milli-degC. The ledger refuses a batch whose
+last reading is after the block time (`FutureBatch`), so a replay puts the pour in the past: `pourStart = block time - dataset
+duration (28 days) - 1 h`, using `--block-time` (the chain scenario passes its latest block) or the clock at replay time. Each file
+records the block time it used (`replayBlockTime`) and the rule (`pourStartRule`). Every file carries
 `deviceKind: "simulated"` and `source: "replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)"`, plus the public key;
 private keys stay in `$POURPROOF_SECRETS`. Chain id and ledger address are part of every signed digest, so the committed files are
 signed for a fresh local Anvil (chain 31337, first deployed contract `0x5FbDB2315678afecb367f032d93F642f64180aa3`); the deploy

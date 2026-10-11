@@ -9,7 +9,8 @@ import {BatchMessage} from "../src/BatchMessage.sol";
 import {GenVectors} from "../script/GenVectors.s.sol";
 
 /// Checks contracts/test/vectors.json against the Solidity message format and the ledger itself, and
-/// contracts/test/proofs.json (Merkle proofs built by packages/core) against OpenZeppelin MerkleProof.
+/// contracts/test/proofs.json (Merkle proofs built by packages/core) against OpenZeppelin MerkleProof
+/// with the prefixed node hash.
 contract VectorsTest is Test {
     string internal json;
     GenVectors internal gen;
@@ -94,9 +95,16 @@ contract VectorsTest is Test {
         for (uint256 i = 0; i < 3; i++) {
             l[i] = vm.parseJsonBytes32(json, string.concat(_b(0, "readings["), vm.toString(i), "].leaf"));
         }
-        bytes32 ab = l[0] < l[1] ? keccak256(abi.encode(l[0], l[1])) : keccak256(abi.encode(l[1], l[0]));
-        bytes32 want = ab < l[2] ? keccak256(abi.encode(ab, l[2])) : keccak256(abi.encode(l[2], ab));
+        bytes32 ab = l[0] < l[1]
+            ? keccak256(abi.encodePacked(bytes1(0x01), l[0], l[1]))
+            : keccak256(abi.encodePacked(bytes1(0x01), l[1], l[0]));
+        bytes32 want = ab < l[2]
+            ? keccak256(abi.encodePacked(bytes1(0x01), ab, l[2]))
+            : keccak256(abi.encodePacked(bytes1(0x01), l[2], ab));
         assertEq(BatchMessage.root(l), want);
+        uint64 t = uint64(vm.parseJsonUint(json, string.concat(_b(0, "readings[0]"), ".t_unix")));
+        int32 c = int32(vm.parseJsonInt(json, string.concat(_b(0, "readings[0]"), ".temp_milliC")));
+        assertEq(l[0], keccak256(abi.encodePacked(bytes1(0x00), uint256(t), int256(c))));
     }
 
     function test_ledgerAcceptsVectorBatches() public {
@@ -119,6 +127,7 @@ contract VectorsTest is Test {
         ledger.createPour(pourId, 0, 0, 8000, 220, 250, pourStart);
         vm.prank(inspector);
         ledger.registerDevice(pourId, vm.parseJsonBytes32(json, ".qx"), vm.parseJsonBytes32(json, ".qy"), "simulated");
+        vm.warp(vm.parseJsonUint(json, _b(2, "toTs")));
         for (uint256 b = 0; b < 3; b++) {
             ledger.appendBatch(
                 pourId,
@@ -145,8 +154,11 @@ contract VectorsTest is Test {
             for (uint256 i = 0; i < leaves.length; i++) {
                 bytes32[] memory proof =
                     vm.parseJsonBytes32Array(pj, string.concat(p, ".proofs[", vm.toString(i), "]"));
-                assertTrue(MerkleProof.verify(proof, root, leaves[i]));
-                assertFalse(MerkleProof.verify(proof, root, keccak256(abi.encode(leaves[i]))));
+                assertTrue(MerkleProof.verify(proof, root, leaves[i], BatchMessage.node));
+                assertTrue(BatchMessage.verify(proof, root, leaves[i]));
+                assertFalse(BatchMessage.verify(proof, root, keccak256(abi.encode(leaves[i]))));
+                // The unprefixed (plain sorted-pair) hash does not rebuild the root.
+                if (proof.length > 0) assertFalse(MerkleProof.verify(proof, root, leaves[i]));
             }
         }
     }

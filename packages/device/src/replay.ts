@@ -24,14 +24,16 @@ export const READINGS_PER_BATCH = 12; // 0.5 h readings -> 6 h batches
 /** The ledger a fresh local Anvil gets on its first deployment (default account 0, nonce 0). */
 export const ANVIL_FIRST_DEPLOY = "0x5FbDB2315678afecb367f032d93F642f64180aa3" as Hex;
 export const ANVIL_CHAIN_ID = 31337;
-export const DEFAULT_POUR_START = 1_760_000_000;
+/** Margin between the last replayed reading and the chain clock at replay time. */
+export const REPLAY_MARGIN_S = 3600;
 
 export const MESSAGE_FORMAT = {
-  leaf: "keccak256(abi.encode(uint64 t_unix, int32 temp_milliC))",
-  root: "pairs hashed sorted (OpenZeppelin MerkleProof compatible), leaves in reading order, odd last node carried up",
+  leaf: "keccak256(bytes.concat(0x00, abi.encode(uint64 t_unix, int32 temp_milliC)))",
+  node: "keccak256(bytes.concat(0x01, min(a, b), max(a, b)))",
+  root: "leaves in reading order, pairs hashed with node, odd last node carried up",
   digest: "sha256(abi.encode(\"POURPROOF_BATCH_V1\", uint256 chainId, address ledger, bytes32 pourId, uint64 counter, uint64 fromTs, uint64 toTs, bytes32 root))",
   signature: "P-256 ECDSA over digest, RFC 6979 nonce, low-s",
-  proof: "per reading: sibling hashes from its leaf to the batch root (OpenZeppelin MerkleProof.verify)",
+  proof: "per reading: sibling hashes from its leaf to the batch root (OpenZeppelin MerkleProof.verify with BatchMessage.node)",
 };
 
 export interface PublishedReading extends DeviceReading {
@@ -53,6 +55,10 @@ export interface BatchesFile {
   dataset: { series: string; doi: string; license: string; attribution: string };
   context: { chainId: number; ledger: Hex; note: string };
   pourStart: number;
+  /** How pourStart was chosen; in replay mode every reading lies before the chain clock (FutureBatch). */
+  pourStartRule: string;
+  /** the block time pourStart was derived from (replay mode), else null */
+  replayBlockTime: number | null;
   readingsPerBatch: number;
   device: PublicKey;
   message: typeof MESSAGE_FORMAT;
@@ -73,10 +79,31 @@ export interface ReplayOptions {
   scenario: string;
   dataset: Dataset;
   pourStart: number;
+  pourStartRule?: string;
+  replayBlockTime?: number;
   chainId: number;
   ledger: Hex;
   key: PublicKey & { secretKey: Uint8Array };
   readingsPerBatch?: number;
+}
+
+/** Length of the replayed record in seconds: the last reading's dataset hour. */
+export function seriesDurationS(...series: readonly (readonly Reading[])[]): number {
+  return Math.max(...series.map((s) => (s.length ? Math.ceil(s[s.length - 1].t_h * 3600) : 0)));
+}
+
+/**
+ * Replay mode: the ledger refuses batches whose last reading is after the block time (FutureBatch), so the pour is
+ * placed in the past: pourStart = block time at replay - dataset duration - 1 h. Every reading then lies at least
+ * one hour before that block time.
+ */
+export function replayPourStart(blockTime: number, ...series: readonly (readonly Reading[])[]): { pourStart: number; rule: string } {
+  if (!Number.isInteger(blockTime) || blockTime <= 0) throw new Error(`bad block time ${blockTime}`);
+  const dur = seriesDurationS(...series);
+  return {
+    pourStart: blockTime - dur - REPLAY_MARGIN_S,
+    rule: `replay: block time ${blockTime} - dataset duration ${dur} s - ${REPLAY_MARGIN_S} s, so all readings are in the past`,
+  };
 }
 
 /** Dataset hours -> device readings: t_unix = pourStart + t_h * 3600, temperature in milli-degC. */
@@ -124,6 +151,8 @@ export function replay(o: ReplayOptions): BatchesFile {
       note: "chainId and ledger are part of every signed digest; re-run the replay against the deployed ledger before appending elsewhere",
     },
     pourStart: o.pourStart,
+    pourStartRule: o.pourStartRule ?? "given explicitly",
+    replayBlockTime: o.replayBlockTime ?? null,
     readingsPerBatch: o.readingsPerBatch ?? READINGS_PER_BATCH,
     device: { qx: o.key.qx, qy: o.key.qy },
     message: MESSAGE_FORMAT,
@@ -132,12 +161,14 @@ export function replay(o: ReplayOptions): BatchesFile {
   };
 }
 
-export type AppendError = "NoDevice" | "CounterGap" | "BadBatchWindow" | "BadSignature";
+export type AppendError = "NoDevice" | "CounterGap" | "BadBatchWindow" | "FutureBatch" | "BadSignature";
 
 export interface LedgerView {
   nextCounter: number;
   pourStart: number;
   device: PublicKey | null;
+  /** block.timestamp of the block the batch would land in */
+  blockTime: number;
 }
 
 /**
@@ -148,6 +179,7 @@ export function predictAppend(ctx: BatchContext, view: LedgerView, b: Pick<Signe
   if (!view.device) return "NoDevice";
   if (b.counter !== view.nextCounter) return "CounterGap";
   if (b.fromTs > b.toTs || b.fromTs < view.pourStart) return "BadBatchWindow";
+  if (b.toTs > view.blockTime) return "FutureBatch";
   const digest = batchDigest({ ...ctx, counter: b.counter, fromTs: b.fromTs, toTs: b.toTs, root: b.root });
   return verifyDigest(digest, b, view.device) ? null : "BadSignature";
 }

@@ -1,8 +1,10 @@
 // Device message format: reading leaves, batch Merkle root and proofs, the signed digest, P-256 signatures.
 // Byte for byte the same as contracts/src/BatchMessage.sol; contracts/test/vectors.json checks both sides.
-//  - leaf:   keccak256(abi.encode(uint64 t_unix, int32 temp_milliC))
-//  - root:   OpenZeppelin MerkleProof-compatible (pairs hashed sorted), leaves in reading order,
-//            an odd last node is carried up unchanged
+//  - leaf:   keccak256(0x00 || abi.encode(uint64 t_unix, int32 temp_milliC))
+//  - node:   keccak256(0x01 || min(a, b) || max(a, b))
+//  - root:   leaves in reading order, an odd last node is carried up unchanged; proofs verify with
+//            OpenZeppelin MerkleProof.verify(proof, root, leaf, BatchMessage.node)
+//            The 0x00 / 0x01 prefixes (RFC 6962 style) keep leaf and node preimages apart.
 //  - digest: sha256(abi.encode("POURPROOF_BATCH_V1", uint256 chainId, address ledger, bytes32 pourId,
 //                              uint64 counter, uint64 fromTs, uint64 toTs, bytes32 root))
 //  - signature: P-256 ECDSA over the digest itself (no extra hashing), low-s
@@ -101,17 +103,20 @@ function compare(a: Uint8Array, b: Uint8Array): number {
 
 // ---------- leaves, root, proofs ----------
 
-/** keccak256(abi.encode(uint64 t_unix, int32 temp_milliC)) */
+const LEAF_PREFIX = new Uint8Array([0x00]);
+const NODE_PREFIX = new Uint8Array([0x01]);
+
+/** keccak256(0x00 || abi.encode(uint64 t_unix, int32 temp_milliC)) */
 export function leafHash(r: DeviceReading): Hex {
   if (!Number.isInteger(r.t_unix) || !Number.isInteger(r.temp_milliC)) throw new Error("reading fields must be integers");
-  return toHex(keccak_256(concat(word(BigInt(r.t_unix), 64, false), word(BigInt(r.temp_milliC), 32, true))));
+  return toHex(keccak_256(concat(LEAF_PREFIX, word(BigInt(r.t_unix), 64, false), word(BigInt(r.temp_milliC), 32, true))));
 }
 
-/** OpenZeppelin Hashes.commutativeKeccak256: keccak256 of the two hashes in ascending order. */
+/** BatchMessage.node: keccak256(0x01 || the two hashes in ascending order). */
 export function hashPair(a: Hex, b: Hex): Hex {
   const x = bytes32(a);
   const y = bytes32(b);
-  return toHex(keccak_256(compare(x, y) <= 0 ? concat(x, y) : concat(y, x)));
+  return toHex(keccak_256(compare(x, y) <= 0 ? concat(NODE_PREFIX, x, y) : concat(NODE_PREFIX, y, x)));
 }
 
 /** Every level of the tree, leaves first, root last. */
@@ -133,7 +138,7 @@ export function merkleRoot(leaves: readonly Hex[]): Hex {
   return l[l.length - 1][0];
 }
 
-/** Sibling path for leaves[index]; verifies with OpenZeppelin MerkleProof.verify(proof, root, leaf). */
+/** Sibling path for leaves[index]; verifies with OpenZeppelin MerkleProof.verify(proof, root, leaf, BatchMessage.node). */
 export function merkleProof(leaves: readonly Hex[], index: number): Hex[] {
   const l = levels(leaves);
   if (!Number.isInteger(index) || index < 0 || index >= leaves.length) throw new Error(`index ${index} out of range`);
@@ -148,7 +153,7 @@ export function merkleProof(leaves: readonly Hex[], index: number): Hex[] {
   return proof;
 }
 
-/** OpenZeppelin MerkleProof.processProof. */
+/** OpenZeppelin MerkleProof.processProof with hashPair as the hasher. */
 export function processProof(proof: readonly Hex[], leaf: Hex): Hex {
   return proof.reduce<Hex>((h, p) => hashPair(h, p), leaf);
 }

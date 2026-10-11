@@ -6,6 +6,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { anomaly, checkBatch, leafHash, pourIdOf, publicKeyOf, verifyProof, type BatchContext, type PublicKey } from "@pourproof/core";
 import {
   ANVIL_FIRST_DEPLOY,
+  REPLAY_MARGIN_S,
   REPO_ROOT,
   SOURCE,
   deviceKeyPath,
@@ -13,6 +14,7 @@ import {
   loadDeviceKey,
   predictAppend,
   replay,
+  replayPourStart,
   secretsDir,
   tamperAttempts,
   toReadings,
@@ -38,8 +40,8 @@ const kB = testKey("pourproof device test key B");
 const ctxOf = (f: BatchesFile | TamperFile): BatchContext => ({ chainId: f.context.chainId, ledger: f.context.ledger, pourId: f.pourId });
 
 /** Replays a list of submissions through the offline ledger mirror, accepting honest batches as the chain would. */
-function run(ctx: BatchContext, start: number, device: PublicKey, subs: PublishedBatch[]) {
-  const view: LedgerView = { nextCounter: 0, pourStart: start, device };
+function run(ctx: BatchContext, start: number, device: PublicKey, subs: PublishedBatch[], blockTime = Math.max(...subs.map((b) => b.toTs))) {
+  const view: LedgerView = { nextCounter: 0, pourStart: start, device, blockTime };
   return subs.map((b) => {
     const err = predictAppend(ctx, view, b);
     if (err === null) view.nextCounter = b.counter + 1;
@@ -125,10 +127,13 @@ describe("replay (simulated device)", () => {
 
   it("the offline ledger mirror predicts each revert", () => {
     const ctx = ctxOf(f);
-    const view = (nextCounter: number, device: PublicKey | null = kA): LedgerView => ({ nextCounter, pourStart, device });
+    const now = f.batches[f.batches.length - 1].toTs;
+    const view = (nextCounter: number, device: PublicKey | null = kA): LedgerView => ({ nextCounter, pourStart, device, blockTime: now });
     expect(predictAppend(ctx, view(0, null), f.batches[0])).toBe("NoDevice");
     expect(predictAppend(ctx, view(1), f.batches[2])).toBe("CounterGap");
     expect(predictAppend(ctx, { ...view(0), pourStart: f.batches[0].fromTs + 1 }, f.batches[0])).toBe("BadBatchWindow");
+    expect(predictAppend(ctx, { ...view(0), blockTime: f.batches[0].toTs - 1 }, f.batches[0])).toBe("FutureBatch");
+    expect(predictAppend(ctx, { ...view(0), blockTime: f.batches[0].toTs }, f.batches[0])).toBe(null);
     expect(predictAppend(ctx, view(0, kB), f.batches[0])).toBe("BadSignature");
     expect(predictAppend({ ...ctx, pourId: pourIdOf("P-T2") }, view(0), f.batches[0])).toBe("BadSignature");
   });
@@ -148,11 +153,38 @@ describe("replay (simulated device)", () => {
   });
 });
 
+describe("replay pour start (FutureBatch)", () => {
+  it("pourStart = block time - dataset duration - 1 h: every batch is in the past at that block time", () => {
+    const blockTime = 1_790_000_000;
+    const { pourStart, rule } = replayPourStart(blockTime, dataset.series.box1, dataset.series.ambient);
+    const last = Math.max(dataset.series.box1.at(-1)!.t_h, dataset.series.ambient.at(-1)!.t_h);
+    expect(pourStart).toBe(blockTime - Math.ceil(last * 3600) - 3600);
+    expect(rule).toMatch(/block time 1790000000/);
+    const f = replay({ dataset, pourLabel: "P-T3", seriesName: "box1", scenario: "test", pourStart, chainId: 31337, ledger: ANVIL_FIRST_DEPLOY, key: kA });
+    expect(f.batches.at(-1)!.toTs).toBe(blockTime - REPLAY_MARGIN_S);
+    expect(run(ctxOf(f), pourStart, kA, f.batches, blockTime).every((e) => e === null)).toBe(true);
+    // The same batches signed for a pour starting at the block time would all be ahead of the chain clock.
+    const late = replay({ dataset, pourLabel: "P-T3", seriesName: "box1", scenario: "test", pourStart: blockTime, chainId: 31337, ledger: ANVIL_FIRST_DEPLOY, key: kA });
+    expect(run(ctxOf(late), blockTime, kA, late.batches.slice(0, 1), blockTime)).toEqual(["FutureBatch"]);
+    expect(() => replayPourStart(0, dataset.series.box1)).toThrow();
+  });
+});
+
 describe("committed outputs in data/pours", () => {
   const load = <T>(p: string) => JSON.parse(readFileSync(join(REPO_ROOT, "data", "pours", p), "utf8")) as T;
   const p1 = load<BatchesFile>("P-001/batches.json");
   const p2 = load<BatchesFile>("P-002/batches.json");
   const tamper = load<TamperFile>("P-002/tamper.json");
+
+  it("are placed in the past by the replay rule: the last reading is 1 h before the replay block time", () => {
+    for (const f of [p1, p2]) {
+      expect(f.replayBlockTime).not.toBeNull();
+      expect(f.pourStart).toBe(replayPourStart(f.replayBlockTime!, dataset.series.box1, dataset.series.ambient).pourStart);
+      expect(f.batches.at(-1)!.toTs).toBeLessThanOrEqual(f.replayBlockTime! - REPLAY_MARGIN_S);
+      expect(f.message.leaf).toMatch(/^keccak256\(bytes\.concat\(0x00, /);
+    }
+    expect(p1.pourStart).toBe(p2.pourStart);
+  });
 
   it("carry deviceKind 'simulated' and the dataset source, and no secret material", () => {
     for (const f of [p1, p2, tamper]) {

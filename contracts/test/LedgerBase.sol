@@ -94,7 +94,13 @@ abstract contract LedgerBase is Test {
         (b.r, b.s) = _sign(pk, id, counter, b.fromTs, b.toTs, b.root);
     }
 
+    /// The ledger only takes a batch once its last reading is in the past; move the clock there if needed.
+    function _reach(uint64 toTs) internal {
+        if (block.timestamp < toTs) vm.warp(toTs);
+    }
+
     function _submit(Batch memory b) internal {
+        _reach(b.toTs);
         ledger.appendBatch(b.id, b.counter, b.fromTs, b.toTs, b.root, b.r, b.s);
     }
 

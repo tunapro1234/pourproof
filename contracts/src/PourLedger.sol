@@ -69,6 +69,7 @@ contract PourLedger is DeviceRegistry {
     error AlreadyAccepted(bytes32 pourId);
     error NotPourContractor(bytes32 pourId, address account);
     error BadBatchWindow(uint64 fromTs, uint64 toTs);
+    error FutureBatch(uint64 toTs, uint256 blockTime);
     error NoBatches(bytes32 pourId);
     error AlreadyApproved(bytes32 pourId);
     error NotAClaimant(bytes32 pourId, address account);
@@ -126,7 +127,8 @@ contract PourLedger is DeviceRegistry {
         emit PourAccepted(pourId, msg.sender);
     }
 
-    /// @notice Anyone may relay a batch; the device signature is the authorization.
+    /// @notice Anyone may relay a batch; the device signature is the authorization. A batch can only be appended
+    ///  once its last reading lies in the past (toTs <= block.timestamp).
     function appendBatch(bytes32 pourId, uint64 counter, uint64 fromTs, uint64 toTs, bytes32 root, bytes32 r, bytes32 s)
         external
     {
@@ -135,6 +137,7 @@ contract PourLedger is DeviceRegistry {
         if (d.qx == 0 && d.qy == 0) revert NoDevice(pourId);
         if (counter != p.nextCounter) revert CounterGap(pourId, p.nextCounter, counter);
         if (fromTs > toTs || fromTs < p.pourStart) revert BadBatchWindow(fromTs, toTs);
+        if (toTs > block.timestamp) revert FutureBatch(toTs, block.timestamp);
         bytes32 h = BatchMessage.digest(block.chainid, address(this), pourId, counter, fromTs, toTs, root);
         if (!P256.verify(h, r, s, d.qx, d.qy)) revert BadSignature();
         p.nextCounter = counter + 1;

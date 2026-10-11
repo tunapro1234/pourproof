@@ -46,6 +46,7 @@ contract LedgerHandler is LedgerBase {
         (uint64 fromTs, uint64 toTs) = _window(counter);
         bytes32 root = _root(fromTs, 12, 20_000);
         (bytes32 r, bytes32 s) = _sign(devicePk, id, counter, fromTs, toTs, root);
+        _reach(toTs);
         try ledger.appendBatch(id, counter, fromTs, toTs, root, r, s) {
             appended[id]++;
         } catch {}
@@ -60,6 +61,7 @@ contract LedgerHandler is LedgerBase {
         (uint64 fromTs, uint64 toTs) = _window(before);
         bytes32 root = _root(fromTs, 12, 20_000);
         (bytes32 r, bytes32 s) = _sign(pk, id, before, fromTs, toTs, root);
+        _reach(toTs);
         try ledger.appendBatch(id, before, fromTs, toTs, root, r, s) {
             wrongKeyAppends++;
         } catch {}

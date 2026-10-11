@@ -39,6 +39,7 @@ contract PourLedgerTest is LedgerBase {
         (uint64 fromTs, uint64 toTs) = _window(0);
         bytes32 root = _root(fromTs, 12, 21_000);
         (bytes32 r, bytes32 s) = _sign(devicePk, P1, 0, fromTs, toTs, root);
+        _reach(toTs);
         vm.expectEmit(address(ledger));
         emit PourLedger.BatchAppended(P1, 0, fromTs, toTs, root);
         ledger.appendBatch(P1, 0, fromTs, toTs, root, r, s);
@@ -51,6 +52,7 @@ contract PourLedgerTest is LedgerBase {
         bytes32 root = _root(fromTs, 12, 21_000);
         uint256 otherPk = uint256(keccak256("pourproof test-only device key B")) % P256_N;
         (bytes32 r, bytes32 s) = _sign(otherPk, P1, 0, fromTs, toTs, root);
+        _reach(toTs);
         vm.expectRevert(PourLedger.BadSignature.selector);
         ledger.appendBatch(P1, 0, fromTs, toTs, root, r, s);
     }
@@ -60,6 +62,7 @@ contract PourLedgerTest is LedgerBase {
         (uint64 fromTs, uint64 toTs) = _window(0);
         bytes32 root = _root(fromTs, 12, 21_000);
         (bytes32 r, bytes32 s) = _sign(devicePk, P1, 0, fromTs, toTs, root);
+        _reach(toTs);
         bytes32 tampered = _root(fromTs, 12, 21_001);
         vm.expectRevert(PourLedger.BadSignature.selector);
         ledger.appendBatch(P1, 0, fromTs, toTs, tampered, r, s);
@@ -72,6 +75,7 @@ contract PourLedgerTest is LedgerBase {
         (uint64 fromTs, uint64 toTs) = _window(0);
         bytes32 root = _root(fromTs, 12, 21_000);
         (bytes32 r, bytes32 s) = _sign(devicePk, P2, 0, fromTs, toTs, root);
+        _reach(toTs);
         ledger.appendBatch(P2, 0, fromTs, toTs, root, r, s);
         vm.expectRevert(PourLedger.BadSignature.selector);
         ledger.appendBatch(P1, 0, fromTs, toTs, root, r, s);
@@ -82,6 +86,7 @@ contract PourLedgerTest is LedgerBase {
         (uint64 fromTs, uint64 toTs) = _window(0);
         bytes32 root = _root(fromTs, 12, 21_000);
         (bytes32 r, bytes32 s) = _sign(devicePk, P1, 0, fromTs, toTs, root);
+        _reach(toTs);
         vm.chainId(84532);
         vm.expectRevert(PourLedger.BadSignature.selector);
         ledger.appendBatch(P1, 0, fromTs, toTs, root, r, s);
@@ -92,6 +97,7 @@ contract PourLedgerTest is LedgerBase {
         (uint64 fromTs, uint64 toTs) = _window(0);
         bytes32 root = _root(fromTs, 12, 21_000);
         (bytes32 r, bytes32 s) = _sign(devicePk, P1, 0, fromTs, toTs, root);
+        _reach(toTs);
         vm.expectRevert(PourLedger.BadSignature.selector);
         ledger.appendBatch(P1, 0, fromTs, toTs, root, r, bytes32(P256_N - uint256(s)));
     }
@@ -107,11 +113,34 @@ contract PourLedgerTest is LedgerBase {
         _submit(b0); // replay
     }
 
+    function test_RevertWhen_futureBatch() public {
+        _setupPour(P1);
+        Batch memory b = _batch(devicePk, P1, 0);
+        vm.warp(b.toTs - 1);
+        vm.expectRevert(abi.encodeWithSelector(PourLedger.FutureBatch.selector, b.toTs, uint256(b.toTs - 1)));
+        ledger.appendBatch(b.id, b.counter, b.fromTs, b.toTs, b.root, b.r, b.s);
+        vm.warp(b.toTs);
+        _submit(b);
+        assertEq(ledger.nextCounter(P1), 1);
+    }
+
+    /// A correctly signed batch whose last reading is any time ahead of the chain clock is refused.
+    function testFuzz_RevertWhen_futureBatch(uint64 ahead) public {
+        ahead = uint64(bound(ahead, 1, 3650 days));
+        _setupPour(P1);
+        Batch memory b = _batch(devicePk, P1, 0);
+        vm.warp(b.toTs - ahead < pourStart - 1 hours ? pourStart - 1 hours : b.toTs - ahead);
+        vm.expectRevert(abi.encodeWithSelector(PourLedger.FutureBatch.selector, b.toTs, block.timestamp));
+        ledger.appendBatch(b.id, b.counter, b.fromTs, b.toTs, b.root, b.r, b.s);
+        assertEq(ledger.nextCounter(P1), 0);
+    }
+
     function test_RevertWhen_batchBeforePourStart() public {
         _setupPour(P1);
         uint64 fromTs = pourStart - 1;
         bytes32 root = _root(fromTs, 12, 21_000);
         (bytes32 r, bytes32 s) = _sign(devicePk, P1, 0, fromTs, fromTs + 1, root);
+        _reach(fromTs + 1);
         vm.expectRevert(abi.encodeWithSelector(PourLedger.BadBatchWindow.selector, fromTs, fromTs + 1));
         ledger.appendBatch(P1, 0, fromTs, fromTs + 1, root, r, s);
     }
@@ -248,6 +277,7 @@ contract PourLedgerTest is LedgerBase {
         (uint64 fromTs, uint64 toTs) = _window(1);
         bytes32 root = _root(fromTs, 12, 21_000);
         (bytes32 r, bytes32 s) = _sign(newPk, P1, 1, fromTs, toTs, root);
+        _reach(toTs);
         ledger.appendBatch(P1, 1, fromTs, toTs, root, r, s);
         assertEq(ledger.nextCounter(P1), 2);
     }
@@ -262,7 +292,7 @@ contract PourLedgerTest is LedgerBase {
     }
 
     function test_RevertWhen_baselineAfterFirstBatch() public {
-        // pourStart set in the future, but readings already exist: the pour has started.
+        // A batch is only accepted once its readings are in the past, so the pour has started.
         vm.prank(supplier);
         ledger.createPour(P1, 0, 0, 8000, 220, 250, pourStart);
         vm.prank(inspector);
@@ -325,6 +355,7 @@ contract PourLedgerTest is LedgerBase {
         (uint64 fromTs, uint64 toTs) = _window(0);
         bytes32 root = _root(fromTs, 12, 21_000);
         (bytes32 r, bytes32 s) = _sign(pk, P1, 0, fromTs, toTs, root);
+        _reach(toTs);
         vm.expectRevert(PourLedger.BadSignature.selector);
         ledger.appendBatch(P1, 0, fromTs, toTs, root, r, s);
     }
