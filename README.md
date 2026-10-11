@@ -192,7 +192,7 @@ Output:
 | `scenario/<network>-evidence-P-001.json` | the evidence package behind `approveStrength` |
 | `apps/web/public/snapshot/<network>.json` | what the web app needs without an RPC: all ledger events, both pours' on-chain state, their signed batches and readings, block number |
 
-On Anvil the scenario starts a private node on a free local port at a fixed genesis time (2026-10-12 00:00 UTC) with 12 s per
+On Anvil the scenario starts a private node on a free local port at a fixed genesis time (2026-09-10 05:00 UTC) with 12 s per
 block, and sets the next block's time (`evm_setNextBlockTimestamp`) to fixed offsets from the readings, so a re-run writes the
 same files byte for byte. The log and the snapshot both carry `timeMode` and `timeNote`, and the log has each pour's `pourStart`
 and the timing constants. Anvil's default hardfork has the P-256 precompile, so `appendBatch` costs

@@ -4,7 +4,7 @@ import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { foundryBin } from "./foundry.ts";
 
-export const ANVIL_GENESIS_TS = 1_791_763_200; // 2026-10-12T00:00:00Z
+export const ANVIL_GENESIS_TS = 1_789_016_400; // 2026-09-10T05:00:00Z, so the first pour starts 08:31 local time (UTC+3)
 export const ANVIL_BLOCK_INTERVAL_S = 12;
 
 export interface AnvilNode {
