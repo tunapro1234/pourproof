@@ -1,0 +1,27 @@
+{
+  "name": "pourproof",
+  "private": true,
+  "version": "0.0.0",
+  "license": "MIT",
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "workspaces": [
+    "packages/core",
+    "packages/device",
+    "packages/ai",
+    "packages/chain",
+    "apps/web"
+  ],
+  "scripts": {
+    "test": "npm test --workspaces --if-present",
+    "test:contracts": "forge test --root contracts",
+    "build:contracts": "forge build --root contracts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "typescript": "^5.9.0",
+    "vitest": "^5.0.3"
+  }
+}

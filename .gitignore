@@ -1,0 +1,11 @@
+node_modules/
+out/
+cache/
+broadcast/
+.env
+*.xlsx
+secrets/
+dist*/
+*.key
+coverage/
+.vite/
