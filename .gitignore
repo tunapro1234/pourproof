@@ -9,3 +9,4 @@ dist*/
 *.key
 coverage/
 .vite/
+__pycache__/
