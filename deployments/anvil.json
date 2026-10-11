@@ -1,0 +1,26 @@
+{
+ "network": "anvil",
+ "networkLabel": "local Anvil",
+ "chainId": 31337,
+ "rpc": "local Anvil started by the scenario (stopped afterwards)",
+ "ledger": {
+  "contract": "PourLedger (includes DeviceRegistry)",
+  "address": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+  "txHash": "0x62c39582f5992083f68a8164f4cbe57e92c5f0d1626a575a9ee7454dca3f3d72",
+  "block": "1"
+ },
+ "compiler": {
+  "solc": "0.8.28",
+  "evmVersion": "prague",
+  "optimizer": true,
+  "codeHash": "0x0c1df68b38b248abc56a1287380026cf71798541c91e1c45da87eecb6e9529d6"
+ },
+ "roles": {
+  "admin": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
+  "supplier": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
+  "contractor": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+  "inspector": "0x90f79bf6eb2c4f870365e785982e1f101e93b906",
+  "owner": "0x15d34aaf54267db7d7c367839aaf71a00a2c6a65",
+  "relay": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc"
+ }
+}

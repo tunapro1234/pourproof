@@ -9,7 +9,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { Hex } from "@pourproof/core";
 import { keygen, loadDeviceKey, REPO_ROOT, secretsDir } from "./keys.ts";
-import { ANVIL_CHAIN_ID, ANVIL_FIRST_DEPLOY, replay, replayPourStart, tamperAttempts, type Dataset } from "./replay.ts";
+import { ANVIL_CHAIN_ID, ANVIL_FIRST_DEPLOY, SCENARIO_TEXT, replay, replayPourStart, tamperAttempts, type Dataset } from "./replay.ts";
 
 const [cmd, ...args] = process.argv.slice(2);
 const opt = (name: string, dflt: string) => {
@@ -46,14 +46,14 @@ if (cmd === "keygen") {
     ...common,
     pourLabel: "P-001",
     seriesName: "box1",
-    scenario: "Low-clinker pour. The device replays Box 1 (a 50 x 50 x 50 cm block) from the dataset; readings are signed as logged.",
+    scenario: SCENARIO_TEXT["P-001"],
     key: k1,
   });
   const p2 = replay({
     ...common,
     pourLabel: "P-002",
     seriesName: "ambient",
-    scenario: "Tamper case. The device sat in open air: the dataset's ambient series is replayed as if it were concrete. Signatures are valid; the curing check flags it.",
+    scenario: SCENARIO_TEXT["P-002"],
     key: k2,
   });
   write(join(out, "P-001", "batches.json"), p1);

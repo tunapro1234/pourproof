@@ -15,7 +15,9 @@ and proposes field values with their source, and a person confirms them. The AI 
 
 Working: the contracts with their tests, the dataset import and the maturity, strength range, CO2 and anomaly calculations
 (`packages/core`), the device message format in TypeScript (checked against the Solidity vectors) and the simulated device
-replay with its tamper cases (`packages/device`). Not built yet: AI extraction, the deploy scenario and the web passport.
+replay with its tamper cases (`packages/device`), and the end-to-end chain scenario on a local Anvil (`packages/chain`), whose
+recorded state the web app reads. Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. Not built yet:
+AI extraction and the web passport.
 
 ## Data sources
 
@@ -45,6 +47,9 @@ replay with its tamper cases (`packages/device`). Not built yet: AI extraction, 
 - **AI responses.** Without an `ANTHROPIC_API_KEY`, the AI package uses responses recorded from an earlier real call, and the UI
   says "recorded response".
 - **The carbon saving.** It is a testnet event that shows the single-claim rule. It is not a credit and has no market value.
+- **Mixes, volumes and tickets.** The two mixes (GWP ranges from a published cement EPD plus labelled assumptions), the 8 m3
+  volumes and the fictional "Sample Ready-Mix Co." tickets are sample values in `data/scenario/inputs.json`; each value names its
+  source or says "assumption". The curing curve is the dataset's own concrete (class B25), not the sample mix.
 
 ## Repository layout
 
@@ -138,10 +143,46 @@ last reading is after the block time (`FutureBatch`), so a replay puts the pour 
 duration (28 days) - 1 h`, using `--block-time` (the chain scenario passes its latest block) or the clock at replay time. Each file
 records the block time it used (`replayBlockTime`) and the rule (`pourStartRule`). Every file carries
 `deviceKind: "simulated"` and `source: "replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)"`, plus the public key;
-private keys stay in `$POURPROOF_SECRETS`. Chain id and ledger address are part of every signed digest, so the committed files are
-signed for a fresh local Anvil (chain 31337, first deployed contract `0x5FbDB2315678afecb367f032d93F642f64180aa3`); the deploy
-scenario re-runs the replay with the address it actually deploys. `predictAppend` mirrors the ledger's checks offline to say which
-revert to expect; the chain decides.
+private keys stay in `$POURPROOF_SECRETS`. Chain id and ledger address are part of every signed digest; the committed files are
+the batches the Anvil scenario below signed and sent (chain 31337, ledger `0x5FbDB2315678afecb367f032d93F642f64180aa3`).
+`predictAppend` mirrors the ledger's checks offline to say which revert to expect; the chain decides.
+
+## Chain scenario
+
+```sh
+npm run scenario -w packages/chain -- --network anvil          # starts its own Anvil, runs everything, stops it
+npm run scenario -w packages/chain -- --network baseSepolia    # role keys from $POURPROOF_SECRETS/roles.json
+```
+
+One run deploys `PourLedger`, grants the four roles, replays both devices for that ledger and then sends, as real transactions:
+
+| Pour | Steps |
+|---|---|
+| P-001 | contractor declares the baseline mix, supplier creates the pour, inspector registers the simulated device, contractor accepts, 112 batches, inspector approves strength, supplier claims the saving, the contractor's second claim reverts `AlreadyClaimed` |
+| P-002 | create, register, accept, batch 0; a batch signed by the P-001 device reverts `BadSignature`, a skipped batch reverts `CounterGap`; the other 111 batches. The curing check flags the record, so it gets no approval and no claim |
+
+Calls meant to fail are simulated first and then sent anyway, so the revert is on chain with its own transaction hash. The
+inspector's `evidenceHash` is the sha256 of `scenario/<network>-evidence-P-001.json`: maturity and the strength range computed by
+`packages/core` from the signed readings, the calibration behind it, the anomaly result and the saving range
+(`sha256sum` the file to check it).
+
+Output:
+
+| File | What it holds |
+|---|---|
+| `deployments/<network>.json` | ledger address, deploy tx and block, role addresses |
+| `scenario/<network>-log.json` | every step: role, account, function, arguments, tx hash, block, time, gas, decoded events, revert name and arguments |
+| `scenario/<network>-evidence-P-001.json` | the evidence package behind `approveStrength` |
+| `apps/web/public/snapshot/<network>.json` | what the web app needs without an RPC: all ledger events, both pours' on-chain state, their signed batches and readings, block number |
+
+On Anvil the scenario starts a private node on a free local port at a fixed genesis time (2026-10-12 00:00 UTC) with 12 s per
+block, so a re-run writes the same files byte for byte. Anvil's default hardfork has the P-256 precompile, so `appendBatch` costs
+about 73,000 to 90,000 gas there instead of about 310,000 with the Solidity fallback measured in the contract tests.
+
+On Base Sepolia (public RPC `https://sepolia.base.org` or `BASE_SEPOLIA_RPC`) the scenario first checks that every role account can
+pay its share at twice the current gas price. If one cannot, it stops before the first transaction and lists each address with its
+shortfall; it does not fall back to Anvil. `npm run roles-keygen -w packages/chain` writes a new `roles.json` (mode 600) when none
+exists. Mainnet is not supported.
 
 ## Setup
 
@@ -165,7 +206,7 @@ Environment variables (`.env.example`):
 |---|---|
 | `ANTHROPIC_API_KEY` | live AI extraction; without it recorded responses are used |
 | `BASE_SEPOLIA_RPC` | Base Sepolia RPC, defaults to the public endpoint |
-| `POURPROOF_SECRETS` | directory outside the repo holding role and device private keys |
+| `POURPROOF_SECRETS` | directory outside the repo holding role keys (`roles.json`) and device keys (`devices/`) |
 
 Private keys never go into the repository.
 

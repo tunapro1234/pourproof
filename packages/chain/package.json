@@ -5,6 +5,16 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "test": "vitest run --passWithNoTests"
-  }
+    "test": "vitest run",
+    "scenario": "node src/cli.ts scenario",
+    "deploy": "node src/cli.ts deploy",
+    "roles-keygen": "node src/cli.ts roles-keygen"
+  },
+  "dependencies": {
+    "@pourproof/core": "0.0.0",
+    "@pourproof/device": "0.0.0",
+    "@noble/hashes": "^2.4.0",
+    "viem": "2.56.9"
+  },
+  "main": "src/index.ts"
 }

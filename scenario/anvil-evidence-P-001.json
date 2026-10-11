@@ -1,0 +1,253 @@
+{
+ "format": "pourproof.evidence/1",
+ "pourLabel": "P-001",
+ "pourId": "0x3b6c46c8162514e504b21fdb90d741e88488affd3572d15dce1af16ef1108f32",
+ "network": "anvil",
+ "chainId": 31337,
+ "ledger": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
+ "device": {
+  "qx": "0x128b020195059e928b938f2aa600089fab3a6fd0cd6305638898de72be3d9dea",
+  "qy": "0x35e9a7f3fd2f7564cc2e87cdc0445af52b88125a78630177885521ae8f762e3f",
+  "deviceKind": "simulated",
+  "source": "replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)"
+ },
+ "batches": {
+  "count": 112,
+  "readings": 1344,
+  "pourStart": 1789340460,
+  "roots": [
+   "0x693301b4b8df264060ad6a2e72b20e459d40cac1d9849ed8c0e7ba9326e3b3e2",
+   "0x71c3d98455b0a194e7e9210beefe25126e7a435bd11a4175cf164d5d411265ae",
+   "0x6c3b6e134627fea467971767c6ecad8901c4213b511e4ec36e80d7c9c7b2e6a1",
+   "0x3e21fc2670ea4146090d1a8c6751ca41b7efdfc82313e70f3f60f56efa0e194c",
+   "0xd58e8343a6f71cec81d5835cdb7de9338a461c1879d2bb0569b4917c528c0abd",
+   "0xcac257a862faaa650777994e778554aeb3298e37caed6e403cfc6712f0a6edcd",
+   "0x04969ebb5836091dceb914c4fc0a3934063031a0f38100241f222edf28468ca8",
+   "0xa82729ef8c60bdf01f858024420943ce8941eaa06481d3955e82413693bb7c6d",
+   "0x847dd5a710f755ce3b935f7587c170578a818eafc49db89d8f40e059d0cf4cd6",
+   "0xa205e42dc5084ed74b7089cf2dc97b40e5b4051ca1093ee880957e925a49834d",
+   "0x39fe7c0ce3db72044601bd46057362958806ab7b1f06ed31d85c5973ce055d96",
+   "0x2232f89438ee23485e82d97f634ed8862c5ca2a6696e6a28a0dc2797bb536239",
+   "0xfd59b3f30ad187e7bcbe3fbcb15fa5ad67ef6abce0e8e18d0b57b1748f260ae2",
+   "0x54b71d03e9c8366eeb5e7ebe00143f1de36b99db88d9df873b49ecbb7cd80fb3",
+   "0xa8dc3a5df6b46a456ad2998d51c4960f880871d081c3f6ab38c61051c3b10e1b",
+   "0xc4050e0f9732bfa1fcbf9f25a9d56b28ed00e0afdff74649253f728135f8eb5d",
+   "0x35a91dd36f479e7715cce58489290cfc95b5a7d557a88b08e3a0117898c72ac3",
+   "0x32f57c46d5edc21cb649f8087417d6d373b1efe742d5be0eb6d1a757268a8cad",
+   "0x5f69f9b55c77b46dff80a0e526d1c2d13173204f744e6a3514444872b56b0370",
+   "0xeff6e04a826a366000fdbab1131ae2db97022fe20b1f8c9dd08b3e6fcd7b10c1",
+   "0x7c14228ddec9a81673c662462cc40d4417a7ff68bb51a004156afc3185081617",
+   "0x6e205e45223db71e5f0e0bcf0ff5acf7667666a6fc0f3d712b33f24c0a06f489",
+   "0x095187748417bdfcfe6c061cf62681f15e54c7561858ce19e5fb650a2e4ae26b",
+   "0x28fd0441ed92a10ab7bcec6229623632b753357a2167860e02978686bf5dcc42",
+   "0x69a040e6a6f5cd6acc6457dd13c42e457be499d87de45ca725fc94bfa320c7d9",
+   "0x870f135336d306ed2a2637f329304dbe12897bb545ba43773b9b6b67501a2d3b",
+   "0x7f05456d35ca6b429f7b588d1e0d1577adda3736fc75510c9e6e143be239885f",
+   "0xbd507226e202a69c428ac0b064b3064422860198dc2f5d8f9acec5a0d460d9df",
+   "0xb915fb1539d4b7b731aa48337f765a6d1a50b79ed7862c1d9e30c5133716105a",
+   "0x1581dada29e61326522b3c1f665b5b012eb30b47be4684a6cf71ef9658ff6a02",
+   "0xecac484e95a3ccb5f1bbe2b544cd02dea03b8c69a1a4166c253ef512457c5eda",
+   "0x71459212558d64ff3550cf0ff3f9937560ce07b4c76a375311649d59a1c759fc",
+   "0x47ef033f151998fc34ec60014667bfbc30e403feb22ea2716d52b9d016f5d49a",
+   "0xf280dd57c432a8ec7a6634252d750b35b4821e969e59d93a89e58f6b62a227ab",
+   "0x909b41488ad9289f00ceaf270194884393f2cd492d85812771fd4ed4b6a41257",
+   "0x3296292924a48e4207afffd63d40a11e05416bdc29463a9ecffb69f0b325a1aa",
+   "0x8b9604e21e2ff311be2976ae7d0cb398ee54f7bfbc168b337b577fe506abc13c",
+   "0x3016281b29ac6b693aff2c2bfa37f5f32426afeefcf1354ee363c30ceb8f01a7",
+   "0x1fda1b2095ee0d3b31ecd90aead7092f2446bdda84eda08a53e0cd4e42ce8300",
+   "0x8d4015f431217d5433b40839d29180eea62e75e25923dafa3a1207d429082b17",
+   "0x318f59a61f0ed2bf9507b6da6ec6cecc9859073025aabf1309469048bafe8e26",
+   "0x943b88f0193586cc7443205435cb70a6bdd38403d9506ee8764429feeeb78b69",
+   "0x2b18935d7d8088a3925be51e7d428de52356910f62200937af15709c245eb971",
+   "0xbfe412196b27363bd6823ebe4ebf08a3c7089270efdb259fb8e652ca732c1bef",
+   "0xd44d8fa5c499561559393ccff22f5f0633f666950d5476bacfe28e670fcb643d",
+   "0x39315e91565e97cd9ecba686b5c52f8ab46b62ad229e9c1934cd6881d82a3452",
+   "0x9145eaa52a45b098c3b2db31d84921dd3fa4a24412327ae9629e69521fbe88bc",
+   "0x8554d9759efa2eb41c3dd6a9d775b88304f1343a4ff913fa392f7b37a2139c7d",
+   "0x10e7229c895f1361cbd52ddc2818ebe9ebddd031bc220215b948152e626a78cb",
+   "0xe453e3844acd92abef388bacbb4827bf8e0cb8db612c579b4fc7ae38b7cfec0e",
+   "0xf6068567e6da8a584efe14cd42be6c90dc7392e26c62f4a80d9ea0575eb0f82a",
+   "0xa2560db8ead79b9c4ac1d1f5d90ed21523dad56f396e51d6ef909763e0beec08",
+   "0x3d78f424eb6b6c27c2ea26fa5cd7103d0f2fb4f40f56b7ff76f6d8fcf9a98500",
+   "0x16bb08e45edefd001ea7343b4f6901a7cb6f7d3e8762bf3b4ea6c3e5c9a2a3dd",
+   "0xf82c70bcdd68c94b6563302351a905f7c0e5985f1f05d869bee029b1cf17519a",
+   "0x1cf03a2f9e3218b49001ecc616d864d10b76413aeb60b2364ba4e9aa6ea514e3",
+   "0x3d1b710000c5dee9366dd2f35bb37133c691bec11e5a5485f14c8198ee2c1a23",
+   "0x748a83e7aa8bd63d52d71f7bcc9e64f34e7f9e864d59bc568fa598a4d0dffad5",
+   "0x9b1b56d2d6e96ea31424e29e47834e399a08cb63ca3699017332718e84a38191",
+   "0x66b07ccbd9bbf2673d65d88627e12d412e0f9e6e1da5a355bfd9d55a797989e7",
+   "0x8a01ab9e1a103223fbe1f4d27c70d2f45e4496601ea0f3782e0974e344d1b140",
+   "0xfc08195eaba6460a1143d6bfd2a6f688f89016df6f851d4323405a2e6163033c",
+   "0x8d9b9c80c107871f26962ec90e93c8fc8c3d0039d0e917c7f614522018faef34",
+   "0x41722713b37202f38ab16ae2490772ca7b645e7aef927dae41fa534cf7e080ea",
+   "0x43d1fdb090eee4dff21366cc249b72c280b824ec91badae659db589051b74478",
+   "0xde1709ab69a6b90f9d8018c65823d0a757a56bf1282820898725f00dfd3d52d4",
+   "0xe22fc4bb0764c4f23211f8c799a0401ceaf74fc1fb421ea02d0ac7397cdf0a01",
+   "0xc677c28397c5f61314dd97256344c25cf0647f9d334059c7e4f437a5d5ebcbb6",
+   "0x965d4c84ab5f03a348654ebdbb4b3bcf86d3d745d3c0badd6b4ceaed609a786b",
+   "0x67fee652ac3cc6ff94efde1d87a73d47f3dacc017a2a1c5344fe54dde8ef502c",
+   "0xd7ce273b513bfb869d7ee291c54f19a58fec7306d01d8183763aece197c50266",
+   "0xa00610bf5a9f14397e5f696b50515b69535730dbe8f6032222d8c4a85d1f6fa7",
+   "0xc7e2e7491c3cfaab93342919c93a07d340a679cc820d014817fa2b0b9a18908d",
+   "0x379b327a6f141636f1eb1bf7ccbf347a056eb6cf2e0068da3720a598f8c158fc",
+   "0xaad65ecc562e00010ec27d0c8e8536820c1bc39a8b6a478523e8be4a2d5a7de3",
+   "0x5ee2a02c30f1f4589cb2d95ce4b4a8cfa2de77ee822eeffcd66e4c7c7061f422",
+   "0x3dd32cedf6c06cd021e8783b058a016646c220611dc1106bda5176110e1248e7",
+   "0x0633eabbecf506a6ffbfc923d7958fae6aa94b6356a3aa15977d0a02206b90d5",
+   "0x0b9821b9903e00e108e2eea17a088a655f90dbadc50c077916b5b378386ebbf2",
+   "0x4d88a1aac6b0aa81ca3312d956d923d985b96a0cc12d8f84ef202faeaa174797",
+   "0xde14a4773a47defcf9680bf8abac4f55814b4626c2e67fe1d99e5a92cfa2e1f6",
+   "0x6ec3cf2dc63f3ee1eb7e6ecf7160909730ce515f4489e7d81c9b28e74d9c862b",
+   "0xb992debd266b8ff625edabf55a7d72aa48cb252b4785ef5b38d781a08819f676",
+   "0x000266d45159a4a46a9152c6e26aa3ed2070a45c73eab841452a834b38b3a98f",
+   "0x1aadaff6de220ece4fedd67f8732d62169333f52bbe561112792d393734e4f92",
+   "0x6f5e4b7d99bbfa7d3ddfca03b1b7b632270540eccb95e21a31d09400a3033341",
+   "0x76833197666505ef4f4c1faca9ed3a74805211c59a8af9c9627a76848e172c97",
+   "0xd96e873ad6fbe52b8539f4e8abde0d318f78281cf8fd78c5e178b31629a61d99",
+   "0x831fb1248d781fe020433bbcdfb6e9658ee96832b8149f0dc354174844678b12",
+   "0x5768df51d7b5dfc2f52a2f4afa065887bc769ea2d8480a26d1784b34f5877a7f",
+   "0x6f16f12cde91a841923d0cd84d795178e497fd2fd45a5eee49ce6d62b6197a16",
+   "0x790efb20a66794c8f2503a86ef3fcc14864a0f8c0910c5a68d3081d4d0047a90",
+   "0x3206e33b3a28193ff401a6f52601afc07fec77ad80ade35ae5dbfa7f797c82d6",
+   "0x0f32d723b78e3516d4d4fde1d3e207c709e12cdf2689cf78f29aa3de2fecfdc6",
+   "0xe24f58ed41a225ab6931e18c8e2b9a7f66aacf36b44df2f76296762ebc9c2a3f",
+   "0x224709bd2bfb8149be1541f26d1ac6f31d92c6bdb7cfc53ff9f88fc3fe99dfb8",
+   "0xe2482925079177f4dc1ecdd54f7fda43dbc6a69202c327ba8bbffbf181feec7f",
+   "0xcaf34295d5737991af7c098e6ef38ea9b25fd492e93418c9ec657ccc61917ba6",
+   "0x11422d25b81e58dad6de63c36add3226f3ef930aba62e430069cef0e740d899a",
+   "0x84842bd24a0f3931b3aabdc9d91cf4f0ba6d225189763244224bd256a3115539",
+   "0xd50c6481160efe7fc6e7b8106c2f6c2f0ae47fe4bb13e18b45489e93b895b506",
+   "0x0efc33d36387d37a674748c42065b0fef5945ce96ac9068a9a5142f3fd68bb28",
+   "0x53005aeed64f3f4e15405cea7e1ad1e85a0723d99b8f3d422cf5fdd690c5633a",
+   "0xf580159dd3e8a38e8052413eb8740a705da4350900e6e7d70588382241b2f61e",
+   "0x2256eb4dd424d7435f355149f7fccccc17098e9c43124e7913ac0c7e73f27e54",
+   "0xf294ff2787ea855431b33a9e0ebc095be3ffb78f0a400485561416fa8c1c353f",
+   "0x44bb4d12b4a1f6d7bfde784e688bf578c8f7f17067b7e2e9eab8783b56f66e9c",
+   "0xc0b6c008fb7e902b4510801790da6a987168b63768cc48f9ba0b0437646e832a",
+   "0x2e420292fc5344ee14e4ac1f5f38a931d199706dc9ad768cc7c8347c96b6628e",
+   "0xe98f30429a5e66fa9160e417a3724487bf7a15969ef8532ef18f4718bda4df11",
+   "0x2ba77c41e8627714bea88d2d7b6ff30c2c2c12b5e06676d5b1fddff108ddf611",
+   "0x4b54a09512bb1ebc14a6d0752046c5107f9213a6a95d65df7d5ef0980dc02cc5"
+  ]
+ },
+ "maturity": {
+  "method": "Nurse-Saul temperature-time factor (ASTM C1074), datum -10 degC, computed by packages/core from the signed readings",
+  "at_h": 672,
+  "maturity_ch": 14798.840000000066
+ },
+ "strength": {
+  "label": "estimated range, inspector decides",
+  "calibration": "S = a + b ln(M) fitted on the dataset's lab tests (cylinder_15x15cm, ages up to 28 d) against the average of the two cylinder temperature records",
+  "fit": {
+   "a": -37.56698648770153,
+   "b": 7.111494586900458,
+   "sigma": 1.4822717390493294,
+   "n": 5,
+   "m_min": 741.3175000000005,
+   "m_max": 13943.277499999975
+  },
+  "range": "prediction +- 2 residual standard deviations",
+  "checkpoints": [
+   {
+    "age_d": 3,
+    "maturity_ch": 2341.3800000000024,
+    "strength": {
+     "low_mpa": 14.64297076272683,
+     "high_mpa": 20.572057718924146,
+     "extrapolated": false
+    }
+   },
+   {
+    "age_d": 7,
+    "maturity_ch": 4738.905000000002,
+    "strength": {
+     "low_mpa": 19.65704094085392,
+     "high_mpa": 25.586127897051238,
+     "extrapolated": false
+    }
+   },
+   {
+    "age_d": 14,
+    "maturity_ch": 8418.694999999972,
+    "strength": {
+     "low_mpa": 23.743652286117257,
+     "high_mpa": 29.672739242314574,
+     "extrapolated": false
+    }
+   },
+   {
+    "age_d": 28,
+    "maturity_ch": 14798.840000000066,
+    "strength": {
+     "low_mpa": 27.755203508817306,
+     "high_mpa": 33.68429046501463,
+     "extrapolated": true
+    }
+   }
+  ],
+  "reference": {
+   "standard_28d_mpa": 32,
+   "paper_70pct_threshold_mpa": 22.4,
+   "source": "paper p.8 (kod/pourproof/data/dataset/paper-mix.json)",
+   "ui_rule": "show as reference only; inspector decides"
+  }
+ },
+ "anomaly": {
+  "flags": [],
+  "reference": "packages/core anomaly() on the signed readings vs the dataset's ambient series"
+ },
+ "carbon": {
+  "baseline": {
+   "label": "Mix A (contractor's declared baseline, standard spec)",
+   "cement_type": "Portland cement Type I/II (CEM I equivalent)",
+   "cement_kg_per_m3": 380,
+   "cement_basis": "assumption: typical over-designed C30/37 mix",
+   "cement_gwp_kg_per_m3": [
+    370.5,
+    370.5
+   ],
+   "cement_gwp_basis": "380 kg x 974.92 kg/t (akcansa_nrmca_epd)",
+   "other_constituents_kg_per_m3": [
+    20,
+    40
+   ],
+   "other_basis": "assumption: aggregates, water, admixture, batching; not modeled",
+   "gwp_total_kg_per_m3": [
+    390,
+    411
+   ]
+  },
+  "delivered": {
+   "label": "Mix B (delivered low-clinker mix)",
+   "cement_type": "Portland-limestone cement Type IL",
+   "cement_kg_per_m3": 320,
+   "cement_basis": "assumption: optimized mix; strength gain proven by maturity record",
+   "cement_gwp_kg_per_m3": [
+    285.7,
+    285.7
+   ],
+   "cement_gwp_basis": "320 kg x 892.95 kg/t (akcansa_nrmca_epd)",
+   "other_constituents_kg_per_m3": [
+    20,
+    40
+   ],
+   "other_basis": "assumption: same as Mix A",
+   "gwp_total_kg_per_m3": [
+    306,
+    326
+   ]
+  },
+  "volume_m3": 8,
+  "saving_kg": {
+   "low_kg": 512,
+   "high_kg": 840
+  },
+  "note": "sample values; on chain the saving is computed again from the declared integers"
+ },
+ "dataset": {
+  "doi": "10.17632/nmr8pjx8d8.1",
+  "license": "CC BY 4.0",
+  "attribution": "Utepov et al., Complex Maturity Method for Estimating the Concrete Strength Based on Curing Temperature, Ambient Temperature and Relative Humidity, Applied Sciences 11(16):7712, 2021; dataset doi 10.17632/nmr8pjx8d8.1, CC BY 4.0"
+ },
+ "ai": null
+}

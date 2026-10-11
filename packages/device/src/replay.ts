@@ -27,6 +27,11 @@ export const ANVIL_CHAIN_ID = 31337;
 /** Margin between the last replayed reading and the chain clock at replay time. */
 export const REPLAY_MARGIN_S = 3600;
 
+export const SCENARIO_TEXT = {
+  "P-001": "Low-clinker pour. The device replays Box 1 (a 50 x 50 x 50 cm block) from the dataset; readings are signed as logged.",
+  "P-002": "Tamper case. The device sat in open air: the dataset's ambient series is replayed as if it were concrete. Signatures are valid; the curing check flags it.",
+};
+
 export const MESSAGE_FORMAT = {
   leaf: "keccak256(bytes.concat(0x00, abi.encode(uint64 t_unix, int32 temp_milliC)))",
   node: "keccak256(bytes.concat(0x01, min(a, b), max(a, b)))",
