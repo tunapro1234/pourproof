@@ -6,7 +6,21 @@ import { BaseError, ContractFunctionRevertedError, encodeErrorResult, type Abi, 
 import { privateKeyToAccount } from "viem/accounts";
 import { batchDigest, merkleRoot, leafHash, saving, verifyDigest, type Hex } from "@pourproof/core";
 import { REPO_ROOT, type BatchesFile } from "@pourproof/device";
-import { canonical, checkBalances, docHash, evidencePackage, loadLedgerArtifact, loadRoleKeys, revertOf, rolesKeygen, sha256Hex, type EvidenceDataset, type ScenarioInputs } from "../src/index.ts";
+import {
+  TIMING,
+  TIME_NOTE,
+  canonical,
+  checkBalances,
+  docHash,
+  evidencePackage,
+  loadLedgerArtifact,
+  loadRoleKeys,
+  revertOf,
+  rolesKeygen,
+  sha256Hex,
+  type EvidenceDataset,
+  type ScenarioInputs,
+} from "../src/index.ts";
 
 const read = <T>(p: string) => JSON.parse(readFileSync(join(REPO_ROOT, p), "utf8")) as T;
 const tmp = mkdtempSync(join(tmpdir(), "pourproof-chain-test-"));
@@ -67,7 +81,7 @@ describe("role keys for Base Sepolia", () => {
 });
 
 // The committed Anvil run (npm run scenario -w packages/chain -- --network anvil). The run is deterministic: a fixed
-// genesis time and 12 s blocks, so re-running it rewrites these files byte for byte.
+// genesis time, 12 s blocks and fixed time steps, so re-running it rewrites these files byte for byte.
 describe("committed Anvil scenario", () => {
   interface LogStep {
     step: number;
@@ -75,14 +89,27 @@ describe("committed Anvil scenario", () => {
     role: string;
     fn: string;
     args: string[];
+    block: string;
+    timestamp: string;
     status: string;
     events: { name: string; args: Record<string, string> }[];
     revert: { name: string; args: string[] } | null;
   }
-  const log = read<{ chainId: number; ledger: Hex; deviceKind: string; evidence: { path: string; sha256: Hex }; steps: LogStep[] }>("scenario/anvil-log.json");
+  const log = read<{
+    chainId: number;
+    ledger: Hex;
+    deviceKind: string;
+    timeMode: string;
+    timeNote: string;
+    pourStart: number;
+    pours: Record<string, { pourStart: number; pourStartRule: string }>;
+    evidence: { path: string; sha256: Hex };
+    steps: LogStep[];
+  }>("scenario/anvil-log.json");
   const dep = read<{ chainId: number; ledger: { address: Hex } }>("deployments/anvil.json");
   const snap = read<{
     block: string;
+    timeMode: string;
     ledger: Hex;
     events: { name: string; args: Record<string, string> }[];
     pours: Record<string, { pourId: Hex; batches: { counter: number; fromTs: number; toTs: number; root: Hex; r: Hex; s: Hex; readings: [number, number][] }[]; device: { qx: Hex; qy: Hex }; chain: { pour: Record<string, unknown>; savingRange: [string, string]; nextCounter: string } }>;
@@ -123,6 +150,71 @@ describe("committed Anvil scenario", () => {
     expect(snap.pours["P-002"].chain.nextCounter).toBe(String(p2.batches.length));
     expect(snap.pours["P-002"].chain.pour.strengthApproved).toBe(false);
     expect(p2.anomaly.flags).toContain("no_hydration_signature");
+  });
+
+  describe("time advanced on Anvil", () => {
+    const ts = (s: LogStep) => Number(s.timestamp);
+    const of = (pour: string, fn: string) => log.steps.filter((s) => s.pour === pour && s.fn === fn);
+
+    it("log and snapshot say timeMode 'advanced'; pourStart is the one each device file and the chain record", () => {
+      expect(log.timeMode).toBe("advanced");
+      expect(snap.timeMode).toBe("advanced");
+      expect(log.timeNote).toBe(TIME_NOTE.advanced);
+      expect(log.pourStart).toBe(p1.pourStart);
+      for (const f of [p1, p2]) {
+        expect(log.pours[f.pourLabel].pourStart).toBe(f.pourStart);
+        expect(f.pourStartRule).toMatch(/^advanced: /);
+        expect(f.replayBlockTime).toBeNull();
+        expect(snap.pours[f.pourLabel].chain.pour.pourStart).toBe(String(f.pourStart));
+      }
+      expect(p2.pourStart - p1.pourStart).toBe(TIMING.secondPourOffsetS);
+    });
+
+    it("baseline, pour record, device and acceptance are mined before pourStart, acceptance at a fixed lead before it", () => {
+      for (const f of [p1, p2]) {
+        const setup = log.steps.filter((s) => s.pour === f.pourLabel && ["declareBaseline", "createPour", "registerDevice", "acceptPour"].includes(s.fn));
+        expect(setup.map((s) => s.fn)).toEqual(f === p1 ? ["declareBaseline", "createPour", "registerDevice", "acceptPour"] : ["createPour", "registerDevice", "acceptPour"]);
+        for (const s of setup) expect(ts(s)).toBeLessThan(f.pourStart);
+      }
+      expect(ts(of("P-001", "declareBaseline")[0])).toBeLessThan(ts(of("P-001", "createPour")[0]));
+      expect(p1.pourStart - ts(of("P-001", "acceptPour")[0])).toBeGreaterThan(TIMING.pourLeadS / 2);
+    });
+
+    it("each accepted batch is mined after its last reading, the on-time ones exactly the send delay after it", () => {
+      for (const f of [p1, p2]) {
+        const ok = of(f.pourLabel, "appendBatch").filter((s) => s.status === "success");
+        expect(ok.map((s) => Number(s.args[1]))).toEqual(f.batches.map((b) => b.counter));
+        for (const s of ok) expect(ts(s)).toBeGreaterThanOrEqual(Number(s.args[3]));
+      }
+      // P-001 has no withheld batch: every batch goes out TIMING.sendDelayS after it closes.
+      for (const s of of("P-001", "appendBatch")) expect(ts(s) - Number(s.args[3])).toBe(TIMING.sendDelayS);
+      const blocks = log.steps.map((s) => Number(s.block));
+      expect(blocks).toEqual([...blocks].sort((a, b) => a - b));
+      const times = log.steps.map(ts);
+      expect(times).toEqual([...times].sort((a, b) => a - b));
+    });
+
+    it("P-002 tamper attempts are sent when the batch they fake closes; the withheld batch 1 follows", () => {
+      const bad = of("P-002", "appendBatch").filter((s) => s.status === "reverted");
+      expect(bad.map((s) => [s.revert?.name, Number(s.args[1])])).toEqual([
+        ["BadSignature", 1],
+        ["CounterGap", 2],
+      ]);
+      for (const s of bad) expect(ts(s) - Number(s.args[3])).toBe(TIMING.sendDelayS);
+      const honest1 = of("P-002", "appendBatch").find((s) => s.status === "success" && s.args[1] === "1")!;
+      expect(honest1.step).toBeGreaterThan(bad[1].step);
+    });
+
+    it("approval comes after the last P-001 batch, the claim after the approval, the rejected claim last", () => {
+      const lastBatch = Math.max(...of("P-001", "appendBatch").map(ts));
+      const appr = ts(of("P-001", "approveStrength")[0]);
+      const [c1, c2] = of("P-001", "claimSaving").map(ts);
+      expect(appr - lastBatch).toBe(TIMING.approveAfterS);
+      expect(c1 - appr).toBe(TIMING.claimAfterS);
+      expect(c2 - c1).toBe(TIMING.claimAfterS);
+      // 28 days of curing between the pour and the approval
+      expect(appr - p1.pourStart).toBeGreaterThan(27 * 86400);
+    });
   });
 
   it("every other transaction succeeded", () => {

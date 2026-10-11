@@ -5,6 +5,8 @@
 // time taken from --block-time (the chain scenario passes the latest block's timestamp) or the clock now.
 // replay writes data/pours/P-001/batches.json (Box 1, honest) and data/pours/P-002/{batches,tamper}.json
 // (ambient air passed off as concrete, plus a skipped batch and a batch signed by another device's key).
+// The committed data/pours files come from the Anvil chain scenario (packages/chain), which advances the chain clock
+// instead; re-running replay here rewrites them with the replay rule.
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 import type { Hex } from "@pourproof/core";

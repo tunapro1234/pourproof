@@ -46,6 +46,8 @@ passport.
   published Mendeley dataset and signs it with a key generated on this machine. Every screen labels it:
   "simulated device · replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)".
 - **Time.** Replay runs faster than real time. Each reading's timestamp is the pour's recorded start plus the hour in the dataset.
+  On local Anvil the scenario moves the chain clock forward; on Base Sepolia the readings are time-shifted into the past (see
+  [Chain scenario](#chain-scenario)).
 - **The parties.** Supplier, contractor, inspector and owner are test accounts on a testnet or local chain.
 - **AI responses.** Without an `ANTHROPIC_API_KEY`, the AI package uses responses recorded from an earlier real call, and the UI
   says "recorded response".
@@ -146,12 +148,14 @@ npm run replay -w packages/device               # options: --chain-id --ledger -
 | `data/pours/P-002/tamper.json` | two attempts against P-002: batch 1 withheld so batch 2 follows batch 0 (`CounterGap`), and batch 1 signed by the P-001 device (`BadSignature`) |
 
 Each reading's time is `pourStart + dataset hour x 3600` and its temperature is in milli-degC. The ledger refuses a batch whose
-last reading is after the block time (`FutureBatch`), so a replay puts the pour in the past: `pourStart = block time - dataset
-duration (28 days) - 1 h`, using `--block-time` (the chain scenario passes its latest block) or the clock at replay time. Each file
-records the block time it used (`replayBlockTime`) and the rule (`pourStartRule`). Every file carries
+last reading is after the block time (`FutureBatch`), so on a chain whose clock cannot be moved a replay puts the pour in the past:
+`pourStart = block time - dataset duration (28 days) - 1 h`, using `--block-time` (the Base Sepolia scenario passes its latest
+block) or the clock at replay time. Each file records the block time it used (`replayBlockTime`, null when the chain clock was
+advanced instead) and the rule (`pourStartRule`). Every file carries
 `deviceKind: "simulated"` and `source: "replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)"`, plus the public key;
 private keys stay in `$POURPROOF_SECRETS`. Chain id and ledger address are part of every signed digest; the committed files are
-the batches the Anvil scenario below signed and sent (chain 31337, ledger `0x5FbDB2315678afecb367f032d93F642f64180aa3`).
+the batches the Anvil scenario below signed and sent (chain 31337, ledger `0x5FbDB2315678afecb367f032d93F642f64180aa3`, time
+advanced, P-002 poured 27 h after P-001).
 `predictAppend` mirrors the ledger's checks offline to say which revert to expect; the chain decides.
 
 ## Chain scenario
@@ -163,10 +167,16 @@ npm run scenario -w packages/chain -- --network baseSepolia    # role keys from 
 
 One run deploys `PourLedger`, grants the four roles, replays both devices for that ledger and then sends, as real transactions:
 
+- **Time, two modes:** on local Anvil the scenario moves the chain clock forward (`timeMode: "advanced"`: baseline, pour record,
+  device and acceptance before `pourStart`, each batch 120 s after its last reading, approval after the last batch); on Base
+  Sepolia the clock cannot be moved, so the readings are time-shifted into the past (`timeMode: "backdated"`) and the chain order
+  (`NotBeforePour`) shows the baseline came before the pour.
+
+
 | Pour | Steps |
 |---|---|
 | P-001 | contractor declares the baseline mix, supplier creates the pour, inspector registers the simulated device, contractor accepts, 112 batches, inspector approves strength, supplier claims the saving, the contractor's second claim reverts `AlreadyClaimed` |
-| P-002 | create, register, accept, batch 0; a batch signed by the P-001 device reverts `BadSignature`, a skipped batch reverts `CounterGap`; the other 111 batches. The curing check flags the record, so it gets no approval and no claim |
+| P-002 | poured the next day: create, register, accept, batch 0; when batch 1 closes, a batch 1 signed by the P-001 device reverts `BadSignature`; when batch 2 closes, batch 2 sent with batch 1 withheld reverts `CounterGap`; then the honest batch 1 and the other 110 batches. The curing check flags the record, so it gets no approval and no claim |
 
 Calls meant to fail are simulated first and then sent anyway, so the revert is on chain with its own transaction hash. The
 inspector's `evidenceHash` is the sha256 of `scenario/<network>-evidence-P-001.json`: maturity and the strength range computed by
@@ -183,7 +193,9 @@ Output:
 | `apps/web/public/snapshot/<network>.json` | what the web app needs without an RPC: all ledger events, both pours' on-chain state, their signed batches and readings, block number |
 
 On Anvil the scenario starts a private node on a free local port at a fixed genesis time (2026-10-12 00:00 UTC) with 12 s per
-block, so a re-run writes the same files byte for byte. Anvil's default hardfork has the P-256 precompile, so `appendBatch` costs
+block, and sets the next block's time (`evm_setNextBlockTimestamp`) to fixed offsets from the readings, so a re-run writes the
+same files byte for byte. The log and the snapshot both carry `timeMode` and `timeNote`, and the log has each pour's `pourStart`
+and the timing constants. Anvil's default hardfork has the P-256 precompile, so `appendBatch` costs
 about 73,000 to 90,000 gas there instead of about 310,000 with the Solidity fallback measured in the contract tests.
 
 On Base Sepolia (public RPC `https://sepolia.base.org` or `BASE_SEPOLIA_RPC`) the scenario first checks that every role account can

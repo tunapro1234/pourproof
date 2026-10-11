@@ -176,14 +176,16 @@ describe("committed outputs in data/pours", () => {
   const p2 = load<BatchesFile>("P-002/batches.json");
   const tamper = load<TamperFile>("P-002/tamper.json");
 
-  it("are placed in the past by the replay rule: the last reading is 1 h before the replay block time", () => {
+  // The committed files come from the Anvil scenario, which moves the chain clock forward ("advanced"): each batch is
+  // mined after its last reading (checked against the scenario log in packages/chain). A replay against a chain whose
+  // clock cannot move uses the replay rule instead (tested above).
+  it("record how pourStart was chosen: advanced Anvil clock, P-002 poured after P-001", () => {
     for (const f of [p1, p2]) {
-      expect(f.replayBlockTime).not.toBeNull();
-      expect(f.pourStart).toBe(replayPourStart(f.replayBlockTime!, dataset.series.box1, dataset.series.ambient).pourStart);
-      expect(f.batches.at(-1)!.toTs).toBeLessThanOrEqual(f.replayBlockTime! - REPLAY_MARGIN_S);
+      expect(f.replayBlockTime).toBeNull();
+      expect(f.pourStartRule).toMatch(/^advanced: chain clock moved forward by the scenario; pourStart = /);
       expect(f.message.leaf).toMatch(/^keccak256\(bytes\.concat\(0x00, /);
     }
-    expect(p1.pourStart).toBe(p2.pourStart);
+    expect(p2.pourStart).toBeGreaterThan(p1.pourStart);
   });
 
   it("carry deviceKind 'simulated' and the dataset source, and no secret material", () => {

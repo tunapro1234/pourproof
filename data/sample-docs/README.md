@@ -34,7 +34,7 @@ sample-values.json. Each entry there names its source or says "assumption".
 | Other constituents | 20 to 40 kg CO2e/m3 | 20 to 40 kg CO2e/m3 | assumption: aggregates, water, admixture, batching; not modeled |
 | **GWP-total, A1-A3** | **390 to 411 kg CO2e/m3** | **306 to 326 kg CO2e/m3** | sum of the two rows above, in the whole kg declared on chain |
 | Volume (ticket) | | 8.0 m3 | assumption, `inputs.json` pour P-001 |
-| Ticket times | | load, arrival, discharge | aligned to the replayed pour start in `data/pours/P-001/batches.json` (UTC+3) |
+| Ticket times | | load, arrival, discharge | aligned to the pour start in `data/pours/P-001/batches.json` (UTC+3) |
 
 Source EPD: Akcansa cement EPD covering Type I/II and Type IL cement, NRMCA EPD No. 20243, valid 26 Nov 2024 to
 26 Nov 2029, declared unit 1 metric ton of cement:
