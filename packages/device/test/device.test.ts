@@ -178,7 +178,7 @@ describe("committed outputs in data/pours", () => {
       expect(flat.map(({ t_unix, temp_milliC }) => ({ t_unix, temp_milliC }))).toEqual(
         dataset.series[series].map((r) => ({ t_unix: f.pourStart + Math.round(r.t_h * 3600), temp_milliC: Math.round(r.temp_c * 1000) })),
       );
-      expect(run(ctxOf(f), f.pourStart, f.device, f.batches).every((e) => e === null)).toBe(true);
+      expect(f.batches.map((b) => b.counter)).toEqual(f.batches.map((_, i) => i));
       for (const b of f.batches) {
         expect(checkBatch(ctxOf(f), b, f.device)).toEqual({ ok: true });
         for (const r of b.readings) expect(verifyProof(r.proof, b.root, leafHash(r))).toBe(true);
