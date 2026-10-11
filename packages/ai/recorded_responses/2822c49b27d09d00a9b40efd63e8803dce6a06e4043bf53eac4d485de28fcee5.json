@@ -1,0 +1,85 @@
+{
+ "format": "pourproof.ai-recording/1",
+ "prompt_sha256": "2822c49b27d09d00a9b40efd63e8803dce6a06e4043bf53eac4d485de28fcee5",
+ "task": "extractTicket",
+ "input": "data/sample-docs/delivery-ticket-P-002.png",
+ "input_sha256": "4f2fc44237f796ab29de6f0a070b530bdad16b0c9f708e9e68688706763949fe",
+ "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
+ "recording": "handwritten fixture",
+ "note": "Written by hand from the request input (document or stats) before any API key was available; no model produced it. It follows the response schema of the request named by prompt_sha256. npm run record -w packages/ai replaces it with a live response.",
+ "stop_reason": null,
+ "output": {
+  "ticket_number": {
+   "value": "SRM-P-002",
+   "unit": null,
+   "page": 1,
+   "quote": "No. SRM-P-002"
+  },
+  "supplier": {
+   "value": "Sample Ready-Mix Co.",
+   "unit": null,
+   "page": 1,
+   "quote": "Sample Ready-Mix Co."
+  },
+  "date": {
+   "value": "11.09.2026",
+   "unit": null,
+   "page": 1,
+   "quote": "DATE 11.09.2026"
+  },
+  "truck_plate": {
+   "value": "34 XX 0001",
+   "unit": null,
+   "page": 1,
+   "quote": "TRUCK PLATE 34 XX 0001"
+  },
+  "pour_id": {
+   "value": "P-002",
+   "unit": null,
+   "page": 1,
+   "quote": "POUR ID P-002"
+  },
+  "mix_code": {
+   "value": "MIX-B-IL320",
+   "unit": null,
+   "page": 1,
+   "quote": "MIX CODE MIX-B-IL320"
+  },
+  "cement_type": {
+   "value": "Portland-limestone Type IL",
+   "unit": null,
+   "page": 1,
+   "quote": "CEMENT TYPE Portland-limestone Type IL"
+  },
+  "cement_content": {
+   "value": "320",
+   "unit": "kg/m3",
+   "page": 1,
+   "quote": "CEMENT CONTENT 320 kg/m3"
+  },
+  "volume": {
+   "value": "8.0",
+   "unit": "m3",
+   "page": 1,
+   "quote": "VOLUME 8.0 m3"
+  },
+  "loaded_at": {
+   "value": "10:36",
+   "unit": null,
+   "page": 1,
+   "quote": "LOADED AT PLANT 10:36"
+  },
+  "arrived_at": {
+   "value": "11:16",
+   "unit": null,
+   "page": 1,
+   "quote": "ARRIVED ON SITE 11:16"
+  },
+  "discharge_start": {
+   "value": "11:31",
+   "unit": null,
+   "page": 1,
+   "quote": "DISCHARGE START 11:31"
+  }
+ }
+}

@@ -5,6 +5,13 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run",
+    "record": "node scripts/record.ts"
+  },
+  "main": "src/index.ts",
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.128.0",
+    "@pourproof/core": "0.0.0",
+    "@pourproof/device": "0.0.0"
   }
 }

@@ -1,0 +1,14 @@
+{
+ "format": "pourproof.ai-recording/1",
+ "prompt_sha256": "92a6b57aec81c169ceec7d01ae8e94ce49609f7d4079c5409e0c42571d204092",
+ "task": "explainAnomaly",
+ "input": "explainAnomaly request",
+ "input_sha256": null,
+ "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
+ "recording": "handwritten fixture",
+ "note": "Written by hand from the request input (document or stats) before any API key was available; no model produced it. It follows the response schema of the request named by prompt_sha256. npm run record -w packages/ai replaces it with a live response.",
+ "stop_reason": null,
+ "output": {
+  "text": "In the first 24 hours this record never rose above the air temperature (largest difference 0 degC) and it followed the air with a correlation of 1. Setting concrete normally warms itself during the first day, so the device appears to have measured air rather than concrete, for example because it was not embedded or was pulled out. On site, the inspector could check where the device sits and compare it with a thermometer reading taken in the concrete."
+ }
+}

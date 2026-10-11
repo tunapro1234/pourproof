@@ -16,9 +16,10 @@ and proposes field values with their source, and a person confirms them. The AI 
 Working: the contracts with their tests, the dataset import and the maturity, strength range, CO2 and anomaly calculations
 (`packages/core`), the device message format in TypeScript (checked against the Solidity vectors) and the simulated device
 replay with its tamper cases (`packages/device`), and the end-to-end chain scenario on a local Anvil (`packages/chain`), whose
-recorded state the web app reads, and the sample delivery tickets and EPDs (`data/sample-docs`).
-Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. Not built yet: AI extraction and the web
-passport.
+recorded state the web app reads, the sample delivery tickets and EPDs (`data/sample-docs`), and the AI layer with its
+deterministic checks (`packages/ai`).
+Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. No live Claude call has been made yet, so the
+stored AI responses are handwritten fixtures and say so (see [AI layer](#ai-layer)). Not built yet: the web passport.
 
 ## Data sources
 
@@ -49,8 +50,9 @@ passport.
   On local Anvil the scenario moves the chain clock forward; on Base Sepolia the readings are time-shifted into the past (see
   [Chain scenario](#chain-scenario)).
 - **The parties.** Supplier, contractor, inspector and owner are test accounts on a testnet or local chain.
-- **AI responses.** Without an `ANTHROPIC_API_KEY`, the AI package uses responses recorded from an earlier real call, and the UI
-  says "recorded response".
+- **AI responses.** Without an `ANTHROPIC_API_KEY`, the AI package answers from `packages/ai/recorded_responses/` and every
+  output says "recorded response". Until the first live call those files are handwritten fixtures, labelled
+  "recorded response (handwritten fixture)", with no model named as their author.
 - **The carbon saving.** It is a testnet event that shows the single-claim rule. It is not a credit and has no market value.
 - **Mixes, volumes and tickets.** The two mixes (GWP ranges from a published cement EPD plus labelled assumptions), the 8 m3
   volumes and the fictional "Sample Ready-Mix Co." tickets are sample values in `data/scenario/inputs.json`; each value names its
@@ -203,9 +205,39 @@ pay its share at twice the current gas price. If one cannot, it stops before the
 shortfall; it does not fall back to Anvil. `npm run roles-keygen -w packages/chain` writes a new `roles.json` (mode 600) when none
 exists. Mainnet is not supported.
 
+## AI layer
+
+`packages/ai` asks Claude (`claude-sonnet-5-5`, official `@anthropic-ai/sdk`) to read documents and explain flags. Code checks
+every answer, and a person approves it. The AI never approves anything and never produces a number that goes on chain.
+
+| Function | Input | What code checks |
+|---|---|---|
+| `extractTicket(png)` | delivery ticket photo | each field is `{value, unit, source: {page, quote}}`; the value must sit inside its quote. A photo has no text layer, so a field is at best `needs_review`: a person compares it with the image |
+| `extractEpd(pdf)` | EPD PDF | the quote must appear verbatim (whitespace aside) in the `pdftotext` output of the cited page, and the value inside the quote; otherwise the field is `unverified` and its approve button stays locked |
+| `explainAnomaly(flags, stats)` | flags and stats from the rule-based check in `packages/core` | text only; every number in it must appear in the stats sent to the model, written the same way, or the explanation is rejected and not shown |
+
+Every output carries `model`, `prompt_sha256` and `mode` (`live` or `recorded`) plus the label the UI shows. `prompt_sha256` is
+the sha256 of the canonical request (instructions, output schema, model and the sha256 of the attached file), so it names exactly
+what produced an answer. Requests use structured output (a JSON schema) and the API's server-side refusal fallback; when a
+fallback model answers, `model` names it.
+
+Without `ANTHROPIC_API_KEY` (read only from the environment) the package answers from `recorded_responses/<prompt_sha256>.json`
+and the tests run that way. No live call has been made yet, so the six files there (two tickets, two EPDs, two flag
+explanations) are written by hand from the documents and the computed stats, carry `"recording": "handwritten fixture"`, and
+name no model as their author. With a key, `npm run record -w packages/ai` sends the same requests once and replaces them with
+the real responses. If a document changes, its `prompt_sha256` changes and the tests point out the missing recording.
+
+The two flag explanations use curing records computed by `packages/core`: pour P-002 (its device logged the dataset's air
+temperature, flag `no_hydration_signature`) and a constructed case, P-001's signed readings with batch 3 left out (flag `gap`).
+
+```sh
+npm test -w packages/ai                      # recorded mode, no key needed
+ANTHROPIC_API_KEY=... npm run record -w packages/ai
+```
+
 ## Setup
 
-Requirements: Node 22, npm, git, Foundry.
+Requirements: Node 22, npm, git, Foundry, `pdftotext` and `pdfinfo` (poppler-utils, for the EPD check).
 
 ```sh
 git clone --recurse-submodules <repo-url> pourproof && cd pourproof

@@ -1,0 +1,73 @@
+{
+ "format": "pourproof.ai-recording/1",
+ "prompt_sha256": "316b764a1edc494367b5d58e429a2e2cd4ccaf80c4170c48602ec0de6b6e30f2",
+ "task": "extractEpd",
+ "input": "data/sample-docs/sample-epd-mix-a.pdf",
+ "input_sha256": "19d9579e4bdc95dfd2178b16204db73d16c8409f53431f18a244719ee2df7794",
+ "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
+ "recording": "handwritten fixture",
+ "note": "Written by hand from the request input (document or stats) before any API key was available; no model produced it. It follows the response schema of the request named by prompt_sha256. npm run record -w packages/ai replaces it with a live response.",
+ "stop_reason": null,
+ "output": {
+  "document_number": {
+   "value": "SAMPLE-EPD-A",
+   "unit": null,
+   "page": 1,
+   "quote": "SAMPLE-EPD-A | page 1 of 2"
+  },
+  "declared_by": {
+   "value": "Sample Ready-Mix Co. (fictional company)",
+   "unit": null,
+   "page": 1,
+   "quote": "Sample Ready-Mix Co. (fictional company)"
+  },
+  "mix_code": {
+   "value": "MIX-A-PC380",
+   "unit": null,
+   "page": 1,
+   "quote": "Ready-mixed concrete, mix code MIX-A-PC380"
+  },
+  "cement": {
+   "value": "Portland cement Type I/II (CEM I equivalent)",
+   "unit": null,
+   "page": 1,
+   "quote": "Portland cement Type I/II (CEM I equivalent), 380 kg per m3 [1]"
+  },
+  "cement_content": {
+   "value": "380",
+   "unit": "kg per m3",
+   "page": 1,
+   "quote": "Portland cement Type I/II (CEM I equivalent), 380 kg per m3 [1]"
+  },
+  "declared_unit": {
+   "value": "1 m3 of ready-mixed concrete at the plant gate",
+   "unit": null,
+   "page": 1,
+   "quote": "1 m3 of ready-mixed concrete at the plant gate"
+  },
+  "modules": {
+   "value": "A1-A3",
+   "unit": null,
+   "page": 1,
+   "quote": "GWP-total, modules A1-A3: 390 to 411 kg CO2e per m3 of concrete."
+  },
+  "gwp_total_low": {
+   "value": "390",
+   "unit": "kg CO2e per m3",
+   "page": 1,
+   "quote": "GWP-total, modules A1-A3: 390 to 411 kg CO2e per m3 of concrete."
+  },
+  "gwp_total_high": {
+   "value": "411",
+   "unit": "kg CO2e per m3",
+   "page": 1,
+   "quote": "GWP-total, modules A1-A3: 390 to 411 kg CO2e per m3 of concrete."
+  },
+  "verification": {
+   "value": "Not third-party verified.",
+   "unit": null,
+   "page": 1,
+   "quote": "Sample for software testing. Not third-party verified. Not for procurement or reporting."
+  }
+ }
+}
