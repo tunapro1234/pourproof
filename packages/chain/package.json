@@ -11,6 +11,7 @@
     "roles-keygen": "node src/cli.ts roles-keygen"
   },
   "dependencies": {
+    "@pourproof/ai": "0.0.0",
     "@pourproof/core": "0.0.0",
     "@pourproof/device": "0.0.0",
     "@noble/hashes": "^2.4.0",

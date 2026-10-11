@@ -30,6 +30,7 @@ export function evidencePackage(o: {
   delivered: Mix;
   volume_m3: number;
   strengthReference?: unknown;
+  ai?: unknown;
 }) {
   const { pour, dataset } = o;
   const readings = toReadings(pour.batches.flatMap((b) => b.readings), pour.pourStart);
@@ -78,7 +79,7 @@ export function evidencePackage(o: {
       note: "sample values; on chain the saving is computed again from the declared integers",
     },
     dataset: { doi: dataset.doi, license: dataset.license, attribution: dataset.attribution },
-    ai: null,
+    ai: o.ai ?? null,
   };
   const text = JSON.stringify(pkg, null, 1) + "\n";
   return { pkg, text, sha256: sha256Hex(text) };

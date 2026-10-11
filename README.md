@@ -182,8 +182,9 @@ One run deploys `PourLedger`, grants the four roles, replays both devices for th
 
 Calls meant to fail are simulated first and then sent anyway, so the revert is on chain with its own transaction hash. The
 inspector's `evidenceHash` is the sha256 of `scenario/<network>-evidence-P-001.json`: maturity and the strength range computed by
-`packages/core` from the signed readings, the calibration behind it, the anomaly result and the saving range
-(`sha256sum` the file to check it).
+`packages/core` from the signed readings, the calibration behind it, the anomaly result, the saving range, and the AI outputs
+behind the ticket and EPD fields (model, `prompt_sha256`, mode and how many fields passed each check; read in recorded mode so
+the file is the same on every run). `sha256sum` the file to check it.
 
 Output:
 

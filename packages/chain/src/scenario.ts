@@ -40,6 +40,7 @@ import {
   type TamperFile,
 } from "@pourproof/device";
 import { loadLedgerArtifact } from "./artifacts.ts";
+import { aiEvidence } from "./ai-evidence.ts";
 import { evidencePackage, type EvidenceDataset, type Mix } from "./evidence.ts";
 import { rpc } from "./anvil.ts";
 import { pretty, sha256Hex } from "./json.ts";
@@ -392,6 +393,7 @@ export async function runScenario(o: ScenarioOptions) {
     delivered: mixOf(in1.delivered_mix),
     volume_m3: in1.volume_m3,
     strengthReference: in1.strength_reference,
+    ai: await aiEvidence(in1.ticket_doc, [base.epd_doc, mixOf(in1.delivered_mix).epd_doc]),
   });
   const evidencePath = `scenario/${o.network}-evidence-P-001.json`;
   const tApprove = sent(p1.batches.at(-1)!) + TIMING.approveAfterS;

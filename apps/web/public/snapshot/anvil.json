@@ -3238,11 +3238,11 @@
    "name": "StrengthApproved",
    "args": {
     "pourId": "0x3b6c46c8162514e504b21fdb90d741e88488affd3572d15dce1af16ef1108f32",
-    "evidenceHash": "0xae8be8a7104f9bebf37bb5e451e1e32735a62293b040a2e2dfd4e02dda40339c"
+    "evidenceHash": "0x27c3b7b9b1d8102cede1577b54f6e8731817d64d7c183dd23c945787e36e7d17"
    },
    "block": "234",
    "timestamp": "1791441180",
-   "txHash": "0xa254095dc9050b380bddb758e48db89498e5bf5daad23fc75956dc49148cab76",
+   "txHash": "0x66793ef4ced358d740ad7ef93ad8b53422158c26268b7f59545045f303e2ec2f",
    "logIndex": 0
   },
   {
@@ -10023,7 +10023,7 @@
      "claimant": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
      "ticketHash": "0x5128a93fe32215b2fa6129ce9be08f839d100cab4c256d419b3b14bcca55e0c4",
      "epdHash": "0x38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
-     "evidenceHash": "0xae8be8a7104f9bebf37bb5e451e1e32735a62293b040a2e2dfd4e02dda40339c"
+     "evidenceHash": "0x27c3b7b9b1d8102cede1577b54f6e8731817d64d7c183dd23c945787e36e7d17"
     },
     "baseline": {
      "contractor": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
@@ -10044,7 +10044,7 @@
    },
    "evidence": {
     "path": "scenario/anvil-evidence-P-001.json",
-    "sha256": "0xae8be8a7104f9bebf37bb5e451e1e32735a62293b040a2e2dfd4e02dda40339c",
+    "sha256": "0x27c3b7b9b1d8102cede1577b54f6e8731817d64d7c183dd23c945787e36e7d17",
     "package": {
      "format": "pourproof.evidence/1",
      "pourLabel": "P-001",
@@ -10300,7 +10300,53 @@
       "license": "CC BY 4.0",
       "attribution": "Utepov et al., Complex Maturity Method for Estimating the Concrete Strength Based on Curing Temperature, Ambient Temperature and Relative Humidity, Applied Sciences 11(16):7712, 2021; dataset doi 10.17632/nmr8pjx8d8.1, CC BY 4.0"
      },
-     "ai": null
+     "ai": {
+      "note": "AI proposes field values with their source; code checks them (verified, needs_review, unverified) and the inspector decides. The AI approves nothing.",
+      "outputs": [
+       {
+        "task": "extractTicket",
+        "document": "data/sample-docs/delivery-ticket-P-001.png",
+        "document_sha256": "5128a93fe32215b2fa6129ce9be08f839d100cab4c256d419b3b14bcca55e0c4",
+        "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
+        "prompt_sha256": "c172cf66957a3d692bbe2e42d10621e19705640fe9d93f6ed9791a09ca87f987",
+        "mode": "recorded",
+        "label": "recorded response (handwritten fixture)",
+        "checks": {
+         "verified": 0,
+         "needs_review": 12,
+         "unverified": 0
+        }
+       },
+       {
+        "task": "extractEpd",
+        "document": "data/sample-docs/sample-epd-mix-a.pdf",
+        "document_sha256": "19d9579e4bdc95dfd2178b16204db73d16c8409f53431f18a244719ee2df7794",
+        "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
+        "prompt_sha256": "316b764a1edc494367b5d58e429a2e2cd4ccaf80c4170c48602ec0de6b6e30f2",
+        "mode": "recorded",
+        "label": "recorded response (handwritten fixture)",
+        "checks": {
+         "verified": 10,
+         "needs_review": 0,
+         "unverified": 0
+        }
+       },
+       {
+        "task": "extractEpd",
+        "document": "data/sample-docs/sample-epd-mix-b.pdf",
+        "document_sha256": "38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
+        "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
+        "prompt_sha256": "4f31bcd2fb0b507fd05165f0f1a12057088d162d5e4b53934ce4124a309fdb8e",
+        "mode": "recorded",
+        "label": "recorded response (handwritten fixture)",
+        "checks": {
+         "verified": 10,
+         "needs_review": 0,
+         "unverified": 0
+        }
+       }
+      ]
+     }
     }
    }
   },

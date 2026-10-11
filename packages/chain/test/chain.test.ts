@@ -8,6 +8,7 @@ import { batchDigest, merkleRoot, leafHash, saving, verifyDigest, type Hex } fro
 import { REPO_ROOT, type BatchesFile } from "@pourproof/device";
 import {
   TIMING,
+  aiEvidence,
   TIME_NOTE,
   canonical,
   checkBalances,
@@ -18,6 +19,7 @@ import {
   revertOf,
   rolesKeygen,
   sha256Hex,
+  type AiEvidence,
   type EvidenceDataset,
   type ScenarioInputs,
 } from "../src/index.ts";
@@ -222,7 +224,7 @@ describe("committed Anvil scenario", () => {
     for (const s of log.steps) expect(s.status === "success" || expected.has(s.revert?.name ?? "")).toBe(true);
   });
 
-  it("evidenceHash on chain = sha256 of the evidence file, which packages/core rebuilds from the signed readings", () => {
+  it("evidenceHash on chain = sha256 of the evidence file, which packages/core rebuilds from the signed readings", async () => {
     const text = readFileSync(join(REPO_ROOT, log.evidence.path), "utf8");
     expect(sha256Hex(text)).toBe(log.evidence.sha256);
     expect(snap.pours["P-001"].chain.pour.evidenceHash).toBe(log.evidence.sha256);
@@ -237,8 +239,21 @@ describe("committed Anvil scenario", () => {
       delivered: inputs.mixes[in1.delivered_mix],
       volume_m3: in1.volume_m3,
       strengthReference: in1.strength_reference,
+      ai: await aiEvidence(in1.ticket_doc, [inputs.mixes[in1.baseline_mix!].epd_doc, inputs.mixes[in1.delivered_mix].epd_doc]),
     });
     expect(ev.text).toBe(text);
+    const ai = ev.pkg.ai as AiEvidence;
+    expect(ai.outputs.map((x) => [x.task, x.document])).toEqual([
+      ["extractTicket", in1.ticket_doc],
+      ["extractEpd", inputs.mixes[in1.baseline_mix!].epd_doc],
+      ["extractEpd", inputs.mixes[in1.delivered_mix].epd_doc],
+    ]);
+    for (const x of ai.outputs) {
+      expect(x.prompt_sha256).toMatch(/^[0-9a-f]{64}$/);
+      expect(x.mode).toBe("recorded");
+      expect(x.document_sha256).toBe(docHash(x.document).slice(2));
+      expect(x.checks.unverified).toBe(0);
+    }
     expect(ev.pkg.strength.label).toBe("estimated range, inspector decides");
     for (const c of ev.pkg.strength.checkpoints) expect(c.strength.low_mpa).toBeLessThanOrEqual(c.strength.high_mpa);
   });
