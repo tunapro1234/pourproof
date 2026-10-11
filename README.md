@@ -24,6 +24,12 @@ README will say what works once each part lands.
   relative humidity, ambient temperature, lab strength tests by age and the authors' ASTM C1074 maturity columns.
   The raw `Data.xlsx` is not stored here; a script downloads it and writes a normalized JSON file
   (`data/dataset/mendeley-nmr8pjx8d8.json`) that carries the attribution inside it. We changed the format, not the values.
+  Regenerate it with `npm run fetch-dataset -w packages/core` (the xlsx is cached in `~/.cache/pourproof`, checked by sha256).
+  Paper: Utepov et al., "Complex Maturity Method for Estimating the Concrete Strength Based on Curing Temperature, Ambient
+  Temperature and Relative Humidity", Applied Sciences 11(16):7712, 2021 (CC BY 4.0). What the paper states about the mix
+  (class B25 / grade M350, specimen sizes, sensors) is in `data/dataset/paper-mix.json` with page and quote; it does not give
+  cement type, cement content, water or aggregate, and we do not guess them.
+  The box strengths in the dataset are rebound hammer readings; our strength calibration uses the lab cylinder tests.
 - **EPD values (GWP A1-A3):** published EPD ranges, listed with links in `data/sample-docs/README.md`.
 - **Delivery ticket and EPD documents in the demo:** sample documents made for this project, watermarked
   "SAMPLE - NOT A REAL DOCUMENT". No real company is named.

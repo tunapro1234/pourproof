@@ -1,0 +1,122 @@
+{
+ "paper": "Utepov et al., Complex Maturity Method for Estimating the Concrete Strength Based on Curing Temperature, Ambient Temperature and Relative Humidity, Applied Sciences 11(16):7712, 2021",
+ "doi": "10.3390/app11167712",
+ "license": "CC BY 4.0",
+ "pdf": {
+  "url": "https://mdpi-res.com/d_attachment/applsci/applsci-11-07712/article_deploy/applsci-11-07712.pdf",
+  "pages": 13,
+  "sha256": "87c19fadf2d13f069ac29f7e2e0892367a416fc2e09552cc5d3731b7cda4fcf5"
+ },
+ "method": "Text extracted with pdftotext page by page; quotes are verbatim with whitespace collapsed. Page numbers are PDF pages. https://www.mdpi.com/2076-3417/11/16/7712/pdf returned 403 to curl and to Playwright (Access Denied page); the same PDF was fetched from MDPI's file host (mdpi-res.com).",
+ "found": "partial",
+ "fields": {
+  "concrete_class": {
+   "found": true,
+   "value": "B25",
+   "grade": "M350",
+   "source": {
+    "page": 3,
+    "quote": "a batch of cement-based concrete mixture of class B25 and grade M350 was retrieved from an operating concrete mixture manufacturing plant"
+   }
+  },
+  "design_strength": {
+   "found": true,
+   "value": {
+    "standard_28d_mpa": 32.0,
+    "stripping_threshold_mpa": 22.4
+   },
+   "source": [
+    {
+     "page": 8,
+     "quote": "For the concrete class B25"
+    },
+    {
+     "page": 8,
+     "quote": "construction is 22.4 MPa, which corresponds to 70% of stand"
+    },
+    {
+     "page": 8,
+     "quote": "standard strength of 32.0 MPa on the 28th day"
+    }
+   ]
+  },
+  "specimens": {
+   "found": true,
+   "value": {
+    "cylinders": "17, diameter 15 cm x height 15 cm",
+    "cubes": "15, edge 10 cm",
+    "boxes": "2, 50 x 50 x 50 cm"
+   },
+   "source": {
+    "page": 3,
+    "quote": "17 vertical cylindrical samples with a diameter of 15 cm and a height of 15 cm [21], 15 cubes with an edge size of 10 cm [14] and 2 boxes 50 × 50 × 50 cm in size [22] at once, depicting the real structures on the site"
+   }
+  },
+  "curing_conditions": {
+   "found": true,
+   "value": "all specimens and boxes kept together under the same temperature and humidity",
+   "source": {
+    "page": 3,
+    "quote": "All the samples and boxes were kept at the same temperature and humidity conditions"
+   }
+  },
+  "sensors": {
+   "found": true,
+   "value": "temperature sensors at the center of 2 cylinders and 2 boxes, every 30 min for 28 days; ambient temperature and RH logged alongside",
+   "source": [
+    {
+     "page": 3,
+     "quote": "The temperature sensors were inserted in the middle of the 2 cylindrical samples and 2 boxes and logged every 30 min for 28 days"
+    },
+    {
+     "page": 3,
+     "quote": "two more sensors were recording the ambient temperature and ambient relative humidity at the same time"
+    }
+   ]
+  },
+  "box_strength_method": {
+   "found": true,
+   "value": "rebound hammer (IPS-MG 4.01 sclerometer), not core or compression tests",
+   "source": {
+    "page": 9,
+    "quote": "with IPS-MG 4.01 sclerometer in both boxes and their average"
+   }
+  },
+  "cement_type": {
+   "found": false,
+   "looked": "all 13 pages: searched for cement, CEM, portland, binder"
+  },
+  "cement_content_kg_m3": {
+   "found": false,
+   "looked": "all 13 pages: searched for kg/m, cement content, dosage; no mix proportions table"
+  },
+  "water_or_wc_ratio": {
+   "found": false,
+   "looked": "all 13 pages: searched for water, w/c, water-cement"
+  },
+  "aggregate": {
+   "found": false,
+   "looked": "all 13 pages: searched for aggregate, sand, gravel; the only hit is a literature mention on page 1 (mass concrete with large aggregate)"
+  },
+  "slump_or_admixture": {
+   "found": false,
+   "looked": "all 13 pages: searched for slump, admixture, plasticizer"
+  },
+  "casting_location": {
+   "found": false,
+   "looked": "no casting site is stated. Authors' affiliation is in Nur-Sultan, Kazakhstan (page 1), which says where the authors work, not where the specimens were cast.",
+   "related": {
+    "page": 1,
+    "quote": "Nur-Sultan 010008, Kazakhstan"
+   }
+  },
+  "casting_date_or_season": {
+   "found": false,
+   "looked": "no date or season given; the only dates are submission (Received 1 July 2021, page 1) and reference access dates. The ambient record in the dataset falls from about 24 to about 13 degC over 28 days, which is not stated as a season by the authors."
+  },
+  "maturity_datum": {
+   "found": false,
+   "looked": "page 2 defines T0 as the datum temperature but gives no value. The -10 degC datum used in our tests is derived from the authors' spreadsheet: each step of their maturity column equals (T + 10) x 0.5 h."
+  }
+ }
+}

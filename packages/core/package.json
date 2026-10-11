@@ -5,6 +5,11 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "test": "vitest run --passWithNoTests"
+    "test": "vitest run",
+    "fetch-dataset": "node scripts/fetch-dataset.ts"
+  },
+  "main": "src/index.ts",
+  "devDependencies": {
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   }
 }
