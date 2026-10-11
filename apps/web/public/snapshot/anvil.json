@@ -10348,7 +10348,25 @@
       ]
      }
     }
-   }
+   },
+   "reverted": [
+    {
+     "step": 235,
+     "role": "contractor",
+     "account": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
+     "fn": "claimSaving",
+     "txHash": "0xba12cc8e02576f3c0e75fc537d9ab19588fce483605b6906a5852305257aa285",
+     "block": "236",
+     "timestamp": "1791448380",
+     "revert": {
+      "name": "AlreadyClaimed",
+      "args": [
+       "0x3b6c46c8162514e504b21fdb90d741e88488affd3572d15dce1af16ef1108f32",
+       "0x70997970C51812dc3A010C7d01b50e0d17dc79C8"
+      ]
+     }
+    }
+   ]
   },
   "P-002": {
    "format": "pourproof.batches/1",
@@ -17077,6 +17095,38 @@
      "step": 21,
      "txHash": "0xcc6c7c64bcd158f81015ee99c6f87c1704de47e3495c418cbcc154d873528420",
      "block": "22",
+     "revert": {
+      "name": "CounterGap",
+      "args": [
+       "0x8df115874c1be4d7a0dd96a62c68099365eeb75f56eb8b303bb5790e87aa0eb7",
+       "1",
+       "2"
+      ]
+     }
+    }
+   ],
+   "reverted": [
+    {
+     "step": 19,
+     "role": "relay",
+     "account": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+     "fn": "appendBatch",
+     "txHash": "0xa3ba1016a55f32299d42abfd392f9b8a731259e7e5eba12d765e22a68a6f951f",
+     "block": "20",
+     "timestamp": "1789158780",
+     "revert": {
+      "name": "BadSignature",
+      "args": []
+     }
+    },
+    {
+     "step": 21,
+     "role": "relay",
+     "account": "0x9965507d1a55bcc2695c58ba16fb37d819b0a4dc",
+     "fn": "appendBatch",
+     "txHash": "0xcc6c7c64bcd158f81015ee99c6f87c1704de47e3495c418cbcc154d873528420",
+     "block": "22",
+     "timestamp": "1789180380",
      "revert": {
       "name": "CounterGap",
       "args": [

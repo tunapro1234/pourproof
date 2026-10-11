@@ -17,9 +17,9 @@ Working: the contracts with their tests, the dataset import and the maturity, st
 (`packages/core`), the device message format in TypeScript (checked against the Solidity vectors) and the simulated device
 replay with its tamper cases (`packages/device`), and the end-to-end chain scenario on a local Anvil (`packages/chain`), whose
 recorded state the web app reads, the sample delivery tickets and EPDs (`data/sample-docs`), and the AI layer with its
-deterministic checks (`packages/ai`).
+deterministic checks (`packages/ai`), and the web passport with in-browser verification (`apps/web`).
 Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. No live Claude call has been made yet, so the
-stored AI responses are handwritten fixtures and say so (see [AI layer](#ai-layer)). Not built yet: the web passport.
+stored AI responses are handwritten fixtures and say so (see [AI layer](#ai-layer)).
 
 ## Data sources
 
@@ -193,7 +193,7 @@ Output:
 | `deployments/<network>.json` | ledger address, deploy tx and block, role addresses |
 | `scenario/<network>-log.json` | every step: role, account, function, arguments, tx hash, block, time, gas, decoded events, revert name and arguments |
 | `scenario/<network>-evidence-P-001.json` | the evidence package behind `approveStrength` |
-| `apps/web/public/snapshot/<network>.json` | what the web app needs without an RPC: all ledger events, both pours' on-chain state, their signed batches and readings, block number |
+| `apps/web/public/snapshot/<network>.json` | what the web app needs without an RPC: all ledger events, both pours' on-chain state, their signed batches and readings, refused (reverted) transactions, block number |
 
 On Anvil the scenario starts a private node on a free local port at a fixed genesis time (2026-09-10 05:00 UTC) with 12 s per
 block, and sets the next block's time (`evm_setNextBlockTimestamp`) to fixed offsets from the readings, so a re-run writes the
@@ -235,6 +235,53 @@ temperature, flag `no_hydration_signature`) and a constructed case, P-001's sign
 npm test -w packages/ai                      # recorded mode, no key needed
 ANTHROPIC_API_KEY=... npm run record -w packages/ai
 ```
+
+## Web app
+
+`apps/web` (Vite, plain TypeScript, no framework) shows each pour's passport and lets anyone check it in the browser, without a
+wallet.
+
+| Page | What it shows |
+|---|---|
+| `/` | the pours, their curing record, strength approval and claim status |
+| `/pour/:id` | the passport: delivered and baseline mix, volume, embodied CO2 range and its EPD source, saving range (baseline vs delivered, next to the ledger's `savingRange`), curing curve, maturity and strength ranges ("estimated range, inspector decides"), the rule-based curing flags with the AI explanation, saving claim status ("Already claimed by supplier" and the refused second claim), roles and signatures timeline, document hashes, AI fields with their source quotes, and a QR code for the page URL |
+| `/verify/:id` | every batch: root rebuilt from the readings vs the root on chain, and the P-256 signature |
+
+Verification runs in the browser with `packages/core`. It downloads the published device batches
+(`data/pours/<id>/batches.json`), rebuilds each batch's Merkle root from the readings and compares it with the root in the
+ledger's `BatchAppended` event, checks every reading on its own with its Merkle proof against that root, rebuilds the signed digest
+from on-chain values and checks the P-256 signature against the device key registered on chain. It also hashes the ticket photo,
+the EPDs and the evidence package and compares them with `ticketHash`, `epdHash`, the baseline `mixHash` and `evidenceHash`.
+Maturity and strength are computed again from the verified readings, and nothing is computed from a record that fails.
+
+`?tamper=reading:<i>` adds 5 degC to reading `i` (counted over the whole pour from 0) after the download, as someone editing the
+file would. The page turns red: "Reading <time> does not match the signed root".
+
+Every screen shows the network (local Anvil or Base Sepolia), where the chain state comes from, the device label
+("simulated device · replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)" or "measured by our sensor"), the
+"Testnet demo, no real claim" card, and on AI outputs "live" or "recorded response" (today "recorded response (handwritten
+fixture)"). On Base Sepolia the page says "readings time-shifted into the past from the published dataset".
+
+Two modes:
+
+- **snapshot** (default): chain state from `public/snapshot/<network>.json`, labelled "recorded on-chain state, block N".
+- **live**: `?mode=live` (optionally `&rpc=<url>&ledger=<address>`, or `VITE_POURPROOF_MODE`, `VITE_POURPROOF_RPC` at build
+  time) reads events and state over JSON-RPC with viem. A reverted transaction leaves no log, so live mode asks the node what a
+  second `claimSaving` by the other parties would do (`eth_call`, nothing is sent) and labels it as a simulated call.
+
+The published files the chain commits to are served under `/published/<repo path>` and copied into the build. The AI outputs on
+screen are `public/ai/outputs.json`, written by `npm run export-ai -w apps/web` from `packages/ai` in recorded mode.
+
+```sh
+npm run dev -w apps/web          # http://localhost:5173
+npm test -w apps/web             # verification, tamper, ABI vs forge output, AI file, and a live read of a fresh Anvil run
+npm run build -w apps/web
+npm run e2e -w apps/web          # build + Playwright smoke test (passport green, tamper red, second claim refused)
+```
+
+The live test starts a private Anvil, runs the scenario on it and checks that the live reader sees exactly the snapshot's events
+and state. The e2e test uses Playwright's Chromium; if that exact build is not installed, it uses the newest headless shell in the
+Playwright cache (`PLAYWRIGHT_CHROMIUM_EXECUTABLE` overrides).
 
 ## Setup
 

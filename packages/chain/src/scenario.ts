@@ -501,6 +501,11 @@ export async function runScenario(o: ScenarioOptions) {
       readings: b.readings.map((r) => [r.t_unix, r.temp_milliC]),
     })),
   });
+  // Reverted transactions emit no events, so the snapshot keeps them from the step log (the web shows them as rejected).
+  const reverted = (label: string) =>
+    steps
+      .filter((x) => x.pour === label && x.status === "reverted")
+      .map((x) => ({ step: x.step, role: x.role, account: x.account, fn: x.fn, txHash: x.txHash, block: x.block, timestamp: x.timestamp, revert: x.revert }));
   const snapshot = {
     format: "pourproof.snapshot/1",
     label: `recorded on-chain state, block ${head.number}`,
@@ -516,8 +521,8 @@ export async function runScenario(o: ScenarioOptions) {
     readingsFormat: "[t_unix, temp_milliC]; leaves and proofs are rebuilt with packages/core",
     events,
     pours: {
-      "P-001": { ...compact(p1), inputs: in1, chain: await chainState(p1.pourId), evidence: { path: evidencePath, sha256: ev.sha256, package: ev.pkg } },
-      "P-002": { ...compact(p2), inputs: inputs.pours["P-002"], chain: await chainState(p2.pourId), tamper: tamperResults },
+      "P-001": { ...compact(p1), inputs: in1, chain: await chainState(p1.pourId), evidence: { path: evidencePath, sha256: ev.sha256, package: ev.pkg }, reverted: reverted(p1.pourLabel) },
+      "P-002": { ...compact(p2), inputs: inputs.pours["P-002"], chain: await chainState(p2.pourId), tamper: tamperResults, reverted: reverted(p2.pourLabel) },
     },
     mixes: inputs.mixes,
   };

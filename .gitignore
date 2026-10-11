@@ -10,3 +10,5 @@ dist*/
 coverage/
 .vite/
 __pycache__/
+test-results/
+playwright-report/
