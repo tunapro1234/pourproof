@@ -10,7 +10,7 @@ import {
   saving,
   strengthRange,
   type Reading,
-} from "../src/index.js";
+} from "../src/index.ts";
 
 const ds = JSON.parse(readFileSync(new URL("../../../data/dataset/mendeley-nmr8pjx8d8.json", import.meta.url), "utf8")) as {
   license: string;

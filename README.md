@@ -14,7 +14,8 @@ and proposes field values with their source, and a person confirms them. The AI 
 ## Status
 
 Working: the contracts with their tests, the dataset import and the maturity, strength range, CO2 and anomaly calculations
-(`packages/core`). Not built yet: device replay, AI extraction, the deploy scenario and the web passport.
+(`packages/core`), the device message format in TypeScript (checked against the Solidity vectors) and the simulated device
+replay with its tamper cases (`packages/device`). Not built yet: AI extraction, the deploy scenario and the web passport.
 
 ## Data sources
 
@@ -106,6 +107,36 @@ at 0x100 where the chain has one; we have not measured that path yet.
 | claimSaving | 40,429 | 40,429 |
 
 Contract size: PourLedger 10,866 bytes.
+
+## Simulated device
+
+`packages/core/src/batch.ts` builds the same bytes as `contracts/src/BatchMessage.sol`: reading leaf, batch Merkle root, per-reading
+Merkle proof and the signed digest. `packages/core/test/vectors.test.ts` rebuilds `contracts/test/vectors.json` (written by the
+Solidity side) value for value, and `contracts/test/proofs.json` (written by the TypeScript side) is checked in Solidity with
+OpenZeppelin `MerkleProof.verify`.
+
+`packages/device` is the software device. It does not measure anything; it replays a series from the published dataset.
+
+```sh
+npm run keygen -w packages/device -- P-001     # P-256 key -> $POURPROOF_SECRETS/devices/P-001.json, mode 600
+npm run keygen -w packages/device -- P-002
+npm run replay -w packages/device               # options: --chain-id --ledger --pour-start
+```
+
+`replay` writes:
+
+| File | What it holds |
+|---|---|
+| `data/pours/P-001/batches.json` | Box 1 (50 cm block), 1344 readings in 112 six-hour batches of 12, each batch root signed; per reading its leaf and Merkle proof |
+| `data/pours/P-002/batches.json` | the ambient air series replayed as if it were concrete; signatures are valid, the curing check flags `no_hydration_signature` |
+| `data/pours/P-002/tamper.json` | two attempts against P-002: batch 1 withheld so batch 2 follows batch 0 (`CounterGap`), and batch 1 signed by the P-001 device (`BadSignature`) |
+
+Each reading's time is `pourStart + dataset hour x 3600` and its temperature is in milli-degC. Every file carries
+`deviceKind: "simulated"` and `source: "replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)"`, plus the public key;
+private keys stay in `$POURPROOF_SECRETS`. Chain id and ledger address are part of every signed digest, so the committed files are
+signed for a fresh local Anvil (chain 31337, first deployed contract `0x5FbDB2315678afecb367f032d93F642f64180aa3`); the deploy
+scenario re-runs the replay with the address it actually deploys. `predictAppend` mirrors the ledger's checks offline to say which
+revert to expect; the chain decides.
 
 ## Setup
 

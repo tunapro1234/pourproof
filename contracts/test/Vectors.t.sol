@@ -3,11 +3,13 @@ pragma solidity 0.8.28;
 
 import {Test} from "forge-std/Test.sol";
 import {P256} from "@openzeppelin/contracts/utils/cryptography/P256.sol";
+import {MerkleProof} from "@openzeppelin/contracts/utils/cryptography/MerkleProof.sol";
 import {PourLedger} from "../src/PourLedger.sol";
 import {BatchMessage} from "../src/BatchMessage.sol";
 import {GenVectors} from "../script/GenVectors.s.sol";
 
-/// Checks contracts/test/vectors.json against the Solidity message format and the ledger itself.
+/// Checks contracts/test/vectors.json against the Solidity message format and the ledger itself, and
+/// contracts/test/proofs.json (Merkle proofs built by packages/core) against OpenZeppelin MerkleProof.
 contract VectorsTest is Test {
     string internal json;
     GenVectors internal gen;
@@ -129,5 +131,23 @@ contract VectorsTest is Test {
             );
         }
         assertEq(ledger.nextCounter(pourId), 3);
+    }
+
+    /// Proofs come from the TypeScript side (packages/core/scripts/gen-proofs.ts); roots must match BatchMessage.root.
+    function test_typescriptProofsVerifyWithOpenZeppelin() public view {
+        string memory pj = vm.readFile("test/proofs.json");
+        for (uint256 t = 0; t < 4; t++) {
+            string memory p = string.concat(".trees[", vm.toString(t), "]");
+            bytes32[] memory leaves = vm.parseJsonBytes32Array(pj, string.concat(p, ".leaves"));
+            bytes32 root = vm.parseJsonBytes32(pj, string.concat(p, ".root"));
+            assertEq(BatchMessage.root(leaves), root);
+            if (t < 3) assertEq(root, vm.parseJsonBytes32(json, _b(t, "root")));
+            for (uint256 i = 0; i < leaves.length; i++) {
+                bytes32[] memory proof =
+                    vm.parseJsonBytes32Array(pj, string.concat(p, ".proofs[", vm.toString(i), "]"));
+                assertTrue(MerkleProof.verify(proof, root, leaves[i]));
+                assertFalse(MerkleProof.verify(proof, root, keccak256(abi.encode(leaves[i]))));
+            }
+        }
     }
 }

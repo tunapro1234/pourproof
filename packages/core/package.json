@@ -6,10 +6,15 @@
   "type": "module",
   "scripts": {
     "test": "vitest run",
-    "fetch-dataset": "node scripts/fetch-dataset.ts"
+    "fetch-dataset": "node scripts/fetch-dataset.ts",
+    "gen-proofs": "node scripts/gen-proofs.ts"
   },
   "main": "src/index.ts",
   "devDependencies": {
     "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "dependencies": {
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0"
   }
 }

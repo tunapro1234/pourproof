@@ -5,6 +5,14 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "test": "vitest run --passWithNoTests"
-  }
+    "test": "vitest run",
+    "keygen": "node src/cli.ts keygen",
+    "replay": "node src/cli.ts replay"
+  },
+  "dependencies": {
+    "@pourproof/core": "0.0.0",
+    "@noble/curves": "^2.4.0",
+    "@noble/hashes": "^2.4.0"
+  },
+  "main": "src/index.ts"
 }

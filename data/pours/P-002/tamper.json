@@ -1,0 +1,314 @@
+{
+ "format": "pourproof.tamper/1",
+ "pourLabel": "P-002",
+ "pourId": "0x8df115874c1be4d7a0dd96a62c68099365eeb75f56eb8b303bb5790e87aa0eb7",
+ "deviceKind": "simulated",
+ "source": "replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)",
+ "context": {
+  "chainId": 31337,
+  "ledger": "0x5FbDB2315678afecb367f032d93F642f64180aa3",
+  "note": "chainId and ledger are part of every signed digest; re-run the replay against the deployed ledger before appending elsewhere"
+ },
+ "attempts": [
+  {
+   "id": "skipped_batch",
+   "description": "Batch 1 is withheld and the device's batch 2 is sent right after batch 0.",
+   "afterCounter": 0,
+   "expectRevert": "CounterGap",
+   "signer": {
+    "pourLabel": "P-002",
+    "qx": "0xfe748856eeb522d4c6d65d4662e395e51496833f3620adf9427e517479d34d3f",
+    "qy": "0x666b1d57740a159fae12e2a30c4cc533ea5e806a09d875ad8c3197f2bcb4638e"
+   },
+   "batch": {
+    "counter": 2,
+    "fromTs": 1760045000,
+    "toTs": 1760064800,
+    "readings": [
+     {
+      "t_unix": 1760045000,
+      "temp_milliC": 18800,
+      "leaf": "0x8403a32109885f7fe2165d8f77011cd36dc6c23b0316819f58584be3aadd2e97",
+      "proof": [
+       "0x46fbe3b647e26c0ca6119faaa2733bab19316db397a9263395e3a0bde0c9c2c7",
+       "0x8de77a15efeb933383ae41e3d497299af7bb573a2d10a46b7a2fc9e6423b3a2b",
+       "0x564788d1fca455ed96c424d0729cecd154065f1cf353e5f82d3f33b9d23a431d",
+       "0xbfdffbc98c8ff9527f5b6eaf79ab9902ce8d1a106080a11fd9eaf8cbe7120236"
+      ]
+     },
+     {
+      "t_unix": 1760046800,
+      "temp_milliC": 18200,
+      "leaf": "0x46fbe3b647e26c0ca6119faaa2733bab19316db397a9263395e3a0bde0c9c2c7",
+      "proof": [
+       "0x8403a32109885f7fe2165d8f77011cd36dc6c23b0316819f58584be3aadd2e97",
+       "0x8de77a15efeb933383ae41e3d497299af7bb573a2d10a46b7a2fc9e6423b3a2b",
+       "0x564788d1fca455ed96c424d0729cecd154065f1cf353e5f82d3f33b9d23a431d",
+       "0xbfdffbc98c8ff9527f5b6eaf79ab9902ce8d1a106080a11fd9eaf8cbe7120236"
+      ]
+     },
+     {
+      "t_unix": 1760048600,
+      "temp_milliC": 17600,
+      "leaf": "0x89f8af132d157718985bf90aa88479d0632717c83125537cc0083bba3485742a",
+      "proof": [
+       "0x5634b07826ab00ade7792ba97ec60665c12669c6ea783a33d6a846ebedf81096",
+       "0x9bf3e2eda1c87c1cd23a9a3ecfdeab201577691bfb0f26f637ae038c936ee1fe",
+       "0x564788d1fca455ed96c424d0729cecd154065f1cf353e5f82d3f33b9d23a431d",
+       "0xbfdffbc98c8ff9527f5b6eaf79ab9902ce8d1a106080a11fd9eaf8cbe7120236"
+      ]
+     },
+     {
+      "t_unix": 1760050400,
+      "temp_milliC": 17800,
+      "leaf": "0x5634b07826ab00ade7792ba97ec60665c12669c6ea783a33d6a846ebedf81096",
+      "proof": [
+       "0x89f8af132d157718985bf90aa88479d0632717c83125537cc0083bba3485742a",
+       "0x9bf3e2eda1c87c1cd23a9a3ecfdeab201577691bfb0f26f637ae038c936ee1fe",
+       "0x564788d1fca455ed96c424d0729cecd154065f1cf353e5f82d3f33b9d23a431d",
+       "0xbfdffbc98c8ff9527f5b6eaf79ab9902ce8d1a106080a11fd9eaf8cbe7120236"
+      ]
+     },
+     {
+      "t_unix": 1760052200,
+      "temp_milliC": 17700,
+      "leaf": "0xb3eb7dcd9804c85cfce90bec51df4bb66d5ff94573b16ebd72190710b91e74c3",
+      "proof": [
+       "0xfe6eabdafe087bf2b054a695f27b454255c45b1823c82ece7aa5b2363f9a9b31",
+       "0xeef80afcb2e480fdfa53b3e7b4ecc424a429469eb8613e36299ba51be2193801",
+       "0x5601621150077a4d94e05afcad495668f84534f400c85344eb1d026771c4efe9",
+       "0xbfdffbc98c8ff9527f5b6eaf79ab9902ce8d1a106080a11fd9eaf8cbe7120236"
+      ]
+     },
+     {
+      "t_unix": 1760054000,
+      "temp_milliC": 17700,
+      "leaf": "0xfe6eabdafe087bf2b054a695f27b454255c45b1823c82ece7aa5b2363f9a9b31",
+      "proof": [
+       "0xb3eb7dcd9804c85cfce90bec51df4bb66d5ff94573b16ebd72190710b91e74c3",
+       "0xeef80afcb2e480fdfa53b3e7b4ecc424a429469eb8613e36299ba51be2193801",
+       "0x5601621150077a4d94e05afcad495668f84534f400c85344eb1d026771c4efe9",
+       "0xbfdffbc98c8ff9527f5b6eaf79ab9902ce8d1a106080a11fd9eaf8cbe7120236"
+      ]
+     },
+     {
+      "t_unix": 1760055800,
+      "temp_milliC": 17800,
+      "leaf": "0x7da406263559f7b980bdaf07d5224adb4e81cd64a516cf739b185d4cf2f5edc5",
+      "proof": [
+       "0x46d949b55fb78ba59747fa50a0782038e03a5092ce317de1082035519bf40e1c",
+       "0x308bd6636bbcdea4bdabd49da45472682d77c2e4eab04c3cf8111fc0064e7664",
+       "0x5601621150077a4d94e05afcad495668f84534f400c85344eb1d026771c4efe9",
+       "0xbfdffbc98c8ff9527f5b6eaf79ab9902ce8d1a106080a11fd9eaf8cbe7120236"
+      ]
+     },
+     {
+      "t_unix": 1760057600,
+      "temp_milliC": 17900,
+      "leaf": "0x46d949b55fb78ba59747fa50a0782038e03a5092ce317de1082035519bf40e1c",
+      "proof": [
+       "0x7da406263559f7b980bdaf07d5224adb4e81cd64a516cf739b185d4cf2f5edc5",
+       "0x308bd6636bbcdea4bdabd49da45472682d77c2e4eab04c3cf8111fc0064e7664",
+       "0x5601621150077a4d94e05afcad495668f84534f400c85344eb1d026771c4efe9",
+       "0xbfdffbc98c8ff9527f5b6eaf79ab9902ce8d1a106080a11fd9eaf8cbe7120236"
+      ]
+     },
+     {
+      "t_unix": 1760059400,
+      "temp_milliC": 17700,
+      "leaf": "0x820567be2a128a01650520baaef763bbaee320338ec541fddbd9750717ddc7fc",
+      "proof": [
+       "0x7df706670e54de795c6e00b542c368a32461025768dc6940ccbf0822bf957acf",
+       "0x3073ff173a91cd1b2d3170d51f40f9c6f27d2e24c5e43bcd9c36411f294602fc",
+       "0xcf1ddd6ed127abfd14191d3e55d4b680668c965a20acbd77b36421717e11d64d"
+      ]
+     },
+     {
+      "t_unix": 1760061200,
+      "temp_milliC": 17800,
+      "leaf": "0x7df706670e54de795c6e00b542c368a32461025768dc6940ccbf0822bf957acf",
+      "proof": [
+       "0x820567be2a128a01650520baaef763bbaee320338ec541fddbd9750717ddc7fc",
+       "0x3073ff173a91cd1b2d3170d51f40f9c6f27d2e24c5e43bcd9c36411f294602fc",
+       "0xcf1ddd6ed127abfd14191d3e55d4b680668c965a20acbd77b36421717e11d64d"
+      ]
+     },
+     {
+      "t_unix": 1760063000,
+      "temp_milliC": 18200,
+      "leaf": "0xf491315703c3e766df05d6629cb5807561677f80c136b48694cfb88c5f41dbcc",
+      "proof": [
+       "0x5ff03b6bd6a9ea3d61acd2d1886349524bc905882fbb5848f547608cf165f61b",
+       "0xd1cf8d004d4ef049245ed9d506a0066fda57f5c57fe1118ee2d5954c01c43e48",
+       "0xcf1ddd6ed127abfd14191d3e55d4b680668c965a20acbd77b36421717e11d64d"
+      ]
+     },
+     {
+      "t_unix": 1760064800,
+      "temp_milliC": 18500,
+      "leaf": "0x5ff03b6bd6a9ea3d61acd2d1886349524bc905882fbb5848f547608cf165f61b",
+      "proof": [
+       "0xf491315703c3e766df05d6629cb5807561677f80c136b48694cfb88c5f41dbcc",
+       "0xd1cf8d004d4ef049245ed9d506a0066fda57f5c57fe1118ee2d5954c01c43e48",
+       "0xcf1ddd6ed127abfd14191d3e55d4b680668c965a20acbd77b36421717e11d64d"
+      ]
+     }
+    ],
+    "root": "0x3c7c6f5e3b72aab02ec5d0a775cad12172fa5409c814e2864fa348d0814601d0",
+    "digest": "0x4b23d7e9534439e0567fd9044951c6e619c5541c48bd3a90b2efd9df5548ff94",
+    "r": "0xdb1b8f40c728d762ceaeafef8d02d84245e88cbcd818000e5aa0596835cfe3bf",
+    "s": "0x1275ea4dbefaa41816ae12d21b79bbcb2b83cacba306048086a9b6a7ffbcd426"
+   }
+  },
+  {
+   "id": "other_device_key",
+   "description": "Batch 1 with the same readings, signed by the P-001 device instead of the device registered for P-002.",
+   "afterCounter": 0,
+   "expectRevert": "BadSignature",
+   "signer": {
+    "pourLabel": "P-001",
+    "qx": "0x128b020195059e928b938f2aa600089fab3a6fd0cd6305638898de72be3d9dea",
+    "qy": "0x35e9a7f3fd2f7564cc2e87cdc0445af52b88125a78630177885521ae8f762e3f"
+   },
+   "batch": {
+    "counter": 1,
+    "fromTs": 1760023400,
+    "toTs": 1760043200,
+    "readings": [
+     {
+      "t_unix": 1760023400,
+      "temp_milliC": 21200,
+      "leaf": "0x40cdfc7acf5561ebdd374daad805217ed86c2ac9e5cdb2b42470b5633ff1cdf0",
+      "proof": [
+       "0xb47f0cc523138d49fd14eb16e1e167a273fc565cba12c4c5f2f9cd7f76699251",
+       "0x0d1521dd78ef5d319a7feb8f5a4a388bf8054f3897deb50daab3f8fbee17880a",
+       "0xd0bcde07374b7d8f9b81c6cdfd8d91442f2458c4410a963de2845b7452e4cda6",
+       "0x5bb6bc98688befb6259cfdbb81fb7ec815127df0ce6ada38f8325f4d4d41fcf2"
+      ]
+     },
+     {
+      "t_unix": 1760025200,
+      "temp_milliC": 21000,
+      "leaf": "0xb47f0cc523138d49fd14eb16e1e167a273fc565cba12c4c5f2f9cd7f76699251",
+      "proof": [
+       "0x40cdfc7acf5561ebdd374daad805217ed86c2ac9e5cdb2b42470b5633ff1cdf0",
+       "0x0d1521dd78ef5d319a7feb8f5a4a388bf8054f3897deb50daab3f8fbee17880a",
+       "0xd0bcde07374b7d8f9b81c6cdfd8d91442f2458c4410a963de2845b7452e4cda6",
+       "0x5bb6bc98688befb6259cfdbb81fb7ec815127df0ce6ada38f8325f4d4d41fcf2"
+      ]
+     },
+     {
+      "t_unix": 1760027000,
+      "temp_milliC": 20900,
+      "leaf": "0xaf770fa70db6a82d503d4633beb97b257871938300764d8cd6cf6a6246378d69",
+      "proof": [
+       "0xb5d50a1cbb06f354dcbec4c2209e910246a21a50a2c86e87275ef8dd9f998df4",
+       "0x7182e384ab08f7595ad2a8740892b5119683a6ac045005767b2eed0f8d98a2f7",
+       "0xd0bcde07374b7d8f9b81c6cdfd8d91442f2458c4410a963de2845b7452e4cda6",
+       "0x5bb6bc98688befb6259cfdbb81fb7ec815127df0ce6ada38f8325f4d4d41fcf2"
+      ]
+     },
+     {
+      "t_unix": 1760028800,
+      "temp_milliC": 20600,
+      "leaf": "0xb5d50a1cbb06f354dcbec4c2209e910246a21a50a2c86e87275ef8dd9f998df4",
+      "proof": [
+       "0xaf770fa70db6a82d503d4633beb97b257871938300764d8cd6cf6a6246378d69",
+       "0x7182e384ab08f7595ad2a8740892b5119683a6ac045005767b2eed0f8d98a2f7",
+       "0xd0bcde07374b7d8f9b81c6cdfd8d91442f2458c4410a963de2845b7452e4cda6",
+       "0x5bb6bc98688befb6259cfdbb81fb7ec815127df0ce6ada38f8325f4d4d41fcf2"
+      ]
+     },
+     {
+      "t_unix": 1760030600,
+      "temp_milliC": 20500,
+      "leaf": "0xddcce2d4d028e8e4631490c2336acd63674fe78bebf4e0576b5c335ce278f2b2",
+      "proof": [
+       "0x46390766d639e154778bd4d9f4ba94a0e20d487db7ab2490fa0d18d27cd5007a",
+       "0x1dda04bbcfade96db475916fba1b399784d737b55ee6750af34a859cfef52dc8",
+       "0x9f60821c0e239c5887c5380ff76307ab40a811aca0b299075a2a9abebaafd040",
+       "0x5bb6bc98688befb6259cfdbb81fb7ec815127df0ce6ada38f8325f4d4d41fcf2"
+      ]
+     },
+     {
+      "t_unix": 1760032400,
+      "temp_milliC": 20200,
+      "leaf": "0x46390766d639e154778bd4d9f4ba94a0e20d487db7ab2490fa0d18d27cd5007a",
+      "proof": [
+       "0xddcce2d4d028e8e4631490c2336acd63674fe78bebf4e0576b5c335ce278f2b2",
+       "0x1dda04bbcfade96db475916fba1b399784d737b55ee6750af34a859cfef52dc8",
+       "0x9f60821c0e239c5887c5380ff76307ab40a811aca0b299075a2a9abebaafd040",
+       "0x5bb6bc98688befb6259cfdbb81fb7ec815127df0ce6ada38f8325f4d4d41fcf2"
+      ]
+     },
+     {
+      "t_unix": 1760034200,
+      "temp_milliC": 19800,
+      "leaf": "0x56381b1b3b973cff95e031d751423f4a0272adf61334679e5bb85f3e804ca06b",
+      "proof": [
+       "0x54d379f3d10e8e70d9bb6ad9696d649775825530a61d74816fc0f83b2c17feb5",
+       "0x349f5341cf088605e4747f6ddd982c13fc2b02de71d9018e790a3ac69015fcd2",
+       "0x9f60821c0e239c5887c5380ff76307ab40a811aca0b299075a2a9abebaafd040",
+       "0x5bb6bc98688befb6259cfdbb81fb7ec815127df0ce6ada38f8325f4d4d41fcf2"
+      ]
+     },
+     {
+      "t_unix": 1760036000,
+      "temp_milliC": 19700,
+      "leaf": "0x54d379f3d10e8e70d9bb6ad9696d649775825530a61d74816fc0f83b2c17feb5",
+      "proof": [
+       "0x56381b1b3b973cff95e031d751423f4a0272adf61334679e5bb85f3e804ca06b",
+       "0x349f5341cf088605e4747f6ddd982c13fc2b02de71d9018e790a3ac69015fcd2",
+       "0x9f60821c0e239c5887c5380ff76307ab40a811aca0b299075a2a9abebaafd040",
+       "0x5bb6bc98688befb6259cfdbb81fb7ec815127df0ce6ada38f8325f4d4d41fcf2"
+      ]
+     },
+     {
+      "t_unix": 1760037800,
+      "temp_milliC": 19100,
+      "leaf": "0x0b30bc2f42d29b34eccafb44649bf473ed966f0759c5ae54af6a6e9e435f0787",
+      "proof": [
+       "0x7ed24ccf9c3eab998a942c8a1005e26d61d863ed7b4353ec23482d0d612b6008",
+       "0x730339f58c5e78543f5883605012c36a705cccd8ef87c6506d526014df8db932",
+       "0x8bd855079780cff52a27e3cc3ceee53049206e2b65b6035d2cce87fe2a7acb8d"
+      ]
+     },
+     {
+      "t_unix": 1760039600,
+      "temp_milliC": 18500,
+      "leaf": "0x7ed24ccf9c3eab998a942c8a1005e26d61d863ed7b4353ec23482d0d612b6008",
+      "proof": [
+       "0x0b30bc2f42d29b34eccafb44649bf473ed966f0759c5ae54af6a6e9e435f0787",
+       "0x730339f58c5e78543f5883605012c36a705cccd8ef87c6506d526014df8db932",
+       "0x8bd855079780cff52a27e3cc3ceee53049206e2b65b6035d2cce87fe2a7acb8d"
+      ]
+     },
+     {
+      "t_unix": 1760041400,
+      "temp_milliC": 19000,
+      "leaf": "0x427ca1dfd56b2687ac5fca4a6aa99efe41aac80efb810e47575f1e7baebbc13a",
+      "proof": [
+       "0x171d9f2990b28bccd1411dd1d5c8fe11ba61dd71ab405fc397229211132ae6de",
+       "0xaeb21e6ce3318eafd2ab725bd7843da0c7c77888b3a6e98a44ad485e7b61338d",
+       "0x8bd855079780cff52a27e3cc3ceee53049206e2b65b6035d2cce87fe2a7acb8d"
+      ]
+     },
+     {
+      "t_unix": 1760043200,
+      "temp_milliC": 19000,
+      "leaf": "0x171d9f2990b28bccd1411dd1d5c8fe11ba61dd71ab405fc397229211132ae6de",
+      "proof": [
+       "0x427ca1dfd56b2687ac5fca4a6aa99efe41aac80efb810e47575f1e7baebbc13a",
+       "0xaeb21e6ce3318eafd2ab725bd7843da0c7c77888b3a6e98a44ad485e7b61338d",
+       "0x8bd855079780cff52a27e3cc3ceee53049206e2b65b6035d2cce87fe2a7acb8d"
+      ]
+     }
+    ],
+    "root": "0xa5b7dda86a6acb01bdf949d6bfa6b8632ecd809f9ee0f56d93eefdb716e6f9d6",
+    "digest": "0x47b1d1c806c668929e40a6bf8d777a582107346b8428455ab2b4a8ac3deaf709",
+    "r": "0x9525d20da033861415d83108ceb58e5c6775889ac61cd520fce2fb43c64c2c6f",
+    "s": "0x2590f84fd10d31442ad9d8d92a1d1aa5e349db9211fd5135bcb00611b1a69148"
+   }
+  }
+ ]
+}
