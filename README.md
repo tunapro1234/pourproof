@@ -37,7 +37,8 @@ passport.
 - **EPD values (GWP A1-A3):** the cement share comes from a published cement EPD (NRMCA EPD No. 20243); cement content and
   the other constituents are labelled assumptions. Every value and its link: `data/sample-docs/README.md`.
 - **Delivery ticket and EPD documents in the demo:** sample documents made for this project (`data/sample-docs`), watermarked
-  "SAMPLE - NOT A REAL DOCUMENT", from a fictional "Sample Ready-Mix Co.". No real company is named on them.
+  "SAMPLE - NOT A REAL DOCUMENT", from a fictional "Sample Ready-Mix Co.". No real company is named on them. On chain,
+  `ticketHash`, `epdHash` and the baseline's `mixHash` are the sha256 of these files.
 
 ## What is simulated
 

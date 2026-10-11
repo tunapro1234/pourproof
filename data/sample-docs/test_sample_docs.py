@@ -82,6 +82,10 @@ class SampleDocs(unittest.TestCase):
             with self.subTest(pour=label):
                 self.assertEqual(pour["ticket"]["mix_code"], m.EPD_META[pour["delivered_mix"]]["code"])
                 self.assertIn("fictional", pour["ticket"]["supplier"])
+                self.assertEqual(pour["ticket_doc"], f"data/sample-docs/delivery-ticket-{label}.png")
+        for key, meta in m.EPD_META.items():
+            self.assertEqual(self.inputs["mixes"][key]["mix_code"], meta["code"])
+            self.assertEqual(self.inputs["mixes"][key]["epd_doc"], f"data/sample-docs/{meta['file']}")
 
 if __name__ == "__main__":
     unittest.main()

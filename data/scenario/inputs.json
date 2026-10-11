@@ -1,6 +1,6 @@
 {
  "format": "pourproof.scenario-inputs/1",
- "note": "Sample values for the testnet demo, not a real pour. Each value carries its source or an 'assumption' label. ticketHash and epdHash on chain are sha256 of the canonical JSON of the 'ticket' and 'mix' records below until the sample documents (data/sample-docs) replace them.",
+ "note": "Sample values for the testnet demo, not a real pour. Each value carries its source or an 'assumption' label. On chain, ticketHash is the sha256 of the pour's ticket_doc, epdHash the sha256 of the delivered mix's epd_doc, and the baselineMixHash the sha256 of the baseline mix's epd_doc (sample documents in data/sample-docs, built from these values).",
  "sources": {
   "akcansa_nrmca_epd": {
    "url": "https://www.nrmca.org/wp-content/uploads/NRMCAEPD_20243_HM-Cement-Akcansa-Import-Cement.pdf",
@@ -38,7 +38,9 @@
    "gwp_total_kg_per_m3": [
     390,
     411
-   ]
+   ],
+   "mix_code": "MIX-A-PC380",
+   "epd_doc": "data/sample-docs/sample-epd-mix-a.pdf"
   },
   "mix_b_actual": {
    "label": "Mix B (delivered low-clinker mix)",
@@ -58,7 +60,9 @@
    "gwp_total_kg_per_m3": [
     306,
     326
-   ]
+   ],
+   "mix_code": "MIX-B-IL320",
+   "epd_doc": "data/sample-docs/sample-epd-mix-b.pdf"
   }
  },
  "pours": {
@@ -80,7 +84,8 @@
     "paper_70pct_threshold_mpa": 22.4,
     "source": "paper p.8 (kod/pourproof/data/dataset/paper-mix.json)",
     "ui_rule": "show as reference only; inspector decides"
-   }
+   },
+   "ticket_doc": "data/sample-docs/delivery-ticket-P-001.png"
   },
   "P-002": {
    "story": "Tamper case: the device logged open air (the dataset's ambient series) instead of concrete. Signatures are valid; the curing check flags it, so no strength approval and no claim.",
@@ -94,7 +99,8 @@
     "mix_code": "MIX-B-IL320",
     "delivered": "sample time"
    },
-   "device_series": "ambient"
+   "device_series": "ambient",
+   "ticket_doc": "data/sample-docs/delivery-ticket-P-002.png"
   }
  }
 }

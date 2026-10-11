@@ -215,7 +215,9 @@
    "gwp_total_kg_per_m3": [
     390,
     411
-   ]
+   ],
+   "mix_code": "MIX-A-PC380",
+   "epd_doc": "data/sample-docs/sample-epd-mix-a.pdf"
   },
   "delivered": {
    "label": "Mix B (delivered low-clinker mix)",
@@ -235,7 +237,9 @@
    "gwp_total_kg_per_m3": [
     306,
     326
-   ]
+   ],
+   "mix_code": "MIX-B-IL320",
+   "epd_doc": "data/sample-docs/sample-epd-mix-b.pdf"
   },
   "volume_m3": 8,
   "saving_kg": {

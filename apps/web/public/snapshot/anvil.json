@@ -75,13 +75,13 @@
    "args": {
     "pourId": "0x3b6c46c8162514e504b21fdb90d741e88488affd3572d15dce1af16ef1108f32",
     "contractor": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
-    "baselineMixHash": "0x7e0c8dbacf877e6724e89dc86b6339b210d2174484c2bf700c88d03710d9562f",
+    "baselineMixHash": "0x19d9579e4bdc95dfd2178b16204db73d16c8409f53431f18a244719ee2df7794",
     "baselineGwpLow": 390,
     "baselineGwpHigh": 411
    },
    "block": "6",
    "timestamp": "1791763272",
-   "txHash": "0xbf652b7cc2ddcbc371365371a8fc7ddc381a55f675efad87c3598b2aab6901a9",
+   "txHash": "0x336e44e597c73b4cd5ae3f40bfa70f99ad24dd96c1999d7d4cf557a5dbea8a3b",
    "logIndex": 0
   },
   {
@@ -89,8 +89,8 @@
    "args": {
     "pourId": "0x3b6c46c8162514e504b21fdb90d741e88488affd3572d15dce1af16ef1108f32",
     "supplier": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    "ticketHash": "0x08eacf28587b6a1f98efa66aba765c0fe4f2bc8587964da94202db666b480d95",
-    "epdHash": "0x9f4f29ee4a10e1f6b8657e76546265b6aaba9d7a03b3cd2eb165574ff5c0e6e5",
+    "ticketHash": "0x5d3894f7c059d98dc341d4336b0170f8eab81182dd3734885b9eea79e3721792",
+    "epdHash": "0x38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
     "volumeDm3": 8000,
     "gwpLow": 306,
     "gwpHigh": 326,
@@ -98,7 +98,7 @@
    },
    "block": "7",
    "timestamp": "1791763284",
-   "txHash": "0x7d78aceff3aabc13917919ab0afd7cf084117bab20fab57cc1837ffa5bb1f4e0",
+   "txHash": "0x7f49fd5e5625e9128df6055957ae02fdee5a1fa2cb281f4d6d690d3f08f48939",
    "logIndex": 0
   },
   {
@@ -1697,11 +1697,11 @@
    "name": "StrengthApproved",
    "args": {
     "pourId": "0x3b6c46c8162514e504b21fdb90d741e88488affd3572d15dce1af16ef1108f32",
-    "evidenceHash": "0x7902c5300270b8b7dce7c268c0e332409d90597103e491f39637f216fa178ad5"
+    "evidenceHash": "0x7dedc1ba9f01b804dd904e80b0f2af35817650cc88b520622dc70fd6ea0f46fb"
    },
    "block": "122",
    "timestamp": "1791764664",
-   "txHash": "0x119acbf3fac26b4a63ea4b84a352da4bb79f81f72adbc29d60a9a8b8d927dd54",
+   "txHash": "0xe4381f021a124d510ba4233c19103c767b76ccd9744f92fb25e95e2a78d990dd",
    "logIndex": 0
   },
   {
@@ -1723,8 +1723,8 @@
    "args": {
     "pourId": "0x8df115874c1be4d7a0dd96a62c68099365eeb75f56eb8b303bb5790e87aa0eb7",
     "supplier": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-    "ticketHash": "0xd01021305fc351643fd52a1b0fe3d8c7e02a57db45ef42a6b363ced8cfd52124",
-    "epdHash": "0x9f4f29ee4a10e1f6b8657e76546265b6aaba9d7a03b3cd2eb165574ff5c0e6e5",
+    "ticketHash": "0x8e2cce4c0076c7a710fda50a30821c5766ec467924374666b98edb9831e3ffbb",
+    "epdHash": "0x38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
     "volumeDm3": 8000,
     "gwpLow": 306,
     "gwpHigh": 326,
@@ -1732,7 +1732,7 @@
    },
    "block": "125",
    "timestamp": "1791764700",
-   "txHash": "0x16b352a3ff349e1c30768c76e5e05d60285f625914acf6b67ec1e0f771de56a6",
+   "txHash": "0x4be5dab43654545c52a072589591810d14e32ac0cc13c32655d3f0a9052a4aca",
    "logIndex": 0
   },
   {
@@ -10005,7 +10005,8 @@
      "paper_70pct_threshold_mpa": 22.4,
      "source": "paper p.8 (kod/pourproof/data/dataset/paper-mix.json)",
      "ui_rule": "show as reference only; inspector decides"
-    }
+    },
+    "ticket_doc": "data/sample-docs/delivery-ticket-P-001.png"
    },
    "chain": {
     "pour": {
@@ -10018,15 +10019,15 @@
      "nextCounter": "112",
      "strengthApproved": true,
      "claimant": "0x70997970C51812dc3A010C7d01b50e0d17dc79C8",
-     "ticketHash": "0x08eacf28587b6a1f98efa66aba765c0fe4f2bc8587964da94202db666b480d95",
-     "epdHash": "0x9f4f29ee4a10e1f6b8657e76546265b6aaba9d7a03b3cd2eb165574ff5c0e6e5",
-     "evidenceHash": "0x7902c5300270b8b7dce7c268c0e332409d90597103e491f39637f216fa178ad5"
+     "ticketHash": "0x5d3894f7c059d98dc341d4336b0170f8eab81182dd3734885b9eea79e3721792",
+     "epdHash": "0x38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
+     "evidenceHash": "0x7dedc1ba9f01b804dd904e80b0f2af35817650cc88b520622dc70fd6ea0f46fb"
     },
     "baseline": {
      "contractor": "0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC",
      "gwpLow": 390,
      "gwpHigh": 411,
-     "mixHash": "0x7e0c8dbacf877e6724e89dc86b6339b210d2174484c2bf700c88d03710d9562f"
+     "mixHash": "0x19d9579e4bdc95dfd2178b16204db73d16c8409f53431f18a244719ee2df7794"
     },
     "device": {
      "qx": "0x128b020195059e928b938f2aa600089fab3a6fd0cd6305638898de72be3d9dea",
@@ -10041,7 +10042,7 @@
    },
    "evidence": {
     "path": "scenario/anvil-evidence-P-001.json",
-    "sha256": "0x7902c5300270b8b7dce7c268c0e332409d90597103e491f39637f216fa178ad5",
+    "sha256": "0x7dedc1ba9f01b804dd904e80b0f2af35817650cc88b520622dc70fd6ea0f46fb",
     "package": {
      "format": "pourproof.evidence/1",
      "pourLabel": "P-001",
@@ -10259,7 +10260,9 @@
        "gwp_total_kg_per_m3": [
         390,
         411
-       ]
+       ],
+       "mix_code": "MIX-A-PC380",
+       "epd_doc": "data/sample-docs/sample-epd-mix-a.pdf"
       },
       "delivered": {
        "label": "Mix B (delivered low-clinker mix)",
@@ -10279,7 +10282,9 @@
        "gwp_total_kg_per_m3": [
         306,
         326
-       ]
+       ],
+       "mix_code": "MIX-B-IL320",
+       "epd_doc": "data/sample-docs/sample-epd-mix-b.pdf"
       },
       "volume_m3": 8,
       "saving_kg": {
@@ -16969,7 +16974,8 @@
      "mix_code": "MIX-B-IL320",
      "delivered": "sample time"
     },
-    "device_series": "ambient"
+    "device_series": "ambient",
+    "ticket_doc": "data/sample-docs/delivery-ticket-P-002.png"
    },
    "chain": {
     "pour": {
@@ -16982,8 +16988,8 @@
      "nextCounter": "112",
      "strengthApproved": false,
      "claimant": "0x0000000000000000000000000000000000000000",
-     "ticketHash": "0xd01021305fc351643fd52a1b0fe3d8c7e02a57db45ef42a6b363ced8cfd52124",
-     "epdHash": "0x9f4f29ee4a10e1f6b8657e76546265b6aaba9d7a03b3cd2eb165574ff5c0e6e5",
+     "ticketHash": "0x8e2cce4c0076c7a710fda50a30821c5766ec467924374666b98edb9831e3ffbb",
+     "epdHash": "0x38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
      "evidenceHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
     },
     "baseline": {
@@ -17054,7 +17060,9 @@
    "gwp_total_kg_per_m3": [
     390,
     411
-   ]
+   ],
+   "mix_code": "MIX-A-PC380",
+   "epd_doc": "data/sample-docs/sample-epd-mix-a.pdf"
   },
   "mix_b_actual": {
    "label": "Mix B (delivered low-clinker mix)",
@@ -17074,7 +17082,9 @@
    "gwp_total_kg_per_m3": [
     306,
     326
-   ]
+   ],
+   "mix_code": "MIX-B-IL320",
+   "epd_doc": "data/sample-docs/sample-epd-mix-b.pdf"
   }
  }
 }

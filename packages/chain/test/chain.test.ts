@@ -6,7 +6,7 @@ import { BaseError, ContractFunctionRevertedError, encodeErrorResult, type Abi, 
 import { privateKeyToAccount } from "viem/accounts";
 import { batchDigest, merkleRoot, leafHash, saving, verifyDigest, type Hex } from "@pourproof/core";
 import { REPO_ROOT, type BatchesFile } from "@pourproof/device";
-import { canonical, checkBalances, evidencePackage, loadLedgerArtifact, loadRoleKeys, revertOf, rolesKeygen, sha256Hex, type EvidenceDataset, type ScenarioInputs } from "../src/index.ts";
+import { canonical, checkBalances, docHash, evidencePackage, loadLedgerArtifact, loadRoleKeys, revertOf, rolesKeygen, sha256Hex, type EvidenceDataset, type ScenarioInputs } from "../src/index.ts";
 
 const read = <T>(p: string) => JSON.parse(readFileSync(join(REPO_ROOT, p), "utf8")) as T;
 const tmp = mkdtempSync(join(tmpdir(), "pourproof-chain-test-"));
@@ -149,6 +149,18 @@ describe("committed Anvil scenario", () => {
     expect(ev.text).toBe(text);
     expect(ev.pkg.strength.label).toBe("estimated range, inspector decides");
     for (const c of ev.pkg.strength.checkpoints) expect(c.strength.low_mpa).toBeLessThanOrEqual(c.strength.high_mpa);
+  });
+
+  it("ticketHash, epdHash and baselineMixHash on chain are the sha256 of the committed sample documents", () => {
+    const inputs = read<ScenarioInputs>("data/scenario/inputs.json");
+    for (const label of ["P-001", "P-002"]) {
+      const p = inputs.pours[label];
+      expect(snap.pours[label].chain.pour.ticketHash).toBe(docHash(p.ticket_doc));
+      expect(snap.pours[label].chain.pour.epdHash).toBe(docHash(inputs.mixes[p.delivered_mix].epd_doc));
+    }
+    const base = inputs.mixes[inputs.pours["P-001"].baseline_mix!];
+    expect((snap.pours["P-001"].chain as unknown as { baseline: { mixHash: Hex } }).baseline.mixHash).toBe(docHash(base.epd_doc));
+    expect(docHash(base.epd_doc)).not.toBe(docHash(inputs.mixes.mix_b_actual.epd_doc));
   });
 
   it("on-chain saving range matches the core calculation on the declared integers", () => {

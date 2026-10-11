@@ -36,7 +36,7 @@ import {
 } from "@pourproof/device";
 import { loadLedgerArtifact } from "./artifacts.ts";
 import { evidencePackage, type EvidenceDataset, type Mix } from "./evidence.ts";
-import { canonical, pretty, sha256Hex } from "./json.ts";
+import { pretty, sha256Hex } from "./json.ts";
 import type { RoleName } from "./roles.ts";
 
 export type NetworkName = "anvil" | "baseSepolia";
@@ -57,9 +57,14 @@ export const GAS_BUDGET: Record<RoleName, bigint> = {
 };
 
 export interface ScenarioInputs {
-  mixes: Record<string, Mix>;
-  pours: Record<string, { baseline_mix: string | null; delivered_mix: string; volume_m3: number; ticket: unknown; device_series: string; strength_reference?: unknown }>;
+  /** epd_doc: the mix's sample EPD (PDF), relative to the repo root; its sha256 goes on chain */
+  mixes: Record<string, Mix & { epd_doc: string }>;
+  /** ticket_doc: the pour's delivery ticket photo (PNG); its sha256 goes on chain as ticketHash */
+  pours: Record<string, { baseline_mix: string | null; delivered_mix: string; volume_m3: number; ticket: unknown; ticket_doc: string; device_series: string; strength_reference?: unknown }>;
 }
+
+/** sha256 of a committed document (data/sample-docs), the hash the parties put on chain. */
+export const docHash = (repoPath: string): Hex => sha256Hex(readFileSync(join(REPO_ROOT, repoPath)));
 
 export interface ScenarioOptions {
   network: NetworkName;
@@ -257,7 +262,6 @@ export async function runScenario(o: ScenarioOptions) {
   const t2 = tamperAttempts(p2, k1);
   say(`replayed devices for ${NETWORK_LABEL[o.network]}: pourStart ${pourStart} (${rule})`);
 
-  const recordHash = (x: unknown) => sha256Hex(canonical(x));
   const mixOf = (name: string) => {
     const m = inputs.mixes[name];
     if (!m) throw new Error(`mix ${name} not in inputs`);
@@ -273,9 +277,9 @@ export async function runScenario(o: ScenarioOptions) {
     return send(
       "supplier",
       "createPour",
-      [f.pourId, bytes32OfHex(recordHash(p.ticket)), bytes32OfHex(recordHash(mix)), Math.round(p.volume_m3 * 1000), lo, hi, BigInt(f.pourStart)],
+      [f.pourId, bytes32OfHex(docHash(p.ticket_doc)), bytes32OfHex(docHash(mix.epd_doc)), Math.round(p.volume_m3 * 1000), lo, hi, BigInt(f.pourStart)],
       label,
-      { note: "ticketHash / epdHash = sha256 of the canonical JSON of the sample ticket and mix records (data/scenario/inputs.json)" },
+      { note: `ticketHash = sha256 of ${p.ticket_doc}, epdHash = sha256 of ${mix.epd_doc}` },
     );
   };
   const register = (f: BatchesFile, k: DeviceKey) => send("inspector", "registerDevice", [f.pourId, k.qx, k.qy, f.deviceKind], f.pourLabel);
@@ -283,8 +287,8 @@ export async function runScenario(o: ScenarioOptions) {
   // ---- P-001: honest low-clinker pour
   const in1 = inputs.pours["P-001"];
   const base = mixOf(in1.baseline_mix!);
-  await send("contractor", "declareBaseline", [p1.pourId, bytes32OfHex(recordHash(base)), base.gwp_total_kg_per_m3[0], base.gwp_total_kg_per_m3[1]], "P-001", {
-    note: "declared before the pour exists on chain",
+  await send("contractor", "declareBaseline", [p1.pourId, bytes32OfHex(docHash(base.epd_doc)), base.gwp_total_kg_per_m3[0], base.gwp_total_kg_per_m3[1]], "P-001", {
+    note: `declared before the pour exists on chain; baselineMixHash = sha256 of ${base.epd_doc}`,
   });
   await createPour("P-001", p1);
   await register(p1, k1);
