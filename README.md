@@ -16,8 +16,9 @@ and proposes field values with their source, and a person confirms them. The AI 
 Working: the contracts with their tests, the dataset import and the maturity, strength range, CO2 and anomaly calculations
 (`packages/core`), the device message format in TypeScript (checked against the Solidity vectors) and the simulated device
 replay with its tamper cases (`packages/device`), and the end-to-end chain scenario on a local Anvil (`packages/chain`), whose
-recorded state the web app reads. Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. Not built yet:
-AI extraction and the web passport.
+recorded state the web app reads, and the sample delivery tickets and EPDs (`data/sample-docs`).
+Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. Not built yet: AI extraction and the web
+passport.
 
 ## Data sources
 
@@ -33,9 +34,10 @@ AI extraction and the web passport.
   (class B25 / grade M350, specimen sizes, sensors) is in `data/dataset/paper-mix.json` with page and quote; it does not give
   cement type, cement content, water or aggregate, and we do not guess them.
   The box strengths in the dataset are rebound hammer readings; our strength calibration uses the lab cylinder tests.
-- **EPD values (GWP A1-A3):** published EPD ranges, listed with links in `data/sample-docs/README.md`.
-- **Delivery ticket and EPD documents in the demo:** sample documents made for this project, watermarked
-  "SAMPLE - NOT A REAL DOCUMENT". No real company is named.
+- **EPD values (GWP A1-A3):** the cement share comes from a published cement EPD (NRMCA EPD No. 20243); cement content and
+  the other constituents are labelled assumptions. Every value and its link: `data/sample-docs/README.md`.
+- **Delivery ticket and EPD documents in the demo:** sample documents made for this project (`data/sample-docs`), watermarked
+  "SAMPLE - NOT A REAL DOCUMENT", from a fictional "Sample Ready-Mix Co.". No real company is named on them.
 
 ## What is simulated
 
@@ -60,6 +62,10 @@ packages/device   simulated device: dataset replay, P-256 batch signing
 packages/ai       Claude extraction for tickets and EPDs, anomaly explanation
 packages/chain    deploy and demo scenario scripts (viem)
 apps/web          pour passport and in-browser verification
+data/dataset      normalized Mendeley dataset (CC BY 4.0) and what the paper states about its mix
+data/scenario     sample values for the two demo pours, each with a source or an "assumption" label
+data/sample-docs  sample delivery tickets (PNG) and EPDs (PDF), with the script that builds them
+data/pours        the simulated device's signed batches per pour
 ```
 
 ## Contracts

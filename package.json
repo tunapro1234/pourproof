@@ -17,7 +17,9 @@
   "scripts": {
     "test": "npm test --workspaces --if-present",
     "test:contracts": "forge test --root contracts",
-    "build:contracts": "forge build --root contracts"
+    "build:contracts": "forge build --root contracts",
+    "sample-docs": "python3 data/sample-docs/make_sample_docs.py",
+    "test:sample-docs": "python3 -m unittest discover -s data/sample-docs -p 'test_*.py'"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
