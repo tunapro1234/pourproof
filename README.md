@@ -13,8 +13,8 @@ and proposes field values with their source, and a person confirms them. The AI 
 
 ## Status
 
-Repository skeleton. Contracts, device replay, calculations, AI extraction and the web passport are not built yet; this
-README will say what works once each part lands.
+Working: the contracts with their tests, the dataset import and the maturity, strength range, CO2 and anomaly calculations
+(`packages/core`). Not built yet: device replay, AI extraction, the deploy scenario and the web passport.
 
 ## Data sources
 
@@ -55,6 +55,57 @@ packages/ai       Claude extraction for tickets and EPDs, anomaly explanation
 packages/chain    deploy and demo scenario scripts (viem)
 apps/web          pour passport and in-browser verification
 ```
+
+## Contracts
+
+`contracts/src/PourLedger.sol` (inherits `DeviceRegistry.sol`) keeps one record per pour. Roles use OpenZeppelin AccessControl:
+`SUPPLIER`, `CONTRACTOR`, `INSPECTOR`, `OWNER`.
+
+| Step | Who | Rule |
+|---|---|---|
+| `declareBaseline` | contractor | the mix it would have used (GWP range, kg CO2e/m3); only before the pour starts and before any batch (`NotBeforePour`); once |
+| `createPour` | supplier | ticket hash, EPD hash, volume (dm3), GWP range of the delivered mix, pour start |
+| `acceptPour` | contractor | if a baseline exists, only the contractor who declared it |
+| `registerDevice` / `replaceDevice` | inspector only | one P-256 key per pour, kind `esp32` or `simulated` (carried in the event) |
+| `appendBatch` | anyone (relay) | device signature checked on chain (`BadSignature`), counter must be the next one (`CounterGap`) |
+| `approveStrength` | inspector | evidence hash (maturity calculation, break tests if any); needs at least one batch |
+| `claimSaving` | the pour's supplier, its contractor, or an owner | needs approval (`StrengthNotApproved`); once per pour, every later call reverts `AlreadyClaimed(pourId, firstClaimant)` |
+
+Saving on chain: low = (baselineLow - gwpHigh) x m3, high = (baselineHigh - gwpLow) x m3, in kg CO2e, rounded down, negative ends
+shown as 0 (volume is stored in dm3, 1 m3 = 1000 dm3). The off-chain `saving()` in `packages/core` keeps a negative low end
+so the screen can show when the ranges overlap.
+
+Device message (same in Solidity and TypeScript):
+
+- reading leaf: `keccak256(abi.encode(uint64 t_unix, int32 temp_milliC))`
+- batch root: OpenZeppelin `MerkleProof`-compatible tree (pairs hashed sorted), leaves in reading order, an odd last node is carried up
+- signed digest: `sha256(abi.encode("POURPROOF_BATCH_V1", chainId, ledger, pourId, counter, fromTs, toTs, root))`, P-256, low-s.
+  The chain id, ledger address and pour id are inside the digest, so a batch signed for one pour or chain is rejected on another.
+
+`contracts/test/vectors.json` holds 3 signed batches built from the first 36 Box 1 readings of the dataset. They are signed with a
+**test-only key**: sha256 of a public seed string that is written in the file, so anyone can rebuild it. It is never used for
+real data. The signatures are deterministic (RFC 6979); `forge script script/GenVectors.s.sol` (run inside `contracts/`)
+regenerates the file and `test/Vectors.t.sol` fails if it is out of date.
+
+Tests: unit tests for every revert above, fuzz tests (random wrong keys cannot append, saving range is ordered and exact) and
+handler-based invariants (`invariant_atMostOneSavingClaimedPerPour`, `invariant_counterMonotone`, `invariant_wrongKeyNeverAppends`).
+
+Gas (`forge test --gas-report`, happy path and device tests, solc 0.8.28, optimizer 200 runs). The local test EVM has no P-256
+precompile, so `appendBatch` here pays for OpenZeppelin's Solidity P-256 verification. `P256.verify` uses the RIP-7212 precompile
+at 0x100 where the chain has one; we have not measured that path yet.
+
+| Function | Median gas | Max gas |
+|---|---:|---:|
+| declareBaseline | 74,787 | 74,787 |
+| createPour | 118,594 | 118,594 |
+| acceptPour | 35,587 | 35,587 |
+| registerDevice | 98,756 | 98,756 |
+| replaceDevice | 45,721 | 45,721 |
+| appendBatch (12 readings, Solidity P-256) | 312,753 | 332,279 |
+| approveStrength | 55,940 | 55,940 |
+| claimSaving | 40,429 | 40,429 |
+
+Contract size: PourLedger 10,866 bytes.
 
 ## Setup
 
