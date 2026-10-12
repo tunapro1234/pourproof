@@ -1,14 +1,14 @@
 {
  "format": "pourproof.web-ai/1",
- "note": "Written by npm run export-ai -w apps/web from packages/ai in recorded mode. Each output says whether it is a live answer or a recorded response; a handwritten fixture says so too.",
+ "note": "Written by npm run export-ai -w apps/web from packages/ai in recorded mode. Each output says whether it is a live answer or a recorded response, and which model wrote it.",
  "pours": {
   "P-001": {
    "ticket": {
-    "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
-    "prompt_sha256": "cc2fa543d59ebb2b361328c935649963cba0748ebcfac32354bd206347c5de7e",
+    "model": "claude-haiku-5-5",
+    "prompt_sha256": "6661267bfe568b2ad2b66fbdb940c17213c02aa6ad136a176adc427c5043c7ce",
     "mode": "recorded",
-    "recording": "handwritten fixture",
-    "label": "recorded response (handwritten fixture)",
+    "recording": "live call",
+    "label": "recorded response",
     "task": "extractTicket",
     "document": "data/sample-docs/delivery-ticket-P-001.png",
     "document_sha256": "5128a93fe32215b2fa6129ce9be08f839d100cab4c256d419b3b14bcca55e0c4",
@@ -38,7 +38,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "DATE 10.09.2026"
+       "quote": "10.09.2026"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -48,7 +48,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "TRUCK PLATE 34 XX 0000"
+       "quote": "34 XX 0000"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -58,7 +58,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "POUR ID P-001"
+       "quote": "P-001"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -68,7 +68,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "MIX CODE MIX-B-IL320"
+       "quote": "MIX-B-IL320"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -78,7 +78,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "CEMENT TYPE Portland-limestone Type IL"
+       "quote": "Portland-limestone Type IL"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -88,7 +88,7 @@
       "unit": "kg/m3",
       "source": {
        "page": 1,
-       "quote": "CEMENT CONTENT 320 kg/m3"
+       "quote": "320 kg/m3"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -98,7 +98,7 @@
       "unit": "m3",
       "source": {
        "page": 1,
-       "quote": "VOLUME 8.0 m3"
+       "quote": "8.0 m3"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -108,7 +108,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "LOADED AT PLANT 07:36"
+       "quote": "07:36"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -118,7 +118,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "ARRIVED ON SITE 08:16"
+       "quote": "08:16"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -128,7 +128,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "DISCHARGE START 08:31"
+       "quote": "08:31"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -144,11 +144,11 @@
     {
      "role": "baseline",
      "mix": "mix_a_baseline",
-     "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
-     "prompt_sha256": "874d71d66d379c431580f68e8485c86f697e02dbf553a7bf40fa0c3c31812a65",
+     "model": "claude-haiku-5-5",
+     "prompt_sha256": "0f36f12c744f1bed8de389bc55f74a089ffff6f911bfaa54f3b522af2819f7e5",
      "mode": "recorded",
-     "recording": "handwritten fixture",
-     "label": "recorded response (handwritten fixture)",
+     "recording": "live call",
+     "label": "recorded response",
      "task": "extractEpd",
      "document": "data/sample-docs/sample-epd-mix-a.pdf",
      "document_sha256": "19d9579e4bdc95dfd2178b16204db73d16c8409f53431f18a244719ee2df7794",
@@ -158,17 +158,17 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "SAMPLE-EPD-A | page 1 of 2"
+        "quote": "Document number SAMPLE-EPD-A (sample, not registered with any program operator)"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "declared_by": {
-       "value": "Sample Ready-Mix Co. (fictional company)",
+       "value": "Sample Ready-Mix Co.",
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Sample Ready-Mix Co. (fictional company)"
+        "quote": "Declared by Sample Ready-Mix Co. (fictional company)"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -178,7 +178,7 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Ready-mixed concrete, mix code MIX-A-PC380"
+        "quote": "Product Ready-mixed concrete, mix code MIX-A-PC380"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -188,7 +188,7 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Portland cement Type I/II (CEM I equivalent), 380 kg per m3 [1]"
+        "quote": "Cement Portland cement Type I/II (CEM I equivalent), 380 kg per m3 [1]"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -198,7 +198,7 @@
        "unit": "kg per m3",
        "source": {
         "page": 1,
-        "quote": "Portland cement Type I/II (CEM I equivalent), 380 kg per m3 [1]"
+        "quote": "Cement Portland cement Type I/II (CEM I equivalent), 380 kg per m3 [1]"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -208,7 +208,7 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "1 m3 of ready-mixed concrete at the plant gate"
+        "quote": "Declared unit 1 m3 of ready-mixed concrete at the plant gate"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -218,37 +218,37 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "GWP-total, modules A1-A3: 390 to 411 kg CO2e per m3 of concrete."
+        "quote": "Ready-mixed concrete, declared unit 1 m3, cradle to gate (modules A1-A3)"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "gwp_total_low": {
        "value": "390",
-       "unit": "kg CO2e per m3",
+       "unit": "kg CO2e/m3",
        "source": {
         "page": 1,
-        "quote": "GWP-total, modules A1-A3: 390 to 411 kg CO2e per m3 of concrete."
+        "quote": "GWP-total (A1-A3) 390 to 411 kg CO2e/m3 [3]"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "gwp_total_high": {
        "value": "411",
-       "unit": "kg CO2e per m3",
+       "unit": "kg CO2e/m3",
        "source": {
         "page": 1,
-        "quote": "GWP-total, modules A1-A3: 390 to 411 kg CO2e per m3 of concrete."
+        "quote": "GWP-total (A1-A3) 390 to 411 kg CO2e/m3 [3]"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "verification": {
-       "value": "Not third-party verified.",
+       "value": "Sample for software testing. Not third-party verified. Not for procurement or reporting.",
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Sample for software testing. Not third-party verified. Not for procurement or reporting."
+        "quote": "Status Sample for software testing. Not third-party verified. Not for procurement or reporting."
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -263,11 +263,11 @@
     {
      "role": "delivered",
      "mix": "mix_b_actual",
-     "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
-     "prompt_sha256": "bbfdad7b3c4cfe1b2648920ba28ba0040269f82fc8d266d8d7bb6fe09efc0405",
+     "model": "claude-haiku-5-5",
+     "prompt_sha256": "cca0a9044b70fa8a6a6d56ab1dd972021f3f17f78a7d4d79858a8bdbe86d47e6",
      "mode": "recorded",
-     "recording": "handwritten fixture",
-     "label": "recorded response (handwritten fixture)",
+     "recording": "live call",
+     "label": "recorded response",
      "task": "extractEpd",
      "document": "data/sample-docs/sample-epd-mix-b.pdf",
      "document_sha256": "38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
@@ -277,17 +277,17 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "SAMPLE-EPD-B | page 1 of 2"
+        "quote": "Document number SAMPLE-EPD-B (sample, not registered with any program operator)"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "declared_by": {
-       "value": "Sample Ready-Mix Co. (fictional company)",
+       "value": "Sample Ready-Mix Co.",
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Sample Ready-Mix Co. (fictional company)"
+        "quote": "Declared by Sample Ready-Mix Co. (fictional company)"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -297,7 +297,7 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Ready-mixed concrete, mix code MIX-B-IL320"
+        "quote": "Product Ready-mixed concrete, mix code MIX-B-IL320"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -307,7 +307,7 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Portland-limestone cement Type IL, 320 kg per m3 [1]"
+        "quote": "Cement Portland-limestone cement Type IL, 320 kg per m3 [1]"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -317,17 +317,17 @@
        "unit": "kg per m3",
        "source": {
         "page": 1,
-        "quote": "Portland-limestone cement Type IL, 320 kg per m3 [1]"
+        "quote": "Cement Portland-limestone cement Type IL, 320 kg per m3 [1]"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "declared_unit": {
-       "value": "1 m3 of ready-mixed concrete at the plant gate",
-       "unit": null,
+       "value": "1",
+       "unit": "m3",
        "source": {
         "page": 1,
-        "quote": "1 m3 of ready-mixed concrete at the plant gate"
+        "quote": "Declared unit 1 m3 of ready-mixed concrete at the plant gate"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -337,37 +337,37 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "GWP-total, modules A1-A3: 306 to 326 kg CO2e per m3 of concrete."
+        "quote": "Ready-mixed concrete, declared unit 1 m3, cradle to gate (modules A1-A3)"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "gwp_total_low": {
        "value": "306",
-       "unit": "kg CO2e per m3",
+       "unit": "kg CO2e/m3",
        "source": {
         "page": 1,
-        "quote": "GWP-total, modules A1-A3: 306 to 326 kg CO2e per m3 of concrete."
+        "quote": "GWP-total (A1-A3) 306 to 326 kg CO2e/m3"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "gwp_total_high": {
        "value": "326",
-       "unit": "kg CO2e per m3",
+       "unit": "kg CO2e/m3",
        "source": {
         "page": 1,
-        "quote": "GWP-total, modules A1-A3: 306 to 326 kg CO2e per m3 of concrete."
+        "quote": "GWP-total (A1-A3) 306 to 326 kg CO2e/m3"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "verification": {
-       "value": "Not third-party verified.",
+       "value": "Sample for software testing. Not third-party verified. Not for procurement or reporting.",
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Sample for software testing. Not third-party verified. Not for procurement or reporting."
+        "quote": "Status Sample for software testing. Not third-party verified. Not for procurement or reporting."
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -384,11 +384,11 @@
   },
   "P-002": {
    "ticket": {
-    "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
-    "prompt_sha256": "9c9c157027718633d5d4986338187e92eec5980ad813ef386baece023bd23798",
+    "model": "claude-haiku-5-5",
+    "prompt_sha256": "2f8759003cea8b8e9d0a122dd68f709b635247cc1f9788421a8df0461dd95891",
     "mode": "recorded",
-    "recording": "handwritten fixture",
-    "label": "recorded response (handwritten fixture)",
+    "recording": "live call",
+    "label": "recorded response",
     "task": "extractTicket",
     "document": "data/sample-docs/delivery-ticket-P-002.png",
     "document_sha256": "4f2fc44237f796ab29de6f0a070b530bdad16b0c9f708e9e68688706763949fe",
@@ -418,7 +418,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "DATE 11.09.2026"
+       "quote": "11.09.2026"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -428,7 +428,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "TRUCK PLATE 34 XX 0001"
+       "quote": "34 XX 0001"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -438,7 +438,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "POUR ID P-002"
+       "quote": "P-002"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -448,7 +448,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "MIX CODE MIX-B-IL320"
+       "quote": "MIX-B-IL320"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -458,7 +458,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "CEMENT TYPE Portland-limestone Type IL"
+       "quote": "Portland-limestone Type IL"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -468,7 +468,7 @@
       "unit": "kg/m3",
       "source": {
        "page": 1,
-       "quote": "CEMENT CONTENT 320 kg/m3"
+       "quote": "320 kg/m3"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -478,7 +478,7 @@
       "unit": "m3",
       "source": {
        "page": 1,
-       "quote": "VOLUME 8.0 m3"
+       "quote": "8.0 m3"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -488,7 +488,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "LOADED AT PLANT 10:36"
+       "quote": "10:36"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -498,7 +498,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "ARRIVED ON SITE 11:16"
+       "quote": "11:16"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -508,7 +508,7 @@
       "unit": null,
       "source": {
        "page": 1,
-       "quote": "DISCHARGE START 11:31"
+       "quote": "11:31"
       },
       "status": "needs_review",
       "reason": "read from a photo; no text layer to check against, compare with the image"
@@ -524,11 +524,11 @@
     {
      "role": "delivered",
      "mix": "mix_b_actual",
-     "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
-     "prompt_sha256": "bbfdad7b3c4cfe1b2648920ba28ba0040269f82fc8d266d8d7bb6fe09efc0405",
+     "model": "claude-haiku-5-5",
+     "prompt_sha256": "cca0a9044b70fa8a6a6d56ab1dd972021f3f17f78a7d4d79858a8bdbe86d47e6",
      "mode": "recorded",
-     "recording": "handwritten fixture",
-     "label": "recorded response (handwritten fixture)",
+     "recording": "live call",
+     "label": "recorded response",
      "task": "extractEpd",
      "document": "data/sample-docs/sample-epd-mix-b.pdf",
      "document_sha256": "38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
@@ -538,17 +538,17 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "SAMPLE-EPD-B | page 1 of 2"
+        "quote": "Document number SAMPLE-EPD-B (sample, not registered with any program operator)"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "declared_by": {
-       "value": "Sample Ready-Mix Co. (fictional company)",
+       "value": "Sample Ready-Mix Co.",
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Sample Ready-Mix Co. (fictional company)"
+        "quote": "Declared by Sample Ready-Mix Co. (fictional company)"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -558,7 +558,7 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Ready-mixed concrete, mix code MIX-B-IL320"
+        "quote": "Product Ready-mixed concrete, mix code MIX-B-IL320"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -568,7 +568,7 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Portland-limestone cement Type IL, 320 kg per m3 [1]"
+        "quote": "Cement Portland-limestone cement Type IL, 320 kg per m3 [1]"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -578,17 +578,17 @@
        "unit": "kg per m3",
        "source": {
         "page": 1,
-        "quote": "Portland-limestone cement Type IL, 320 kg per m3 [1]"
+        "quote": "Cement Portland-limestone cement Type IL, 320 kg per m3 [1]"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "declared_unit": {
-       "value": "1 m3 of ready-mixed concrete at the plant gate",
-       "unit": null,
+       "value": "1",
+       "unit": "m3",
        "source": {
         "page": 1,
-        "quote": "1 m3 of ready-mixed concrete at the plant gate"
+        "quote": "Declared unit 1 m3 of ready-mixed concrete at the plant gate"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -598,37 +598,37 @@
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "GWP-total, modules A1-A3: 306 to 326 kg CO2e per m3 of concrete."
+        "quote": "Ready-mixed concrete, declared unit 1 m3, cradle to gate (modules A1-A3)"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "gwp_total_low": {
        "value": "306",
-       "unit": "kg CO2e per m3",
+       "unit": "kg CO2e/m3",
        "source": {
         "page": 1,
-        "quote": "GWP-total, modules A1-A3: 306 to 326 kg CO2e per m3 of concrete."
+        "quote": "GWP-total (A1-A3) 306 to 326 kg CO2e/m3"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "gwp_total_high": {
        "value": "326",
-       "unit": "kg CO2e per m3",
+       "unit": "kg CO2e/m3",
        "source": {
         "page": 1,
-        "quote": "GWP-total, modules A1-A3: 306 to 326 kg CO2e per m3 of concrete."
+        "quote": "GWP-total (A1-A3) 306 to 326 kg CO2e/m3"
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
       },
       "verification": {
-       "value": "Not third-party verified.",
+       "value": "Sample for software testing. Not third-party verified. Not for procurement or reporting.",
        "unit": null,
        "source": {
         "page": 1,
-        "quote": "Sample for software testing. Not third-party verified. Not for procurement or reporting."
+        "quote": "Status Sample for software testing. Not third-party verified. Not for procurement or reporting."
        },
        "status": "verified",
        "reason": "quote found verbatim on page 1, value inside the quote"
@@ -643,11 +643,11 @@
    ],
    "explanation": {
     "case_label": "pour P-002 (tamper case): flags from data/pours/P-002/batches.json",
-    "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
+    "model": "claude-haiku-5-5",
     "prompt_sha256": "d33262a922575b7554f30c84582f066518a469c0a50069cd3775a00157b2fb5d",
     "mode": "recorded",
-    "recording": "handwritten fixture",
-    "label": "recorded response (handwritten fixture)",
+    "recording": "live call",
+    "label": "recorded response",
     "task": "explainAnomaly",
     "flags": [
      "no_hydration_signature"
@@ -663,7 +663,7 @@
      "gaps": []
     },
     "status": "accepted",
-    "text": "In the first 24 hours this record never rose above the air temperature (largest difference 0 degC) and it followed the air with a correlation of 1. Setting concrete normally warms itself during the first day, so the device appears to have measured air rather than concrete, for example because it was not embedded or was pulled out. On site, the inspector could check where the device sits and compare it with a thermometer reading taken in the concrete.",
+    "text": "The no_hydration_signature flag was raised because, within the first 24 hours, the concrete never rose clearly above the air temperature: the peak over ambient is 0 and the correlation with ambient is 1, so the concrete appears to have followed the air closely rather than heating itself as setting concrete normally does. On site, the inspector could check whether the logger was placed in the concrete rather than in the air or shaded near the formwork, confirm the sensor was embedded and not exposed, and compare the logged values against a thermometer reading taken inside the fresh concrete at the same time.",
     "unknown_numbers": [],
     "rejected_text": null
    }

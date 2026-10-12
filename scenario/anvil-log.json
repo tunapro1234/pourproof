@@ -32,7 +32,7 @@
  "evidence": {
   "pour": "P-001",
   "path": "scenario/anvil-evidence-P-001.json",
-  "sha256": "0xef9ecbd1d3ef33e4b8f58b35db7fd6171aa9b4b63efdab139bae9bfad92a9f8b"
+  "sha256": "0xfd9473c7fd7687d55eb624c975259cfa78c7d18c33c0590f7d03489f588a1c05"
  },
  "tamper": [
   {
@@ -7929,9 +7929,9 @@
    "fn": "approveStrength",
    "args": [
     "0x3b6c46c8162514e504b21fdb90d741e88488affd3572d15dce1af16ef1108f32",
-    "0xef9ecbd1d3ef33e4b8f58b35db7fd6171aa9b4b63efdab139bae9bfad92a9f8b"
+    "0xfd9473c7fd7687d55eb624c975259cfa78c7d18c33c0590f7d03489f588a1c05"
    ],
-   "txHash": "0xe36fc702c7ddb1a0e3f05be8da81344d98b36cd93c6e0f10e836d2c28ef27459",
+   "txHash": "0x46e7c08df632967c34de7fe24ca99eb810a36541d5ebbb2872fae00280324601",
    "block": "234",
    "timestamp": "1791441180",
    "gasUsed": "55940",
@@ -7941,7 +7941,7 @@
      "name": "StrengthApproved",
      "args": {
       "pourId": "0x3b6c46c8162514e504b21fdb90d741e88488affd3572d15dce1af16ef1108f32",
-      "evidenceHash": "0xef9ecbd1d3ef33e4b8f58b35db7fd6171aa9b4b63efdab139bae9bfad92a9f8b"
+      "evidenceHash": "0xfd9473c7fd7687d55eb624c975259cfa78c7d18c33c0590f7d03489f588a1c05"
      }
     }
    ],

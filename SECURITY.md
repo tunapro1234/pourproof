@@ -172,5 +172,5 @@ model.
 - **Strength calibration** comes from one published dataset (class B25 concrete), not from the delivered mix. Mix A and
   Mix B values and both EPDs are labelled samples.
 - **AI fields from photos** stay `needs_review` until a person confirms them; the stored AI responses in this repository
-  are handwritten fixtures until a live call is recorded, and are labelled so.
+  were recorded once from live `claude-haiku-5-5` calls and are replayed, labelled "recorded response".
 - **No audit, no mainnet.** Local Anvil and Base Sepolia only.

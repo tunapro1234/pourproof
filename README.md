@@ -19,8 +19,9 @@ replay with its tamper cases (`packages/device`), and the end-to-end chain scena
 recorded state the web app reads, the sample delivery tickets and EPDs (`data/sample-docs`), and the AI layer with its
 deterministic checks (`packages/ai`), the web passport with in-browser verification (`apps/web`) and its static snapshot build, and the
 passport export as a W3C Verifiable Credential 2.0 signed by the inspector ([Security](#security)).
-Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. No live Claude call has been made yet, so the
-stored AI responses are handwritten fixtures and say so (see [AI layer](#ai-layer)).
+Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. The demo's AI answers were taken once from
+`claude-haiku-5-5` in live calls and stored; the app replays them without a key and labels them "recorded response" (see
+[AI layer](#ai-layer)).
 
 ## Data sources
 
@@ -52,8 +53,8 @@ stored AI responses are handwritten fixtures and say so (see [AI layer](#ai-laye
   [Chain scenario](#chain-scenario)).
 - **The parties.** Supplier, contractor, inspector and owner are test accounts on a testnet or local chain.
 - **AI responses.** Without an `ANTHROPIC_API_KEY`, the AI package answers from `packages/ai/recorded_responses/` and every
-  output says "recorded response". Until the first live call those files are handwritten fixtures, labelled
-  "recorded response (handwritten fixture)", with no model named as their author.
+  output says "recorded response". Those files are real `claude-haiku-5-5` answers, recorded once from live calls with
+  `npm run record -w packages/ai`; the demo makes no live call.
 - **The carbon saving.** It is a testnet event that shows the single-claim rule. It is not a credit and has no market value.
 - **Mixes, volumes and tickets.** The two mixes (GWP ranges from a published cement EPD plus labelled assumptions), the 8 m3
   volumes and the fictional "Sample Ready-Mix Co." tickets are sample values in `data/scenario/inputs.json`; each value names its
@@ -248,10 +249,10 @@ request (instructions, then the output schema) comes first and ends in a prompt 
 the cache. Haiku 5.5 has no server-side refusal fallback: a declined request stops with `AiRefused` and no other model answers.
 
 Without `ANTHROPIC_API_KEY` (read only from the environment) the package answers from `recorded_responses/<prompt_sha256>.json`
-and the tests run that way. No live call has been made yet, so the six files there (two tickets, two EPDs, two flag
-explanations) are written by hand from the documents and the computed stats, carry `"recording": "handwritten fixture"`, and
-name no model as their author. With a key, `npm run record -w packages/ai` sends the same requests once and replaces them with
-the real responses. If a document changes, its `prompt_sha256` changes and the tests point out the missing recording.
+and the tests run that way. The six files there (two tickets, two EPDs, two flag explanations) are what `claude-haiku-5-5`
+returned when `npm run record -w packages/ai` sent the demo's requests once with a key; each carries `"recording": "live call"`
+and the model that answered. The record script runs under the spending cap below (8 USD a month, 1 USD a day) and stops when
+it is reached. If a document changes, its `prompt_sha256` changes and the tests point out the missing recording.
 
 The two flag explanations use curing records computed by `packages/core`: pour P-002 (its device logged the dataset's air
 temperature, flag `no_hydration_signature`) and a constructed case, P-001's signed readings with batch 3 left out (flag `gap`).
@@ -295,8 +296,8 @@ file would. The page turns red: "Reading <time> does not match the signed root".
 
 Every screen shows the network (local Anvil or Base Sepolia), where the chain state comes from, the device label
 ("simulated device · replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)" or "measured by our sensor"), the
-"Testnet demo, no real claim" card, and on AI outputs "live" or "recorded response" (today "recorded response (handwritten
-fixture)"). On Base Sepolia the page says "readings time-shifted into the past from the published dataset".
+"Testnet demo, no real claim" card, and on AI outputs "live" or "recorded response" (the demo shows "recorded response":
+answers recorded from `claude-haiku-5-5`, replayed without a key). On Base Sepolia the page says "readings time-shifted into the past from the published dataset".
 
 Two modes:
 

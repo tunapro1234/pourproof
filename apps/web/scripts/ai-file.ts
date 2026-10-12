@@ -30,7 +30,7 @@ export async function buildAiFile(): Promise<AiFile> {
   }
   return {
     format: "pourproof.web-ai/1",
-    note: "Written by npm run export-ai -w apps/web from packages/ai in recorded mode. Each output says whether it is a live answer or a recorded response; a handwritten fixture says so too.",
+    note: "Written by npm run export-ai -w apps/web from packages/ai in recorded mode. Each output says whether it is a live answer or a recorded response, and which model wrote it.",
     pours,
   };
 }
