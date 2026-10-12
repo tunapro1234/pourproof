@@ -139,7 +139,7 @@
    "baselineMixHash": "0x19d9579e4bdc95dfd2178b16204db73d16c8409f53431f18a244719ee2df7794",
    "evidence": {
     "path": "scenario/anvil-evidence-P-001.json",
-    "sha256": "0x27c3b7b9b1d8102cede1577b54f6e8731817d64d7c183dd23c945787e36e7d17"
+    "sha256": "0xef9ecbd1d3ef33e4b8f58b35db7fd6171aa9b4b63efdab139bae9bfad92a9f8b"
    }
   },
   "dataset": {
@@ -161,7 +161,7 @@
     "acceptPour": "0x3705d55e8c45b18be5e908aee32e9c87fe29bce5c9cf50443e198d3b52dd12f3",
     "firstBatch": "0x33142c9d9aa33d8e9a62683b655cb8e8df860d8f19cdfdde31c9c480d92d4e6d",
     "lastBatch": "0x92fb802a09e77c4b62dbaa365f4c70dd5e8710bc4e7d2d72cc9a78e8e554275e",
-    "approveStrength": "0x66793ef4ced358d740ad7ef93ad8b53422158c26268b7f59545045f303e2ec2f",
+    "approveStrength": "0xe36fc702c7ddb1a0e3f05be8da81344d98b36cd93c6e0f10e836d2c28ef27459",
     "claimSaving": "0x73d2e80fc451ac9a6a13417d3b97af30df95eace837a323bab5b0454dd6526c9"
    }
   }
@@ -181,7 +181,7 @@
    },
    "primaryType": "PourPassport"
   },
-  "credentialHash": "0x62170399f478e49d523873bc5e71185e77832359cf5dc383a9d270b6ed3ad017",
-  "proofValue": "0x84973d8cabffaee3651e5e7d7a32f44a6ee75e96652b628d0252c31c930ded0a13614a0d875e7a85ee6df47ed7adda9b9248eafd3e3a854972eda92931abd9a31c"
+  "credentialHash": "0x51a9ba314ecd7278db460aef36857f5a8e365b589b7cdbacfa17c9fc59e3a850",
+  "proofValue": "0x1788b4eef8ce6c8ba38c5f38dbaf481b3a28b441ba590c312f30413d8f0b314035a4110413d4d30598d6e4357ce9db9db1119f484dfb2e8be3c7abfe249c8c9f1b"
  }
 }

@@ -232,7 +232,7 @@ is the STRIDE table.
 
 ## AI layer
 
-`packages/ai` asks Claude (`claude-sonnet-5-5`, official `@anthropic-ai/sdk`) to read documents and explain flags. Code checks
+`packages/ai` asks Claude (`claude-haiku-5-5`, official `@anthropic-ai/sdk`) to read documents and explain flags. Code checks
 every answer, and a person approves it. The AI never approves anything and never produces a number that goes on chain.
 
 | Function | Input | What code checks |
@@ -243,8 +243,9 @@ every answer, and a person approves it. The AI never approves anything and never
 
 Every output carries `model`, `prompt_sha256` and `mode` (`live` or `recorded`) plus the label the UI shows. `prompt_sha256` is
 the sha256 of the canonical request (instructions, output schema, model and the sha256 of the attached file), so it names exactly
-what produced an answer. Requests use structured output (a JSON schema) and the API's server-side refusal fallback; when a
-fallback model answers, `model` names it.
+what produced an answer. Requests use structured output (a JSON schema) and adaptive thinking. The fixed part of each task's
+request (instructions, then the output schema) comes first and ends in a prompt cache breakpoint, so repeated calls read it from
+the cache. Haiku 5.5 has no server-side refusal fallback: a declined request stops with `AiRefused` and no other model answers.
 
 Without `ANTHROPIC_API_KEY` (read only from the environment) the package answers from `recorded_responses/<prompt_sha256>.json`
 and the tests run that way. No live call has been made yet, so the six files there (two tickets, two EPDs, two flag
@@ -256,9 +257,20 @@ The two flag explanations use curing records computed by `packages/core`: pour P
 temperature, flag `no_hydration_signature`) and a constructed case, P-001's signed readings with batch 3 left out (flag `gap`).
 
 ```sh
-npm test -w packages/ai                      # recorded mode, no key needed
-ANTHROPIC_API_KEY=... npm run record -w packages/ai
+npm test -w packages/ai                      # recorded mode, no key needed, no network
+ANTHROPIC_API_KEY="$(cat <key file>)" npm run record -w packages/ai
 ```
+
+**Spending cap, in code.** Each live call is priced from `response.usage` (Haiku 5.5: 0.10 USD per million input tokens and
+0.50 per million output tokens for prompts up to 100K tokens, 0.50 and 2.50 above; cache reads 0.1x and 5 minute cache writes
+1.25x the input rate) and added to a counter outside the repository: `~/.cache/pourproof/ai-spend.json`, or the path in
+`POURPROOF_AI_SPEND` (a path inside the repository is refused). The counter keeps a total per UTC month and per UTC day and one
+line per call (task, `prompt_sha256`, token counts, cost). Before every call the totals are checked: at 8 USD for the month or
+1 USD for the day the call is not made and `BudgetExceeded` is thrown. Nothing falls back to recorded responses; `npm run record`
+prints the spend so far and stops there, leaving the requests not yet sent with their current recordings. The caps are constants
+in `packages/ai/src/budget.ts`; `POURPROOF_AI_MONTH_CAP_USD` and `POURPROOF_AI_DAY_CAP_USD` can lower them, never raise them.
+The key is read only from `ANTHROPIC_API_KEY`; it is not written to the counter, the recordings or any log, and an error that
+carries it is shown with `[redacted]` in its place.
 
 ## Web app
 

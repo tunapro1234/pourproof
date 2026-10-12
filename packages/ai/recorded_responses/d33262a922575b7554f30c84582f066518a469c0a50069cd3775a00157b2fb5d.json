@@ -1,10 +1,10 @@
 {
  "format": "pourproof.ai-recording/1",
- "prompt_sha256": "92a6b57aec81c169ceec7d01ae8e94ce49609f7d4079c5409e0c42571d204092",
+ "prompt_sha256": "d33262a922575b7554f30c84582f066518a469c0a50069cd3775a00157b2fb5d",
  "task": "explainAnomaly",
  "input": "explainAnomaly request",
  "input_sha256": null,
- "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
+ "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
  "recording": "handwritten fixture",
  "note": "Written by hand from the request input (document or stats) before any API key was available; no model produced it. It follows the response schema of the request named by prompt_sha256. npm run record -w packages/ai replaces it with a live response.",
  "stop_reason": null,

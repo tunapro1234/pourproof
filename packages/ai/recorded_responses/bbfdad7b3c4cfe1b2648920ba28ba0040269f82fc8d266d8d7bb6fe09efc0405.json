@@ -1,10 +1,10 @@
 {
  "format": "pourproof.ai-recording/1",
- "prompt_sha256": "4f31bcd2fb0b507fd05165f0f1a12057088d162d5e4b53934ce4124a309fdb8e",
+ "prompt_sha256": "bbfdad7b3c4cfe1b2648920ba28ba0040269f82fc8d266d8d7bb6fe09efc0405",
  "task": "extractEpd",
  "input": "data/sample-docs/sample-epd-mix-b.pdf",
  "input_sha256": "38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
- "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
+ "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
  "recording": "handwritten fixture",
  "note": "Written by hand from the request input (document or stats) before any API key was available; no model produced it. It follows the response schema of the request named by prompt_sha256. npm run record -w packages/ai replaces it with a live response.",
  "stop_reason": null,

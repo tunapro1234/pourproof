@@ -6,12 +6,10 @@ import { readFileSync } from "node:fs";
 import { basename } from "node:path";
 import type Anthropic from "@anthropic-ai/sdk";
 
-export const MODEL = "claude-sonnet-5-5";
+// Haiku 5.5 is the default model under the team's API budget. It has no server-side refusal fallback: a decline stops
+// the call (AiRefused) and nothing else answers in its place.
+export const MODEL = "claude-haiku-5-5";
 export const MAX_TOKENS = 16000;
-// Server-side refusal fallback (Claude API only): on a policy decline the API re-runs the request on a fallback model
-// inside the same call. The output records response.model, so a fallback shows up as a different model name.
-export const BETAS = ["server-side-fallback-2026-07-01"];
-export const FALLBACKS = "default" as const;
 
 export type Task = "extractTicket" | "extractEpd" | "explainAnomaly";
 
@@ -24,7 +22,7 @@ export interface Attachment {
 
 export interface BuiltRequest {
   task: Task;
-  params: Anthropic.Beta.Messages.MessageCreateParamsNonStreaming;
+  params: Anthropic.MessageCreateParamsNonStreaming;
   attachment?: Attachment;
   prompt_sha256: string;
 }
@@ -49,7 +47,7 @@ export function canonical(v: unknown): string {
   return JSON.stringify(sort(v));
 }
 
-function fileBlock(a: Attachment): Anthropic.Beta.Messages.BetaContentBlockParam {
+function fileBlock(a: Attachment): Anthropic.ContentBlockParam {
   const data = a.bytes.toString("base64");
   return a.kind === "pdf"
     ? { type: "document", source: { type: "base64", media_type: "application/pdf", data } }
@@ -57,18 +55,22 @@ function fileBlock(a: Attachment): Anthropic.Beta.Messages.BetaContentBlockParam
 }
 
 export function build(task: Task, system: string, text: string, schema: Record<string, unknown>, attachment?: Attachment): BuiltRequest {
-  const content: Anthropic.Beta.Messages.BetaContentBlockParam[] = [];
+  const content: Anthropic.ContentBlockParam[] = [];
   if (attachment) content.push(fileBlock(attachment));
   content.push({ type: "text", text });
-  const params: Anthropic.Beta.Messages.MessageCreateParamsNonStreaming = {
+  const params: Anthropic.MessageCreateParamsNonStreaming = {
     model: MODEL,
     max_tokens: MAX_TOKENS,
     thinking: { type: "adaptive" },
-    system,
+    // The fixed part of every request of a task (instructions, then the output schema) comes first and ends in a cache
+    // breakpoint; the document and the per-request text follow it. A prefix under the model's minimum (512 tokens on
+    // Haiku 5.5) is simply not cached; usage.cache_read_input_tokens shows whether it was.
+    system: [
+      { type: "text", text: system },
+      { type: "text", text: `The response is JSON matching this schema:\n${canonical(schema)}`, cache_control: { type: "ephemeral" } },
+    ],
     messages: [{ role: "user", content }],
     output_config: { format: { type: "json_schema", schema } },
-    betas: BETAS,
-    fallbacks: FALLBACKS,
   };
   const hashed = {
     ...params,

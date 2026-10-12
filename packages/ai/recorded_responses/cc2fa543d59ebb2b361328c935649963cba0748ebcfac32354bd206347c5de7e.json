@@ -1,10 +1,10 @@
 {
  "format": "pourproof.ai-recording/1",
- "prompt_sha256": "c172cf66957a3d692bbe2e42d10621e19705640fe9d93f6ed9791a09ca87f987",
+ "prompt_sha256": "cc2fa543d59ebb2b361328c935649963cba0748ebcfac32354bd206347c5de7e",
  "task": "extractTicket",
  "input": "data/sample-docs/delivery-ticket-P-001.png",
  "input_sha256": "5128a93fe32215b2fa6129ce9be08f839d100cab4c256d419b3b14bcca55e0c4",
- "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
+ "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
  "recording": "handwritten fixture",
  "note": "Written by hand from the request input (document or stats) before any API key was available; no model produced it. It follows the response schema of the request named by prompt_sha256. npm run record -w packages/ai replaces it with a live response.",
  "stop_reason": null,

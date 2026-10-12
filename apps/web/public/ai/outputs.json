@@ -4,8 +4,8 @@
  "pours": {
   "P-001": {
    "ticket": {
-    "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
-    "prompt_sha256": "c172cf66957a3d692bbe2e42d10621e19705640fe9d93f6ed9791a09ca87f987",
+    "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
+    "prompt_sha256": "cc2fa543d59ebb2b361328c935649963cba0748ebcfac32354bd206347c5de7e",
     "mode": "recorded",
     "recording": "handwritten fixture",
     "label": "recorded response (handwritten fixture)",
@@ -144,8 +144,8 @@
     {
      "role": "baseline",
      "mix": "mix_a_baseline",
-     "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
-     "prompt_sha256": "316b764a1edc494367b5d58e429a2e2cd4ccaf80c4170c48602ec0de6b6e30f2",
+     "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
+     "prompt_sha256": "874d71d66d379c431580f68e8485c86f697e02dbf553a7bf40fa0c3c31812a65",
      "mode": "recorded",
      "recording": "handwritten fixture",
      "label": "recorded response (handwritten fixture)",
@@ -263,8 +263,8 @@
     {
      "role": "delivered",
      "mix": "mix_b_actual",
-     "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
-     "prompt_sha256": "4f31bcd2fb0b507fd05165f0f1a12057088d162d5e4b53934ce4124a309fdb8e",
+     "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
+     "prompt_sha256": "bbfdad7b3c4cfe1b2648920ba28ba0040269f82fc8d266d8d7bb6fe09efc0405",
      "mode": "recorded",
      "recording": "handwritten fixture",
      "label": "recorded response (handwritten fixture)",
@@ -384,8 +384,8 @@
   },
   "P-002": {
    "ticket": {
-    "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
-    "prompt_sha256": "2822c49b27d09d00a9b40efd63e8803dce6a06e4043bf53eac4d485de28fcee5",
+    "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
+    "prompt_sha256": "9c9c157027718633d5d4986338187e92eec5980ad813ef386baece023bd23798",
     "mode": "recorded",
     "recording": "handwritten fixture",
     "label": "recorded response (handwritten fixture)",
@@ -524,8 +524,8 @@
     {
      "role": "delivered",
      "mix": "mix_b_actual",
-     "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
-     "prompt_sha256": "4f31bcd2fb0b507fd05165f0f1a12057088d162d5e4b53934ce4124a309fdb8e",
+     "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
+     "prompt_sha256": "bbfdad7b3c4cfe1b2648920ba28ba0040269f82fc8d266d8d7bb6fe09efc0405",
      "mode": "recorded",
      "recording": "handwritten fixture",
      "label": "recorded response (handwritten fixture)",
@@ -643,8 +643,8 @@
    ],
    "explanation": {
     "case_label": "pour P-002 (tamper case): flags from data/pours/P-002/batches.json",
-    "model": "none: handwritten fixture (request is for claude-sonnet-5-5)",
-    "prompt_sha256": "92a6b57aec81c169ceec7d01ae8e94ce49609f7d4079c5409e0c42571d204092",
+    "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
+    "prompt_sha256": "d33262a922575b7554f30c84582f066518a469c0a50069cd3775a00157b2fb5d",
     "mode": "recorded",
     "recording": "handwritten fixture",
     "label": "recorded response (handwritten fixture)",
