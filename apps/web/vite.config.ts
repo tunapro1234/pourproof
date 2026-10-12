@@ -2,13 +2,16 @@
 // them into the build, so the static site verifies against exactly the committed files:
 //   data/pours/*/ (device batches)   data/scenario/inputs.json   data/sample-docs/*.png|pdf
 //   scenario/*-evidence-*.json       deployments/*.json
-import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
+// `vite build --mode snapshot` (npm run build:snapshot) writes the static site to dist-snapshot/ (scripts/static-site.ts).
+import { existsSync, mkdirSync, readdirSync, readFileSync, statSync, writeFileSync } from "node:fs";
 import type { IncomingMessage, ServerResponse } from "node:http";
 import { dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
+import { assertRecordedAi, findSecrets, injectNotice, readSnapshots, routeFiles, staticNotice } from "./scripts/static-site.ts";
 
-const REPO = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
+const HERE = dirname(fileURLToPath(import.meta.url));
+const REPO = resolve(HERE, "../..");
 const PUBLISHED: { dir: string; match: RegExp }[] = [
   { dir: "data/pours", match: /^[\w-]+\/(batches|tamper)\.json$/ },
   { dir: "data/scenario", match: /^inputs\.json$/ },
@@ -54,9 +57,37 @@ function published(): Plugin {
   };
 }
 
-export default defineConfig({
-  plugins: [published()],
-  server: { port: 5173, strictPort: false, fs: { allow: [REPO] } },
-  preview: { port: 4317, strictPort: true },
-  build: { outDir: "dist", target: "es2022", chunkSizeWarningLimit: 1200 },
+/** Static snapshot site: label in every HTML file, one HTML file per route, recorded AI only, no secret-like strings. */
+function staticSite(outDir: string): Plugin {
+  const snaps = readSnapshots(join(HERE, "public/snapshot"));
+  return {
+    name: "pourproof-static-site",
+    apply: "build",
+    buildStart() {
+      assertRecordedAi(JSON.parse(readFileSync(join(HERE, "public/ai/outputs.json"), "utf8")));
+    },
+    transformIndexHtml: (html) => injectNotice(html, staticNotice(snaps)),
+    closeBundle() {
+      const index = readFileSync(join(outDir, "index.html"));
+      for (const f of routeFiles(snaps.flatMap((s) => s.pours))) {
+        mkdirSync(dirname(join(outDir, f)), { recursive: true });
+        writeFileSync(join(outDir, f), index);
+      }
+      const hits = findSecrets(outDir);
+      if (hits.length) throw new Error(`secret-like strings in ${outDir}:\n${hits.join("\n")}`);
+    },
+  };
+}
+
+export default defineConfig(({ mode }) => {
+  const snapshotSite = mode === "snapshot";
+  const outDir = snapshotSite ? "dist-snapshot" : "dist";
+  return {
+    base: "/",
+    plugins: [published(), ...(snapshotSite ? [staticSite(join(HERE, outDir))] : [])],
+    define: { __POURPROOF_STATIC__: JSON.stringify(snapshotSite) },
+    server: { port: 5173, strictPort: false, fs: { allow: [REPO] } },
+    preview: { port: 4317, strictPort: true },
+    build: { outDir, emptyOutDir: true, target: "es2022", chunkSizeWarningLimit: 1200 },
+  };
 });

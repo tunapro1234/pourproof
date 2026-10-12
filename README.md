@@ -17,7 +17,7 @@ Working: the contracts with their tests, the dataset import and the maturity, st
 (`packages/core`), the device message format in TypeScript (checked against the Solidity vectors) and the simulated device
 replay with its tamper cases (`packages/device`), and the end-to-end chain scenario on a local Anvil (`packages/chain`), whose
 recorded state the web app reads, the sample delivery tickets and EPDs (`data/sample-docs`), and the AI layer with its
-deterministic checks (`packages/ai`), the web passport with in-browser verification (`apps/web`), and the
+deterministic checks (`packages/ai`), the web passport with in-browser verification (`apps/web`) and its static snapshot build, and the
 passport export as a W3C Verifiable Credential 2.0 signed by the inspector ([Security](#security)).
 Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. No live Claude call has been made yet, so the
 stored AI responses are handwritten fixtures and say so (see [AI layer](#ai-layer)).
@@ -67,7 +67,7 @@ packages/core     maturity, strength range, CO2 ranges, message hashing, passpor
 packages/device   simulated device: dataset replay, P-256 batch signing
 packages/ai       Claude extraction for tickets and EPDs, anomaly explanation
 packages/chain    deploy and demo scenario scripts (viem)
-apps/web          pour passport and in-browser verification
+apps/web          pour passport and in-browser verification; build:snapshot writes the static site
 data/dataset      normalized Mendeley dataset (CC BY 4.0) and what the paper states about its mix
 data/scenario     sample values for the two demo pours, each with a source or an "assumption" label
 data/sample-docs  sample delivery tickets (PNG) and EPDs (PDF), with the script that builds them
@@ -302,6 +302,40 @@ npm test -w apps/web             # verification, tamper, ABI vs forge output, AI
 npm run build -w apps/web
 npm run e2e -w apps/web          # build + Playwright smoke test (passport green, tamper red, second claim refused)
 ```
+
+### Running it: live mode and snapshot mode
+
+**Live mode** reads a running chain over JSON-RPC. Against a local Anvil:
+
+```sh
+anvil --chain-id 31337 --timestamp 1789016400 --accounts 6          # terminal 1, http://127.0.0.1:8545
+npm run scenario -w packages/chain -- --network anvil --rpc http://127.0.0.1:8545   # terminal 2
+npm run dev -w apps/web
+# open http://localhost:5173/?mode=live
+```
+
+With `--rpc` the scenario runs on that node and keeps it, and it rewrites `deployments/anvil.json`, `scenario/anvil-log.json`,
+the evidence package and the snapshot for that run (`git checkout -- deployments scenario apps/web/public/snapshot` brings back the
+committed ones). The ledger address comes from `deployments/anvil.json`; `?rpc=<url>&ledger=<address>` points the page at another node or
+ledger, and `?network=baseSepolia&mode=live` reads Base Sepolia through `https://sepolia.base.org`. To make live the default
+in a build, set `VITE_POURPROOF_MODE=live` (and `VITE_POURPROOF_NETWORK`, `VITE_POURPROOF_RPC`) before `npm run build`.
+
+**Snapshot mode** needs no node. In dev and in the normal build it is the default (`/?mode=snapshot`). The static site is a
+snapshot-only build:
+
+```sh
+npm run build:snapshot -w apps/web     # writes apps/web/dist-snapshot/
+npm run preview:snapshot -w apps/web   # serves it on http://localhost:4317
+npm run e2e:snapshot -w apps/web       # builds it and runs the Playwright tests against it
+```
+
+`dist-snapshot/` is a plain folder of files for any static host, served at `/` (the site uses root paths such as
+`/assets/`, `/snapshot/`, `/published/`). It reads only `snapshot/<network>.json` and the published files copied next to it, and
+it shows AI outputs only as recorded responses: the build stops if `public/ai/outputs.json` holds a live one. `?mode=live`,
+`?rpc` and `?ledger` are ignored there. Every HTML file (`index.html`, `pour/<id>/index.html`, `verify/<id>/index.html` and
+`404.html` for any other path) says "recorded on-chain state, block N" in its markup before any script runs, and the app
+shows the same label on every page. The build also scans its output and fails on anything that looks like an API key or a
+private key. Nothing in it needs a secret: verification runs in the reader's browser against the recorded chain state.
 
 The live test starts a private Anvil, runs the scenario on it and checks that the live reader sees exactly the snapshot's events
 and state. The e2e test uses Playwright's Chromium; if that exact build is not installed, it uses the newest headless shell in the

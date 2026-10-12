@@ -6,6 +6,8 @@ import { join } from "node:path";
 import { chromium, defineConfig } from "@playwright/test";
 
 const PORT = Number(process.env.POURPROOF_E2E_PORT ?? 4317);
+/** Build folder to serve: dist (npm run e2e) or dist-snapshot (npm run e2e:snapshot, the static site). */
+const DIST = process.env.POURPROOF_E2E_DIST ?? "dist";
 
 /** The Chromium this Playwright version ships with, else the newest headless shell already in the cache (no download). */
 function executablePath(): string | undefined {
@@ -27,5 +29,5 @@ export default defineConfig({
   workers: 1,
   reporter: "list",
   use: { baseURL: `http://127.0.0.1:${PORT}`, headless: true, launchOptions: { executablePath: executablePath() } },
-  webServer: { command: `npx vite preview --port ${PORT} --strictPort --host 127.0.0.1`, url: `http://127.0.0.1:${PORT}/`, reuseExistingServer: false, timeout: 60_000 },
+  webServer: { command: `npx vite preview --outDir ${DIST} --port ${PORT} --strictPort --host 127.0.0.1`, url: `http://127.0.0.1:${PORT}/`, reuseExistingServer: false, timeout: 60_000 },
 });

@@ -32,7 +32,8 @@ async function render(): Promise<void> {
       document.title = "PourProof";
       html = page(search, homeView(v, inputs, search), v);
     } else {
-      html = page(search, `<h1>Not found</h1><p>No page at ${esc(pathname)}.</p>`, null);
+      const v = cfg.mode === "snapshot" ? await loadChain(cfg, []).catch(() => null) : null;
+      html = page(search, `<h1>Not found</h1><p>No page at ${esc(pathname)}.</p>`, v);
     }
     if (my === seq) app.innerHTML = html;
   } catch (e) {
