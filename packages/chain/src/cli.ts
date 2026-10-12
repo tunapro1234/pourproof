@@ -2,6 +2,7 @@
 //   node src/cli.ts scenario --network anvil|baseSepolia [--rpc <url>]
 //   node src/cli.ts deploy   --network anvil|baseSepolia [--rpc <url>]
 //   node src/cli.ts roles-keygen [--force]
+//   node src/cli.ts passport --network anvil|baseSepolia [--pour P-001]   (after scenario: W3C VC 2.0 signed by the inspector)
 // anvil: starts a private local Anvil (fixed genesis time, 12 s per block) unless --rpc points at a running node, and
 //        stops it at the end. Role accounts are the node's unlocked dev accounts 0..5.
 // baseSepolia: role keys from $POURPROOF_SECRETS/roles.json, RPC https://sepolia.base.org (or BASE_SEPOLIA_RPC).
@@ -15,6 +16,7 @@ import { REPO_ROOT } from "@pourproof/device";
 import { rpc, startAnvil, type AnvilNode } from "./anvil.ts";
 import { loadLedgerArtifact } from "./artifacts.ts";
 import { pretty } from "./json.ts";
+import { exportPassport } from "./passport.ts";
 import { ROLE_NAMES, loadRoleKeys, rolesKeygen, type RoleName } from "./roles.ts";
 import { NETWORK_LABEL, checkBalances, runScenario, type NetworkName } from "./scenario.ts";
 
@@ -59,8 +61,15 @@ async function main() {
     for (const [r, a] of Object.entries(addresses)) console.log(`  ${r.padEnd(10)} ${a}`);
     return;
   }
+  if (cmd === "passport") {
+    const network = opt("--network") as NetworkName | undefined;
+    if (network !== "anvil" && network !== "baseSepolia") throw new Error("--network anvil|baseSepolia is required");
+    const { path, vc } = await exportPassport(network, opt("--pour") ?? "P-001");
+    console.log(`wrote ${path}: ${vc.id}, issuer ${vc.issuer}, verified`);
+    return;
+  }
   if (cmd !== "scenario" && cmd !== "deploy") {
-    console.error("usage: node src/cli.ts scenario|deploy --network anvil|baseSepolia [--rpc url] | roles-keygen [--force]");
+    console.error("usage: node src/cli.ts scenario|deploy|passport --network anvil|baseSepolia [--rpc url] | roles-keygen [--force]");
     process.exit(2);
   }
   const net = await connect();

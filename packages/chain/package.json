@@ -8,7 +8,8 @@
     "test": "vitest run",
     "scenario": "node src/cli.ts scenario",
     "deploy": "node src/cli.ts deploy",
-    "roles-keygen": "node src/cli.ts roles-keygen"
+    "roles-keygen": "node src/cli.ts roles-keygen",
+    "passport": "node src/cli.ts passport"
   },
   "dependencies": {
     "@pourproof/ai": "0.0.0",

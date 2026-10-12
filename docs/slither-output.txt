@@ -1,0 +1,18 @@
+# slither 0.11.6, solc 0.8.28, forge 1.8.5; run from contracts/:
+#   slither . --filter-paths "lib/|test/|script/"
+# 102 detectors on 15 contracts (OpenZeppelin, forge-std, tests and scripts filtered out). Decisions: SECURITY.md
+
+
+Detector: uninitialized-local
+PourLedger.claimSaving(bytes32).role (src/PourLedger.sol#165) is a local variable never initialized
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#uninitialized-local-variables
+
+Detector: timestamp
+PourLedger.declareBaseline(bytes32,bytes32,uint32,uint32) (src/PourLedger.sol#84-96) uses timestamp for comparisons
+	Dangerous comparisons:
+	- p.supplier != address(0) && (block.timestamp >= p.pourStart || p.nextCounter > 0) (src/PourLedger.sol#90)
+PourLedger.appendBatch(bytes32,uint64,uint64,uint64,bytes32,bytes32,bytes32) (src/PourLedger.sol#132-146) uses timestamp for comparisons
+	Dangerous comparisons:
+	- toTs > block.timestamp (src/PourLedger.sol#140)
+Reference: https://github.com/crytic/slither/wiki/Detector-Documentation#block-timestamp
+. analyzed (15 contracts with 102 detectors), 3 result(s) found

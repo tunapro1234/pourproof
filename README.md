@@ -17,7 +17,8 @@ Working: the contracts with their tests, the dataset import and the maturity, st
 (`packages/core`), the device message format in TypeScript (checked against the Solidity vectors) and the simulated device
 replay with its tamper cases (`packages/device`), and the end-to-end chain scenario on a local Anvil (`packages/chain`), whose
 recorded state the web app reads, the sample delivery tickets and EPDs (`data/sample-docs`), and the AI layer with its
-deterministic checks (`packages/ai`), and the web passport with in-browser verification (`apps/web`).
+deterministic checks (`packages/ai`), the web passport with in-browser verification (`apps/web`), and the
+passport export as a W3C Verifiable Credential 2.0 signed by the inspector ([Security](#security)).
 Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. No live Claude call has been made yet, so the
 stored AI responses are handwritten fixtures and say so (see [AI layer](#ai-layer)).
 
@@ -62,7 +63,7 @@ stored AI responses are handwritten fixtures and say so (see [AI layer](#ai-laye
 
 ```
 contracts/        Foundry project (Solidity 0.8.28, OpenZeppelin Contracts v5)
-packages/core     maturity, strength range, CO2 ranges, message hashing
+packages/core     maturity, strength range, CO2 ranges, message hashing, passport credential (VC 2.0)
 packages/device   simulated device: dataset replay, P-256 batch signing
 packages/ai       Claude extraction for tickets and EPDs, anomaly explanation
 packages/chain    deploy and demo scenario scripts (viem)
@@ -71,6 +72,7 @@ data/dataset      normalized Mendeley dataset (CC BY 4.0) and what the paper sta
 data/scenario     sample values for the two demo pours, each with a source or an "assumption" label
 data/sample-docs  sample delivery tickets (PNG) and EPDs (PDF), with the script that builds them
 data/pours        the simulated device's signed batches per pour
+docs              STRIDE threat model, Slither output
 ```
 
 ## Contracts
@@ -193,6 +195,7 @@ Output:
 | `deployments/<network>.json` | ledger address, deploy tx and block, role addresses |
 | `scenario/<network>-log.json` | every step: role, account, function, arguments, tx hash, block, time, gas, decoded events, revert name and arguments |
 | `scenario/<network>-evidence-P-001.json` | the evidence package behind `approveStrength` |
+| `scenario/<network>-passport-P-001.json` | the approved pour as a W3C Verifiable Credential 2.0, signed by the inspector (`npm run passport`, below) |
 | `apps/web/public/snapshot/<network>.json` | what the web app needs without an RPC: all ledger events, both pours' on-chain state, their signed batches and readings, refused (reverted) transactions, block number |
 
 On Anvil the scenario starts a private node on a free local port at a fixed genesis time (2026-09-10 05:00 UTC) with 12 s per
@@ -205,6 +208,27 @@ On Base Sepolia (public RPC `https://sepolia.base.org` or `BASE_SEPOLIA_RPC`) th
 pay its share at twice the current gas price. If one cannot, it stops before the first transaction and lists each address with its
 shortfall; it does not fall back to Anvil. `npm run roles-keygen -w packages/chain` writes a new `roles.json` (mode 600) when none
 exists. Mainnet is not supported.
+
+### Passport credential (W3C VC 2.0)
+
+```sh
+npm run passport -w packages/chain -- --network anvil    # after the scenario; writes scenario/anvil-passport-P-001.json
+```
+
+`packages/core/src/vc.ts` turns an approved pour into a Verifiable Credential 2.0 (`@context`
+`https://www.w3.org/ns/credentials/v2`, type `VerifiableCredential` and `ConcretePourPassport`). The subject holds the pour id,
+both mixes, the volume, the embodied CO2 range, the saving range and who claimed it, a curing summary (batches, maturity, strength
+checkpoints as ranges labelled "estimated range, inspector decides") and the chain references: chain id, ledger, and the
+transaction hashes from baseline to claim. Every value is read from the deployment record, the scenario log and the evidence
+package. The inspector signs it with EIP-712 typed data whose domain is the chain and the ledger, the same signature a wallet
+makes with `eth_signTypedData_v4`; `verifyPassport` checks it. The method is described in [SECURITY.md](SECURITY.md#passport-credential-w3c-vc-20).
+
+## Security
+
+[SECURITY.md](SECURITY.md) covers assets, trust boundaries, the oracle problem (a signature says "this device measured this",
+not "this sensor was in the concrete") with three measures, key management, replay protection, the counter, privacy, a
+post-quantum note, the Slither results with a decision for each, and the known limits. [docs/threat-model.md](docs/threat-model.md)
+is the STRIDE table.
 
 ## AI layer
 
