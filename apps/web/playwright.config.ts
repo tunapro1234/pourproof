@@ -28,6 +28,6 @@ export default defineConfig({
   expect: { timeout: 60_000 },
   workers: 1,
   reporter: "list",
-  use: { baseURL: `http://127.0.0.1:${PORT}`, headless: true, launchOptions: { executablePath: executablePath() } },
+  use: { baseURL: `http://127.0.0.1:${PORT}`, headless: true, launchOptions: { executablePath: executablePath(), args: ["--disable-gpu", "--disable-software-rasterizer"] } },
   webServer: { command: `npx vite preview --outDir ${DIST} --port ${PORT} --strictPort --host 127.0.0.1`, url: `http://127.0.0.1:${PORT}/`, reuseExistingServer: false, timeout: 60_000 },
 });

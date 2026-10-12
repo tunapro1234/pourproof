@@ -351,7 +351,8 @@ private key. Nothing in it needs a secret: verification runs in the reader's bro
 
 The live test starts a private Anvil, runs the scenario on it and checks that the live reader sees exactly the snapshot's events
 and state. The e2e test uses Playwright's Chromium; if that exact build is not installed, it uses the newest headless shell in the
-Playwright cache (`PLAYWRIGHT_CHROMIUM_EXECUTABLE` overrides).
+Playwright cache (`PLAYWRIGHT_CHROMIUM_EXECUTABLE` overrides). It runs one worker and starts Chromium with `--disable-gpu` and
+`--disable-software-rasterizer`, because it runs on a shared server without a GPU and the app draws no WebGL.
 
 ## Setup
 
