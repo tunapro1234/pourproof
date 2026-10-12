@@ -25,6 +25,17 @@ export function verifyBanner(m: PourModel, search: string): string {
   </section>`;
 }
 
+/** Amber band under the verification banner when the rule-based curing check flagged the record (packages/core, not AI). */
+export function curingFlag(flags: string[], approved: boolean): string {
+  if (flags.length === 0) return "";
+  const what = flags.includes("no_hydration_signature")
+    ? "Signatures are valid, but this record does not look like curing concrete: no hydration heat rise in the first 24 h (no_hydration_signature)."
+    : `Signatures are valid, but the curing check flagged this record: ${flags.join(", ")}.`;
+  const then = approved ? "The inspector approved it anyway; read the curing check below." : "No strength approval, no saving claim.";
+  return `<section class="banner warn" data-testid="curing-flag" role="alert"><strong>${esc(what)}</strong> ${esc(then)}
+    <div class="small">Rule-based curing check in packages/core, run on the signed readings; the AI only explains it.</div></section>`;
+}
+
 function claimStatus(m: PourModel): string {
   const claim = eventsOf(m.view, m.chain.pourId, "SavingClaimed")[0];
   const roles = accountRoles(m.view.events);
@@ -70,7 +81,7 @@ function describe(e: ChainEvent, roles: Map<string, string[]>): [string, string]
 function timeline(m: PourModel): string {
   const roles = accountRoles(m.view.events);
   const ev = eventsOf(m.view, m.chain.pourId);
-  const rows: { block: number; idx: number; html: string }[] = [];
+  const rows: { block: number; idx: number; html: string; cls?: string }[] = [];
   const batches = ev.filter((e) => e.name === "BatchAppended");
   for (const e of ev.filter((x) => x.name !== "BatchAppended")) {
     const [who, what] = describe(e, roles as never);
@@ -90,12 +101,13 @@ function timeline(m: PourModel): string {
     rows.push({
       block: Number(r.block),
       idx: 0,
+      cls: "bad-row",
       html: `<td>${esc(fmtTime(r.timestamp ?? 0))}</td><td><strong>${esc(r.role)}</strong></td><td class="no">${esc(r.fn)} rejected on chain: ${esc(r.revert?.name ?? "reverted")}</td><td class="mono">${esc(r.block ?? "")} · ${esc(short(r.txHash ?? ""))}</td>`,
     });
   }
   rows.sort((a, b) => a.block - b.block || a.idx - b.idx);
   return `<section class="card"><h2>Roles and signatures</h2>
-  <table class="timeline" data-testid="timeline"><thead><tr><th>Time</th><th>Who</th><th>What</th><th>Block · tx</th></tr></thead><tbody>${rows.map((r) => `<tr>${r.html}</tr>`).join("")}</tbody></table>
+  <div class="table-wrap"><table class="timeline" data-testid="timeline"><thead><tr><th>Time</th><th>Who</th><th>What</th><th>Block · tx</th></tr></thead><tbody>${rows.map((r) => (r.cls ? `<tr class="${r.cls}" data-testid="rejected-tx">${r.html}</tr>` : `<tr>${r.html}</tr>`)).join("")}</tbody></table></div>
   <p class="small">Who is who: ${[...roles].map(([a, r]) => `${esc(r.join(", "))} ${esc(short(a))}`).join("; ")}. Times in UTC+3.</p></section>`;
 }
 
@@ -118,7 +130,7 @@ function aiBlock(title: string, x: AiExtraction, docUrl: string): string {
   return `<div class="ai-out" data-testid="ai-output">
     <h3>${esc(title)}</h3>
     <p><span class="pill ai" data-testid="ai-label">AI: ${esc(aiLabel(x))}</span> model ${esc(x.model)} · prompt_sha256 <span class="mono">${esc(short(x.prompt_sha256, 8))}</span> · <a href="${esc(docUrl)}" target="_blank" rel="noopener">open document</a> · ${x.counts.verified} verified, ${x.counts.needs_review} need review, ${x.counts.unverified} unverified</p>
-    <table class="fields"><thead><tr><th>Field</th><th>Value</th><th>Source quote</th><th>Check</th><th>Person</th></tr></thead><tbody>${fieldRows(x)}</tbody></table>
+    <div class="table-wrap"><table class="fields"><thead><tr><th>Field</th><th>Value</th><th>Source quote</th><th>Check</th><th>Person</th></tr></thead><tbody>${fieldRows(x)}</tbody></table></div>
   </div>`;
 }
 
@@ -141,9 +153,9 @@ export function pourView(m: PourModel, search: string): string {
   const anomalyFlags = m.file.anomaly?.flags ?? [];
 
   const strength = sv
-    ? `<table class="ranges" data-testid="strength"><thead><tr><th>Age</th><th>Maturity</th><th>Strength (${STRENGTH_LABEL})</th></tr></thead><tbody>
+    ? `<div class="table-wrap"><table class="ranges" data-testid="strength"><thead><tr><th>Age</th><th>Maturity</th><th>Strength (${STRENGTH_LABEL})</th></tr></thead><tbody>
       ${sv.checkpoints.map((c) => `<tr><td>day ${c.age_d}</td><td>${esc(Math.round(c.maturity_ch).toLocaleString("en-US"))} °C·h</td><td><strong>${esc(range(c.strength.low_mpa, c.strength.high_mpa, "MPa", 1))}</strong>${c.strength.extrapolated ? ' <span class="small">(outside the calibrated maturity span)</span>' : ""}</td></tr>`).join("")}
-      </tbody></table>
+      </tbody></table></div>
       <p class="small">Maturity: Nurse-Saul (ASTM C1074, datum -10 °C), computed in this browser from the ${readings.length} verified readings: ${esc(Math.round(sv.lastM).toLocaleString("en-US"))} °C·h at day ${(sv.lastH / 24).toFixed(0)}. Strength: S = a + b ln(M) from the evidence package calibration, shown as prediction ± 2σ. ${ref ? `Reference only: class B25 standard strength ${ref.standard_28d_mpa} MPa at 28 days (paper p.8).` : ""}</p>`
     : m.verify.ok
       ? `<p>No strength estimate: the inspector has not approved this pour, so there is no evidence package with a calibration on chain.</p>`
@@ -158,6 +170,7 @@ export function pourView(m: PourModel, search: string): string {
     <figure class="qr" data-testid="qr">${qrSvg(url)}<figcaption>scan to open this passport<br><span class="mono small">${esc(url)}</span></figcaption></figure>
   </div>
   ${verifyBanner(m, search)}
+  ${m.verify.ok ? curingFlag(anomalyFlags, s.pour.strengthApproved) : ""}
   <div class="grid2">
     <section class="card"><h2>Mix and volume</h2>
       <p><strong>Delivered:</strong> ${esc(m.delivered.mix_code)}, ${esc(m.delivered.label)}; ${esc(m.delivered.cement_type)}, ${m.delivered.cement_kg_per_m3} kg/m³ cement <span class="small">(${esc(m.delivered.cement_basis)})</span></p>
@@ -183,8 +196,8 @@ export function pourView(m: PourModel, search: string): string {
   ${claimStatus(m)}
   ${timeline(m)}
   <section class="card"><h2>Documents on chain</h2>
-    <table class="docs" data-testid="docs"><thead><tr><th>What</th><th>File</th><th>On chain</th><th>Check in this browser</th></tr></thead><tbody>
-    ${m.docs.map(docRow).join("")}${m.evidence ? docRow(m.evidence.check) : ""}</tbody></table>
+    <div class="table-wrap"><table class="docs" data-testid="docs"><thead><tr><th>What</th><th>File</th><th>On chain</th><th>Check in this browser</th></tr></thead><tbody>
+    ${m.docs.map(docRow).join("")}${m.evidence ? docRow(m.evidence.check) : ""}</tbody></table></div>
   </section>
   ${m.ai ? `<section class="card" data-testid="ai"><h2>AI field extraction</h2><p>Claude reads the ticket photo and the EPD PDFs and proposes each field with the page and quote it came from. Code checks every PDF quote against the PDF's text; a field that fails is unverified and its approval stays locked. The AI approves nothing.</p>
     ${aiBlock(`Delivery ticket ${m.label}`, m.ai.ticket, publishedUrl(m.ai.ticket.document))}

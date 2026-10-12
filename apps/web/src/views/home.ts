@@ -27,7 +27,7 @@ export function homeView(v: ChainView, inputs: InputsFile, search: string): stri
   });
   return `<h1>Pours</h1>
   <p>Each pour has a passport that the supplier, contractor, inspector and owner read from the same ledger. Open one, or check its curing record yourself in this browser.</p>
-  <table class="list"><thead><tr><th>Pour</th><th>Mix</th><th>Curing record</th><th>Strength</th><th>Saving claim</th><th></th></tr></thead>
-  <tbody>${rows.join("")}</tbody></table>
+  <div class="table-wrap"><table class="list"><thead><tr><th>Pour</th><th>Mix</th><th>Curing record</th><th>Strength</th><th>Saving claim</th><th></th></tr></thead>
+  <tbody>${rows.join("")}</tbody></table></div>
   <p class="small">Tamper demo: <a href="${link("/verify/P-001", search, { tamper: "reading:40" })}" data-nav>change reading 40 of P-001 and verify again</a>.</p>`;
 }

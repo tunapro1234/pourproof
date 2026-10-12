@@ -26,5 +26,5 @@ export function verifyPage(m: PourModel, search: string): string {
   </ol>
   ${verifyBanner(m, search)}
   <p class="small">No wallet: this page only reads. Try the tamper demo: <a href="${link(`/verify/${m.label}`, search, { tamper: `reading:${3 * n + 4}` })}" data-nav>change reading ${3 * n + 4}</a>, or <a href="${link(`/pour/${m.label}`, search)}" data-nav>back to the passport</a>.</p>
-  <table class="batches"><thead><tr><th>#</th><th>Window</th><th>Readings</th><th>Root on chain</th><th>Root from readings</th><th>Root</th><th>Signature</th><th>Changed readings</th></tr></thead><tbody>${rows}</tbody></table>`;
+  <div class="table-wrap"><table class="batches"><thead><tr><th>#</th><th>Window</th><th>Readings</th><th>Root on chain</th><th>Root from readings</th><th>Root</th><th>Signature</th><th>Changed readings</th></tr></thead><tbody>${rows}</tbody></table></div>`;
 }
