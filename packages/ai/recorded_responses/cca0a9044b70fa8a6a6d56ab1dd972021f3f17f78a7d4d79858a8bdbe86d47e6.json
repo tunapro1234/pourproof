@@ -1,0 +1,73 @@
+{
+ "format": "pourproof.ai-recording/1",
+ "prompt_sha256": "cca0a9044b70fa8a6a6d56ab1dd972021f3f17f78a7d4d79858a8bdbe86d47e6",
+ "task": "extractEpd",
+ "input": "data/sample-docs/sample-epd-mix-b.pdf",
+ "input_sha256": "38056258945353fa1aae50c54070d84414cfb74cdef790a11694edb574663a21",
+ "model": "claude-haiku-5-5",
+ "recording": "live call",
+ "note": "Response of a live API call, stored by npm run record -w packages/ai.",
+ "stop_reason": "end_turn",
+ "output": {
+  "document_number": {
+   "value": "SAMPLE-EPD-B",
+   "unit": "",
+   "page": 1,
+   "quote": "Document number SAMPLE-EPD-B (sample, not registered with any program operator)"
+  },
+  "declared_by": {
+   "value": "Sample Ready-Mix Co.",
+   "unit": "",
+   "page": 1,
+   "quote": "Declared by Sample Ready-Mix Co. (fictional company)"
+  },
+  "mix_code": {
+   "value": "MIX-B-IL320",
+   "unit": "",
+   "page": 1,
+   "quote": "Product Ready-mixed concrete, mix code MIX-B-IL320"
+  },
+  "cement": {
+   "value": "Portland-limestone cement Type IL",
+   "unit": "",
+   "page": 1,
+   "quote": "Cement Portland-limestone cement Type IL, 320 kg per m3 [1]"
+  },
+  "cement_content": {
+   "value": "320",
+   "unit": "kg per m3",
+   "page": 1,
+   "quote": "Cement Portland-limestone cement Type IL, 320 kg per m3 [1]"
+  },
+  "declared_unit": {
+   "value": "1",
+   "unit": "m3",
+   "page": 1,
+   "quote": "Declared unit 1 m3 of ready-mixed concrete at the plant gate"
+  },
+  "modules": {
+   "value": "A1-A3",
+   "unit": "",
+   "page": 1,
+   "quote": "Ready-mixed concrete, declared unit 1 m3, cradle to gate (modules A1-A3)"
+  },
+  "gwp_total_low": {
+   "value": "306",
+   "unit": "kg CO2e/m3",
+   "page": 1,
+   "quote": "GWP-total (A1-A3) 306 to 326 kg CO2e/m3"
+  },
+  "gwp_total_high": {
+   "value": "326",
+   "unit": "kg CO2e/m3",
+   "page": 1,
+   "quote": "GWP-total (A1-A3) 306 to 326 kg CO2e/m3"
+  },
+  "verification": {
+   "value": "Sample for software testing. Not third-party verified. Not for procurement or reporting.",
+   "unit": "",
+   "page": 1,
+   "quote": "Status Sample for software testing. Not third-party verified. Not for procurement or reporting."
+  }
+ }
+}

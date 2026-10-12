@@ -77,13 +77,14 @@ describe("recorded mode", () => {
     expect(names.size).toBe(hashes.length + demoAnomalyCases().length);
   });
 
-  it("labels a handwritten fixture as such and never as a live answer", async () => {
+  it("answers the demo from live claude-haiku-5-5 recordings, labelled as recorded, with no handwritten fixture left", async () => {
     const t = await extractTicket(abs(DEMO_TICKETS[0]), R);
     expect(t.mode).toBe("recorded");
-    expect(t.recording).toBe("handwritten fixture");
-    expect(t.label).toBe("recorded response (handwritten fixture)");
-    expect(t.model).toMatch(/^none: handwritten fixture/);
+    expect(t.recording).toBe("live call");
+    expect(t.label).toBe("recorded response");
+    expect(t.model).toBe("claude-haiku-5-5");
     expect(t.prompt_sha256).toMatch(/^[0-9a-f]{64}$/);
+    for (const n of readdirSync(RECORDED_DIR)) expect(readFileSync(join(RECORDED_DIR, n), "utf8")).not.toContain("handwritten fixture");
   });
 
   it("throws NoRecording for a request with no stored response", async () => {

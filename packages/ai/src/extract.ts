@@ -35,10 +35,11 @@ export const EPD_FIELDS = {
 export type TicketField = keyof typeof TICKET_FIELDS;
 export type EpdField = keyof typeof EPD_FIELDS;
 
-const nullable = { anyOf: [{ type: "string" }, { type: "null" }] };
+// value and unit are plain strings, "" when absent: the API allows at most 16 union-typed (nullable) parameters per
+// schema, and an EPD asks for 12 fields. raw() maps "" back to null.
 const fieldSchema = {
   type: "object",
-  properties: { value: nullable, unit: nullable, page: { type: "integer" }, quote: { type: "string" } },
+  properties: { value: { type: "string" }, unit: { type: "string" }, page: { type: "integer" }, quote: { type: "string" } },
   required: ["value", "unit", "page", "quote"],
   additionalProperties: false,
 };
@@ -56,10 +57,10 @@ export const EXTRACT_SYSTEM = [
   "You read paperwork for a concrete pour so that a site inspector can check it quickly.",
   "For each requested field, return:",
   "- value: the text exactly as printed on the document, character for character. Do not convert units, reformat dates or numbers, or fill in anything that is not printed. A range such as \"390 to 411\" is two fields (lower and upper bound) when asked that way; each value is then one number as printed.",
-  "- unit: the unit printed next to the value (for example \"m3\" or \"kg CO2e/m3\"), or null if there is none.",
+  "- unit: the unit printed next to the value (for example \"m3\" or \"kg CO2e/m3\"), or an empty string if there is none.",
   "- page: the 1-based page number where you read it (1 for a photo).",
   "- quote: one line of text from that page, copied exactly, that contains the value. Prefer the shortest complete line or table row. Do not join text from different lines.",
-  "If a field is not on the document, return value null, unit null, page 1 and an empty quote. Never guess.",
+  "If a field is not on the document, return an empty value, an empty unit, page 1 and an empty quote. Never guess.",
   "Your output is checked by software against the document's text and then approved or rejected by a person.",
 ].join("\n");
 
@@ -87,7 +88,7 @@ export interface Extraction<K extends string> extends AiMeta {
 
 function raw(output: unknown, key: string): RawField {
   const f = (output as Record<string, Partial<RawField>> | null)?.[key];
-  return { value: f?.value ?? null, unit: f?.unit ?? null, page: typeof f?.page === "number" ? f.page : 0, quote: typeof f?.quote === "string" ? f.quote : "" };
+  return { value: f?.value || null, unit: f?.unit || null, page: typeof f?.page === "number" ? f.page : 0, quote: typeof f?.quote === "string" ? f.quote : "" };
 }
 
 function finish<K extends string>(req: BuiltRequest, meta: AiMeta, keys: readonly K[], check: (f: RawField) => Field, output: unknown): Extraction<K> {

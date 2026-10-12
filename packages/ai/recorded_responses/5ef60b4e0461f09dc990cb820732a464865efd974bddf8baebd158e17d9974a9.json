@@ -4,11 +4,11 @@
  "task": "explainAnomaly",
  "input": "explainAnomaly request",
  "input_sha256": null,
- "model": "none: handwritten fixture (request is for claude-haiku-5-5)",
- "recording": "handwritten fixture",
- "note": "Written by hand from the request input (document or stats) before any API key was available; no model produced it. It follows the response schema of the request named by prompt_sha256. npm run record -w packages/ai replaces it with a live response.",
- "stop_reason": null,
+ "model": "claude-haiku-5-5",
+ "recording": "live call",
+ "note": "Response of a live API call, stored by npm run record -w packages/ai.",
+ "stop_reason": "end_turn",
  "output": {
-  "text": "Part of the curing record is missing: readings normally arrive every 0.5 hours, but one step is 6.5 hours long, from 18 to 24.5 hours after the pour start, so there are no signed temperatures for that stretch. The inspector could ask why the device stopped sending (power, battery or radio) and check whether the missing batch was ever signed by the device."
+  "text": "The gap flag means the record jumps from hour 18 to hour 24.5, a step of 6.5 hours, while the usual step between readings is 0.5 hours, so the readings for that period are missing. On site, the inspector could check the logger's battery and memory for that period, look for a loose or disconnected sensor cable, and ask whether any manual temperature readings were taken between hour 18 and hour 24.5."
  }
 }
