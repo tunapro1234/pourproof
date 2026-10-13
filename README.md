@@ -7,6 +7,9 @@ computed in code from those readings. When a lower-clinker mix is used, the carb
 declared before the pour can be claimed on chain exactly once, by one party. Claude reads the delivery ticket photo and the EPD PDF
 and proposes field values with their source, and a person confirms them. The AI flags; it never approves.
 
+**Live demo (static, recorded on-chain state):** https://pourproof.tunapro.xyz/ . Open a pour, then its verify page; add
+`?tamper=reading:42` to the verify URL to see a changed reading fail against the signed root.
+
 > **Testnet demo, no real claim.**
 > Everything in this repository runs on a local Anvil chain or on Base Sepolia testnet. No carbon saving has been claimed, sold or
 > registered anywhere. Strength is shown as an estimated range; the inspector decides.
