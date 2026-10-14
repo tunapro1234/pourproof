@@ -35,6 +35,13 @@ To report a problem, open an issue on the repository. Do not put keys or persona
 6. **Chain to reader.** The web app reads public RPC or a recorded snapshot and verifies roots and signatures in the
    browser. It has no wallet and signs nothing.
 
+**Trust model of the static demo.** On the static site the readings, the batch roots and the device key all come from the
+same server: one snapshot file and the published batch files. The browser check proves that an edited reading cannot
+match its signed root. It does not prove that the server is honest, because the server could replace readings, roots and
+key together. The page names the snapshot's block and sha256 so the file can be compared with the one in the repository.
+To remove that trust, run the scenario on your own Anvil and open the app with `?mode=live`; the roots, the device key,
+the approval and the claim then come from your node (README, "Trust model").
+
 ## The oracle problem
 
 A valid device signature says only one thing: **this device key signed these readings**. It does not say that the sensor
