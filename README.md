@@ -76,7 +76,7 @@ data/dataset      normalized Mendeley dataset (CC BY 4.0) and what the paper sta
 data/scenario     sample values for the two demo pours, each with a source or an "assumption" label
 data/sample-docs  sample delivery tickets (PNG) and EPDs (PDF), with the script that builds them
 data/pours        the simulated device's signed batches per pour
-docs              STRIDE threat model, Slither output
+docs              STRIDE threat model, Slither output, forge gas report
 ```
 
 ## Contracts
@@ -237,9 +237,10 @@ transactions):
 The first batch of a pour costs the most because it writes the pour's counter for the first time. A refused transaction still
 pays for the work done before the revert.
 
-**Contract tests, Solidity P-256.** `forge test --gas-report` on the happy path and device tests (solc 0.8.28, optimizer 200
-runs). Forge's test EVM has no P-256 precompile, so `appendBatch` here pays for OpenZeppelin's Solidity P-256 verification,
-about four times the precompile cost above.
+**Contract tests, Solidity P-256.** `forge test --gas-report` on the happy path and device tests (forge 1.8.5, solc 0.8.28,
+optimizer 200 runs); the command and its full output are in [docs/gas-report.txt](docs/gas-report.txt). Forge's test EVM has
+no P-256 precompile, so `appendBatch` here pays for OpenZeppelin's Solidity P-256 verification, about four times the
+precompile cost above.
 
 | Function | Median gas | Max gas |
 |---|---:|---:|
@@ -248,11 +249,12 @@ about four times the precompile cost above.
 | acceptPour | 35,587 | 35,587 |
 | registerDevice | 98,756 | 98,756 |
 | replaceDevice | 45,721 | 45,721 |
-| appendBatch (12 readings, Solidity P-256) | 312,446 | 333,022 |
+| appendBatch (12 readings, Solidity P-256) | 313,146 | 333,022 |
 | approveStrength | 55,940 | 55,940 |
 | claimSaving | 40,429 | 40,429 |
 
-Contract size: PourLedger 10,603 bytes runtime, 10,893 bytes initcode.
+Contract size: PourLedger 10,603 bytes runtime, 10,893 bytes initcode (the report's deployment size, 10,925 bytes, adds the
+32-byte constructor argument).
 
 ## Security
 
