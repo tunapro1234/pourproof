@@ -27,6 +27,27 @@ export const FLAG_TEXT: Record<string, string> = {
   gap: "gap: a step between readings longer than the device's normal interval",
 };
 
+// Embodied CO2 card: the pour's own footprint, the saving beside it and what backs each part, the scope of the factors.
+// Every number is passed in, computed from the chain or the scenario inputs.
+export const inventoryText = (lo: string, hi: string): string =>
+  `Inventory, delivered mix: ${lo} to ${hi} kg CO2e (absolute, A1-A3, GWP-total). This is the pour's own footprint; the saving below is an avoided-emissions claim and sits outside the inventory.`;
+export const lessCementText = (q: string, qa: string, vol: string, cA: string, cB: string): string =>
+  `Less cement: about ${q} kg CO2e/m³ (${qa} kg for ${vol} m³), from ${cA} vs ${cB} kg/m³ cement. The strength record backs this part.`;
+export const cementTypeText = (t: string, ta: string): string =>
+  `Cement type: about ${t} kg CO2e/m³ (${ta} kg), from the two cement EPDs. The supplier's EPD declares this part; a curing record cannot prove it.`;
+export const cementSumText = (sum: string, vol: string): string => `Cement difference alone: about ${sum} kg for ${vol} m³.`;
+export const rangeNote = (lowToHighKg: string): string =>
+  `The ${lowToHighKg} range comes from the sample mixes' other constituents counted on both sides. It is not an error bar.`;
+export const SCOPE_NOTE =
+  "Scope: A1-A3, GWP-total. Cement factors from a US-PCR EPD (ISO 21930, NSF PCR v3.2, not EN 15804) that includes transport to the US market.";
+export const BASELINE_CAP_NOTE = "Baseline cap against a regional benchmark: not yet. The contractor's declared baseline is used as is.";
+export const ONE_CLAIM_NOTE =
+  "Reduction claim recorded once, by the supplier. If it is ever sold as a certificate, the delivered mix is reported at baseline intensity.";
+/** The one-claim note for the role that actually claimed (the text above when it is the supplier). */
+export const oneClaimNote = (role: string): string => ONE_CLAIM_NOTE.replace("by the supplier", `by the ${role}`);
+/** Mix and volume card: a strength class written in a sample mix's text is an assumption, said next to it. */
+export const ASSUMED_CLASS = "(assumed strength class, sample)";
+
 // Home page hero: the one pour a visitor should open first, and who opens a passport and when.
 export const HERO_POUR = "P-001";
 export const heroTitle = (label: string): string => `Pour ${label} left one signed curing record. Fake a warm night in it and see what happens.`;

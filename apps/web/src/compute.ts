@@ -65,6 +65,45 @@ export function carbonView(volume_m3: number, delivered: Mix, baseline: Mix | nu
   };
 }
 
+/** One part of the cement saving, per m³ and for the pour's volume (kg CO2e). */
+export interface SplitPart {
+  per_m3: number;
+  kg: number;
+}
+
+/**
+ * The cement difference between baseline and delivered mix, split in two:
+ * quantity (less cement, priced at the baseline cement's factor), which the strength record backs, and
+ * type (the delivered cement priced at both factors), which only the supplier's EPD declares.
+ * The two parts add up to the cement difference exactly. Factor = mid cement GWP per m³ / cement kg per m³.
+ */
+export interface SavingSplit {
+  cement_kg_per_m3: { baseline: number; delivered: number };
+  quantity: SplitPart;
+  type: SplitPart;
+  total: SplitPart;
+}
+
+const mid = (r: readonly [number, number]) => (r[0] + r[1]) / 2;
+const part = (per_m3: number, volume_m3: number): SplitPart => ({ per_m3, kg: per_m3 * volume_m3 });
+
+export function savingSplit(baseline: Mix, delivered: Mix, volume_m3: number): SavingSplit {
+  const cA = baseline.cement_kg_per_m3;
+  const cB = delivered.cement_kg_per_m3;
+  const gA = mid(baseline.cement_gwp_kg_per_m3);
+  const gB = mid(delivered.cement_gwp_kg_per_m3);
+  const fA = gA / cA;
+  return {
+    cement_kg_per_m3: { baseline: cA, delivered: cB },
+    quantity: part((cA - cB) * fA, volume_m3),
+    type: part(cB * fA - gB, volume_m3),
+    total: part(gA - gB, volume_m3),
+  };
+}
+
+/** "about" amounts on the passport: kg rounded to 10 kg. */
+export const about10 = (kg: number): number => Math.round(kg / 10) * 10;
+
 /** The saving the curing record supports right now. Every number comes from the chain; nothing new is computed. */
 export type Claimable =
   | { status: "claimed"; by: Role | "unknown role"; saving: Co2Range }

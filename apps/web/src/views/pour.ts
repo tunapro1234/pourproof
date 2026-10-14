@@ -1,11 +1,32 @@
 import { aiLabel, STATUS_TEXT, type AiExplanation, type AiExtraction } from "../ai.ts";
 import { eventsOf, type ChainEvent } from "../chain.ts";
 import { curingChart } from "../chart.ts";
-import { carbonView, claimableNow, forgedClaim, readingsOf, strengthView, STRENGTH_LABEL } from "../compute.ts";
+import { about10, carbonView, claimableNow, forgedClaim, readingsOf, savingSplit, strengthView, STRENGTH_LABEL } from "../compute.ts";
 import { link, SNAPSHOT_SHA256 } from "../config.ts";
-import { publishedUrl } from "../data.ts";
+import { publishedUrl, type Mix } from "../data.ts";
 import { esc, fmtTime, range, short } from "../format.ts";
-import { CALIBRATION_NOTE, deviceLabel, FLAG_TEXT, liveNote, SERIES_NOTE, TAMPER_NOTE, TAMPER_NOTE_CLAIMED, TRY_TEXT, TRY_TITLE, trustNote, UNDO } from "../labels.ts";
+import {
+  ASSUMED_CLASS,
+  BASELINE_CAP_NOTE,
+  CALIBRATION_NOTE,
+  cementSumText,
+  cementTypeText,
+  deviceLabel,
+  FLAG_TEXT,
+  inventoryText,
+  lessCementText,
+  liveNote,
+  oneClaimNote,
+  rangeNote,
+  SCOPE_NOTE,
+  SERIES_NOTE,
+  TAMPER_NOTE,
+  TAMPER_NOTE_CLAIMED,
+  TRY_TEXT,
+  TRY_TITLE,
+  trustNote,
+  UNDO,
+} from "../labels.ts";
 import type { DocCheck, PourModel } from "../model.ts";
 import { qrSvg } from "../qr.ts";
 import { accountRoles, roleName, whoIs } from "../roles.ts";
@@ -124,7 +145,51 @@ export function tryIt(m: PourModel, search: string): string {
   </section>`;
 }
 
-function claimStatus(m: PourModel): string {
+const kg = (x: number): string => x.toLocaleString("en-US", { maximumFractionDigits: 0 });
+
+/** A sample mix's assumption stays visible as one: "assumption" is on screen, and a strength class gets its note. */
+const assumed = (text: string): string => text.replace(/\bC\d{2}\/\d{2}\b/g, (c) => `${c} ${ASSUMED_CLASS}`);
+const basis = (b: string): string => assumed(/assumption/i.test(b) ? b : `assumption: ${b}`);
+const cementOf = (mix: Mix): string =>
+  `${esc(assumed(mix.cement_type))}, ${mix.cement_kg_per_m3} kg/m³ cement <span class="small" data-testid="cement-basis">(${esc(basis(mix.cement_basis))})</span>`;
+
+export function mixCard(m: Pick<PourModel, "chain" | "inputs" | "delivered" | "baseline">): string {
+  const s = m.chain.state;
+  const vol = s.pour.volumeDm3 / 1000;
+  return `<section class="card" data-testid="mix"><h2>Mix and volume</h2>
+      <p><strong>Delivered:</strong> ${esc(m.delivered.mix_code)}, ${esc(assumed(m.delivered.label))}; ${cementOf(m.delivered)}</p>
+      <p><strong>Volume:</strong> ${vol} m³ on chain (createPour, ${s.pour.volumeDm3} dm³)${m.inputs.volume_basis ? ` <span class="small">${esc(m.inputs.volume_basis)}</span>` : ""}</p>
+      <p><strong>Baseline:</strong> ${m.baseline ? `${esc(m.baseline.mix_code)}, ${esc(assumed(m.baseline.label))}; ${cementOf(m.baseline)}; declared on chain by the contractor before the pour` : "none declared"}</p>
+    </section>`;
+}
+
+/**
+ * Embodied CO2: the delivered mix's own footprint (the inventory), the baseline, the saving with its two cement parts,
+ * what the range is, and the scope of the factors. Every number is computed from the chain or the scenario inputs.
+ */
+export function carbonCard(m: Pick<PourModel, "chain" | "delivered" | "baseline">): string {
+  const s = m.chain.state;
+  const vol = s.pour.volumeDm3 / 1000;
+  const carbon = carbonView(vol, m.delivered, m.baseline);
+  const onChainSaving = s.savingRange.map(Number);
+  const split = m.baseline ? savingSplit(m.baseline, m.delivered, vol) : null;
+  const inventory = esc(inventoryText(kg(carbon.delivered.low_kg), kg(carbon.delivered.high_kg))).replace("Inventory, delivered mix:", "<strong>Inventory, delivered mix:</strong>");
+  return `<section class="card" id="carbon" data-testid="carbon"><h2>Embodied CO2</h2>
+      <p data-testid="inventory">${inventory} <span class="small">(${vol} m³ × ${esc(range(m.delivered.gwp_total_kg_per_m3[0], m.delivered.gwp_total_kg_per_m3[1], "kg CO2e/m³"))}; on chain ${s.pour.gwpLow} to ${s.pour.gwpHigh})</span></p>
+      ${carbon.baseline ? `<p><strong>Baseline mix:</strong> ${esc(range(carbon.baseline.low_kg, carbon.baseline.high_kg, "kg CO2e"))} <span class="small">(on chain ${s.baseline.gwpLow} to ${s.baseline.gwpHigh} kg CO2e/m³)</span></p>
+      <p data-testid="baseline-cap">${esc(BASELINE_CAP_NOTE)}</p>` : ""}
+      ${carbon.saving ? `<p data-testid="saving"><strong>Saving, baseline vs delivered:</strong> ${esc(range(carbon.saving.low_kg, carbon.saving.high_kg, "kg CO2e"))} <span class="small">(ledger savingRange: ${esc(range(onChainSaving[0], onChainSaving[1], "kg CO2e"))}; low = baseline low minus delivered high)</span></p>` : `<p>No saving: no baseline was declared before this pour.</p>`}
+      ${split ? `<ul class="split" data-testid="saving-split">
+        <li>${esc(lessCementText(kg(split.quantity.per_m3), kg(about10(split.quantity.kg)), String(vol), kg(split.cement_kg_per_m3.baseline), kg(split.cement_kg_per_m3.delivered)))}</li>
+        <li>${esc(cementTypeText(kg(split.type.per_m3), kg(about10(split.type.kg))))}</li>
+        <li>${esc(cementSumText(kg(about10(split.total.kg)), String(vol)))}</li>
+      </ul>` : ""}
+      ${carbon.saving ? `<p data-testid="range-note">${esc(rangeNote(range(onChainSaving[0], onChainSaving[1], "kg")))}</p>` : ""}
+      <p class="small"><strong data-testid="scope">${esc(SCOPE_NOTE)}</strong> Source: sample EPDs (<a href="${esc(publishedUrl(m.delivered.epd_doc))}" target="_blank" rel="noopener">${esc(m.delivered.mix_code)}</a>${m.baseline ? `, <a href="${esc(publishedUrl(m.baseline.epd_doc))}" target="_blank" rel="noopener">${esc(m.baseline.mix_code)}</a>` : ""}), cement GWP ${esc(m.delivered.cement_gwp_basis)}; other constituents ${esc(m.delivered.other_basis)}. Sample values, not a real product.</p>
+    </section>`;
+}
+
+export function claimStatus(m: Pick<PourModel, "view" | "chain">): string {
   const claim = eventsOf(m.view, m.chain.pourId, "SavingClaimed")[0];
   const roles = accountRoles(m.view.events);
   const rejected = m.chain.rejected.filter((r) => r.fn === "claimSaving");
@@ -133,7 +198,8 @@ function claimStatus(m: PourModel): string {
   if (claim) {
     const role = roleName(String(claim.args.role)) ?? "unknown role";
     head = `Already claimed by ${role}`;
-    body = `<p>${esc(role)} (${esc(short(String(claim.args.claimant)))}) claimed the saving of ${esc(range(Number(claim.args.savingLow_kg), Number(claim.args.savingHigh_kg), "kg CO2e"))} at ${esc(fmtTime(claim.timestamp))}, block ${esc(claim.block)}. The ledger accepts one claim per pour, from one role; any later claim reverts with AlreadyClaimed.</p>`;
+    body = `<p>${esc(role)} (${esc(short(String(claim.args.claimant)))}) claimed the saving of ${esc(range(Number(claim.args.savingLow_kg), Number(claim.args.savingHigh_kg), "kg CO2e"))} at ${esc(fmtTime(claim.timestamp))}, block ${esc(claim.block)}. The ledger accepts one claim per pour, from one role; any later claim reverts with AlreadyClaimed.</p>
+    <p data-testid="one-claim">${esc(oneClaimNote(role))}</p>`;
   } else if (!m.chain.state.pour.strengthApproved) head = "Not claimable yet: the inspector has not approved strength";
   else if (/^0x0+$/.test(m.chain.state.baseline.mixHash)) head = "Not claimable: no baseline mix was declared before the pour";
   else head = "Not claimed yet";
@@ -231,9 +297,6 @@ export function pourView(m: PourModel, search: string): string {
   const s = m.chain.state;
   const pourStart = Number(s.pour.pourStart);
   const readings = readingsOf(m.batches, pourStart);
-  const vol = s.pour.volumeDm3 / 1000;
-  const carbon = carbonView(vol, m.delivered, m.baseline);
-  const onChainSaving = s.savingRange.map(Number);
   const fit = m.evidence?.pkg?.strength.fit ?? null;
   const sv = fit && m.verify.ok ? strengthView(readings, fit) : null;
   const ref = m.evidence?.pkg?.strength.reference ?? m.inputs.strength_reference ?? null;
@@ -261,17 +324,8 @@ export function pourView(m: PourModel, search: string): string {
   ${m.verify.ok ? curingFlag(anomalyFlags, s.pour.strengthApproved) : ""}
   ${tryIt(m, search)}
   <div class="grid2">
-    <section class="card"><h2>Mix and volume</h2>
-      <p><strong>Delivered:</strong> ${esc(m.delivered.mix_code)}, ${esc(m.delivered.label)}; ${esc(m.delivered.cement_type)}, ${m.delivered.cement_kg_per_m3} kg/m³ cement <span class="small">(${esc(m.delivered.cement_basis)})</span></p>
-      <p><strong>Volume:</strong> ${vol} m³ on chain (createPour, ${s.pour.volumeDm3} dm³)${m.inputs.volume_basis ? ` <span class="small">${esc(m.inputs.volume_basis)}</span>` : ""}</p>
-      <p><strong>Baseline:</strong> ${m.baseline ? `${esc(m.baseline.mix_code)}, ${esc(m.baseline.label)}; declared on chain by the contractor before the pour` : "none declared"}</p>
-    </section>
-    <section class="card" id="carbon" data-testid="carbon"><h2>Embodied CO2</h2>
-      <p><strong>Delivered mix:</strong> ${esc(range(carbon.delivered.low_kg, carbon.delivered.high_kg, "kg CO2e"))} <span class="small">(${vol} m³ × ${esc(range(m.delivered.gwp_total_kg_per_m3[0], m.delivered.gwp_total_kg_per_m3[1], "kg CO2e/m³"))}; on chain ${s.pour.gwpLow} to ${s.pour.gwpHigh})</span></p>
-      ${carbon.baseline ? `<p><strong>Baseline mix:</strong> ${esc(range(carbon.baseline.low_kg, carbon.baseline.high_kg, "kg CO2e"))} <span class="small">(on chain ${s.baseline.gwpLow} to ${s.baseline.gwpHigh} kg CO2e/m³)</span></p>` : ""}
-      ${carbon.saving ? `<p data-testid="saving"><strong>Saving, baseline vs delivered:</strong> ${esc(range(carbon.saving.low_kg, carbon.saving.high_kg, "kg CO2e"))} <span class="small">(ledger savingRange: ${esc(range(onChainSaving[0], onChainSaving[1], "kg CO2e"))}; low = baseline low minus delivered high)</span></p>` : `<p>No saving: no baseline was declared before this pour.</p>`}
-      <p class="small">Source: sample EPDs (<a href="${esc(publishedUrl(m.delivered.epd_doc))}" target="_blank" rel="noopener">${esc(m.delivered.mix_code)}</a>${m.baseline ? `, <a href="${esc(publishedUrl(m.baseline.epd_doc))}" target="_blank" rel="noopener">${esc(m.baseline.mix_code)}</a>` : ""}), cement GWP ${esc(m.delivered.cement_gwp_basis)}; other constituents ${esc(m.delivered.other_basis)}. Sample values, not a real product.</p>
-    </section>
+    ${mixCard(m)}
+    ${carbonCard(m)}
   </div>
   <section class="card" id="curing"><h2>Curing curve</h2>
     ${curingChart(readings, { sourceLabel: deviceLabel(s.device.kind), note: SERIES_NOTE[m.inputs.device_series], marked: m.applied ? { from: m.applied.changed[0].index, to: m.applied.changed[m.applied.changed.length - 1].index } : null })}
