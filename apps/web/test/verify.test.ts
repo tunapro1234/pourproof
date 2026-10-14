@@ -41,18 +41,19 @@ describe("verifyBatches on the recorded chain state", () => {
 });
 
 describe("tamper: ?tamper=reading:<i>", () => {
-  it("parses only reading:<non-negative integer>", () => {
-    expect(parseTamper("?tamper=reading:40")).toEqual({ kind: "reading", index: 40 });
-    expect(parseTamper("?mode=snapshot&tamper=reading:0")).toEqual({ kind: "reading", index: 0 });
+  it("parses only reading:<non-negative integer> (+5 °C); the other forms are in tamper.test.ts", () => {
+    expect(parseTamper("?tamper=reading:40")).toEqual({ kind: "reading", index: 40, delta_milliC: TAMPER_DELTA_MILLIC });
+    expect(parseTamper("?mode=snapshot&tamper=reading:0")).toEqual({ kind: "reading", index: 0, delta_milliC: TAMPER_DELTA_MILLIC });
     expect(parseTamper("?tamper=reading:-1")).toBeNull();
     expect(parseTamper("?tamper=batch:1")).toBeNull();
     expect(parseTamper("")).toBeNull();
   });
 
   it("one changed reading turns verification red and names that reading; the signature over the on-chain root still holds", () => {
-    const t = applyTamper(p1.batches, { kind: "reading", index: 40 })!;
+    const t = applyTamper(p1.batches, { kind: "reading", index: 40, delta_milliC: TAMPER_DELTA_MILLIC })!;
     const original = p1.batches[3].readings[4];
-    expect(t.applied).toMatchObject({ counter: 3, t_unix: original.t_unix, before_milliC: original.temp_milliC, after_milliC: original.temp_milliC + TAMPER_DELTA_MILLIC });
+    expect(t.applied.changed).toEqual([{ index: 40, counter: 3, t_unix: original.t_unix, before_milliC: original.temp_milliC, after_milliC: original.temp_milliC + TAMPER_DELTA_MILLIC }]);
+    expect(t.applied).toMatchObject({ count: 1, counters: [3] });
     expect(p1.batches[3].readings[4].temp_milliC).toBe(original.temp_milliC); // input untouched
 
     const r = verifyBatches({ ...inputFor(view, "P-001", p1), published: t.batches });
@@ -68,16 +69,16 @@ describe("tamper: ?tamper=reading:<i>", () => {
 
   it("works on the first and last reading, and an index past the end changes nothing", () => {
     for (const i of [0, 1343]) {
-      const t = applyTamper(p1.batches, { kind: "reading", index: i })!;
+      const t = applyTamper(p1.batches, { kind: "reading", index: i, delta_milliC: TAMPER_DELTA_MILLIC })!;
       const r = verifyBatches({ ...inputFor(view, "P-001", p1), published: t.batches });
       expect(r.ok).toBe(false);
       expect(r.batches.flatMap((b) => b.badReadings.map((x) => x.index))).toEqual([i]);
     }
-    expect(applyTamper(p1.batches, { kind: "reading", index: 1344 })).toBeNull();
+    expect(applyTamper(p1.batches, { kind: "reading", index: 1344, delta_milliC: TAMPER_DELTA_MILLIC })).toBeNull();
   });
 
   it("without published proofs the batch still fails, reported as a batch", () => {
-    const t = applyTamper(p1.batches, { kind: "reading", index: 40 })!;
+    const t = applyTamper(p1.batches, { kind: "reading", index: 40, delta_milliC: TAMPER_DELTA_MILLIC })!;
     const stripped = t.batches.map((b) => ({ ...b, readings: b.readings.map(({ t_unix, temp_milliC }) => ({ t_unix, temp_milliC })) }));
     const r = verifyBatches({ ...inputFor(view, "P-001", p1), published: stripped });
     expect(r.ok).toBe(false);

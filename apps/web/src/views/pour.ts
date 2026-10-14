@@ -1,15 +1,30 @@
 import { aiLabel, STATUS_TEXT, type AiExplanation, type AiExtraction } from "../ai.ts";
 import { eventsOf, type ChainEvent } from "../chain.ts";
 import { curingChart } from "../chart.ts";
-import { carbonView, readingsOf, strengthView, STRENGTH_LABEL } from "../compute.ts";
-import { link } from "../config.ts";
+import { carbonView, claimableNow, forgedClaim, readingsOf, strengthView, STRENGTH_LABEL } from "../compute.ts";
+import { link, SNAPSHOT_SHA256 } from "../config.ts";
 import { publishedUrl } from "../data.ts";
 import { esc, fmtTime, range, short } from "../format.ts";
-import { deviceLabel, FLAG_TEXT, SERIES_NOTE } from "../labels.ts";
+import { CALIBRATION_NOTE, deviceLabel, FLAG_TEXT, liveNote, SERIES_NOTE, TAMPER_NOTE, TAMPER_NOTE_CLAIMED, TRY_TEXT, TRY_TITLE, trustNote, UNDO } from "../labels.ts";
 import type { DocCheck, PourModel } from "../model.ts";
 import { qrSvg } from "../qr.ts";
 import { accountRoles, roleName, whoIs } from "../roles.ts";
+import { paramOf, TAMPER_STEPS_C, tamperHref, tamperParam, type TamperApplied } from "../tamper.ts";
 import { ok } from "./layout.ts";
+
+const signed = (c: number): string => (c > 0 ? `+${c}` : c < 0 ? `\u2212${-c}` : "0");
+const plural = (n: number, one: string, many = `${one}s`): string => `${n} ${n === 1 ? one : many}`;
+
+/** What the tamper changed, in words: one reading with its old and new value, or a night with its readings and batches. */
+export function describeTamper(a: TamperApplied): string {
+  const t = a.tamper;
+  const first = a.changed[0];
+  if (t.kind === "reading") {
+    return `reading ${t.index} (${fmtTime(first.t_unix)}) was changed in this browser from ${first.before_milliC / 1000} °C to ${first.after_milliC / 1000} °C before checking.`;
+  }
+  const last = a.changed[a.changed.length - 1];
+  return `night ${t.night}: ${plural(a.count, "reading")} from ${fmtTime(first.t_unix)} to ${fmtTime(last.t_unix)} (${a.counters.length === 1 ? "batch" : "batches"} ${a.counters.join(", ")}) ${a.count === 1 ? "was" : "were"} changed in this browser by ${signed(t.delta_milliC / 1000)} °C before checking.`;
+}
 
 export function verifyBanner(m: PourModel, search: string): string {
   const v = m.verify;
@@ -20,8 +35,8 @@ export function verifyBanner(m: PourModel, search: string): string {
   return `<section class="banner ${v.ok ? "good" : "bad"}" data-testid="verify-status" data-ok="${v.ok}">
     <strong>${esc(head)}</strong>
     ${bad.length ? `<ul>${bad.slice(0, 5).map((p) => `<li>${esc(p)}</li>`).join("")}${bad.length > 5 ? `<li>and ${bad.length - 5} more</li>` : ""}</ul>` : ""}
-    ${m.applied ? `<div class="small">Tamper demo: reading ${m.applied.index} (${esc(fmtTime(m.applied.t_unix))}) was changed in this browser from ${m.applied.before_milliC / 1000} °C to ${m.applied.after_milliC / 1000} °C before checking. <a href="${link(`/${location.pathname.split("/")[1]}/${m.label}`, search)}" data-nav>Undo</a></div>` : ""}
-    <div class="small"><a href="${link(`/verify/${m.label}`, search, m.tamper ? { tamper: `reading:${m.tamper.index}` } : {})}" data-nav>See every batch</a></div>
+    ${m.applied ? `<div class="small" data-testid="tamper-applied">Tamper demo: ${esc(describeTamper(m.applied))} <a href="${link(`/${location.pathname.split("/")[1]}/${m.label}`, search)}" data-nav>${esc(UNDO)}</a></div>` : ""}
+    <div class="small"><a href="${link(`/verify/${m.label}`, search, m.tamper ? { tamper: paramOf(m.tamper) } : {})}" data-nav>See every batch</a></div>
   </section>`;
 }
 
@@ -34,6 +49,79 @@ export function curingFlag(flags: string[], approved: boolean): string {
   const then = approved ? "The inspector approved it anyway; read the curing check below." : "No strength approval, no saving claim.";
   return `<section class="banner warn" data-testid="curing-flag" role="alert"><strong>${esc(what)}</strong> ${esc(then)}
     <div class="small">Rule-based curing check in packages/core, run on the signed readings; the AI only explains it.</div></section>`;
+}
+
+const sentence = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
+
+/** "Saving this record supports: ...": what the curing record, as checked in this browser, supports right now. */
+export function claimableText(m: Pick<PourModel, "verify" | "view" | "chain">): string {
+  const c = claimableNow(m);
+  if (c.status === "claimed") return `Saving this record supports: ${range(c.saving.low_kg, c.saving.high_kg, "kg CO2e")}, already claimed once by ${c.by}. A second claim reverts on chain.`;
+  if (c.status === "supported") return `Saving this record supports: ${range(c.saving.low_kg, c.saving.high_kg, "kg CO2e")}, not claimed yet.`;
+  return `Saving this record supports: none. ${sentence(c.reason)}.`;
+}
+
+/** The trust note: where the chain state on this page comes from, and what the check here does and does not show. */
+export function trustText(v: PourModel["view"]): string {
+  if (v.source === "live") return esc(liveNote(v.rpcUrl ?? v.sourceLabel));
+  const sha = SNAPSHOT_SHA256[v.network];
+  const shortSha = sha ? sha.slice(0, 12) : "not computed at build";
+  return esc(trustNote(v.block, shortSha))
+    .replace("snapshot file", `<a href="/snapshot/${esc(v.network)}.json" target="_blank" rel="noopener">snapshot file</a>`)
+    .replace(`sha256 ${shortSha}`, `sha256 <span class="mono" title="${esc(sha ?? "")}">${esc(shortSha)}</span>`);
+}
+
+/**
+ * "Fake a warm night": the visitor picks a night (or one reading) and a change in degrees; the page reloads its own
+ * copy of the published readings with that change and checks them again. Links only, no form; nothing is sent.
+ */
+export function tryIt(m: PourModel, search: string): string {
+  const base = link(`/pour/${m.label}`, search);
+  const q = new URLSearchParams(search);
+  const t = m.tamper;
+  const all = m.file.batches.flatMap((b) => b.readings);
+  const total = all.length;
+  const stepMin = all.length > 1 ? Math.round((all[1].t_unix - all[0].t_unix) / 60) : null;
+  const picked = Number(q.get("night"));
+  const night = t?.kind === "range" ? t.night : t ? null : m.nights.some((x) => x.n === picked) ? picked : (m.nights[0]?.n ?? null);
+  const nightOf = (n: number) => m.nights.find((x) => x.n === n)!;
+  const deltaC = t ? t.delta_milliC / 1000 : null;
+
+  const target =
+    t?.kind === "reading"
+      ? `reading ${t.index} (${fmtTime(m.applied!.changed[0].t_unix)})`
+      : night !== null
+        ? `night ${night}: ${plural(nightOf(night).to - nightOf(night).from + 1, "reading")}, ${fmtTime(nightOf(night).from_unix)} to ${fmtTime(nightOf(night).to_unix)}`
+        : "";
+  const hrefFor = (d: number) => (t?.kind === "reading" ? tamperHref(base, tamperParam({ kind: "reading", index: t.index }, d)) : night !== null ? tamperHref(base, tamperParam({ kind: "night", n: night }, d)) : "");
+  const nightHref = (n: number) => (t && deltaC !== null ? tamperHref(base, tamperParam({ kind: "night", n }, deltaC)) : `${link(`/pour/${m.label}`, search, { night: String(n) })}#try`);
+
+  const nights = m.nights
+    .map((x) => `<a href="${nightHref(x.n)}" data-nav class="chip"${x.n === night ? ' aria-current="true"' : ""} data-testid="try-night">${x.n}</a>`)
+    .join("");
+  const steps = night !== null || t?.kind === "reading"
+    ? TAMPER_STEPS_C.map((d) => `<a href="${hrefFor(d)}" data-nav class="button${d === deltaC ? " active" : ""}" data-d="${d}"${d === deltaC ? ' aria-current="true"' : ""}>${signed(d)} °C</a>`).join(" ")
+    : "";
+
+  const claimed = eventsOf(m.view, m.chain.pourId, "SavingClaimed").length > 0;
+  const forged = forgedClaim(m);
+  const fit = m.evidence?.pkg?.strength.fit;
+  const sources = fit
+    ? `<p data-testid="try-sources">Where the numbers come from: readings from <a href="#curing">the published dataset (class B25)</a>, maturity by ASTM C1074 Nurse-Saul, strength fit from <a href="${esc(m.evidence!.url)}" target="_blank" rel="noopener">the inspector's evidence package</a>, saving from <a href="#carbon">the two sample EPDs shown in the passport</a>. The saving range is fixed on chain and not changed by your edit.</p>`
+    : "";
+
+  return `<section class="card try" id="try" data-testid="try" data-try data-base="${esc(base)}" data-readings="${total}">
+    <h2>${esc(TRY_TITLE)}</h2>
+    <p>${esc(TRY_TEXT)}</p>
+    <p class="try-pick"><strong>Night:</strong> <span class="chips">${nights}</span></p>
+    <p class="try-pick"><label>Or one reading, number <input type="number" inputmode="numeric" min="0" max="${total - 1}" step="1" data-try-reading data-testid="try-reading" value="${t?.kind === "reading" ? t.index : ""}" aria-describedby="try-reading-help"></label> <span class="small" id="try-reading-help">0 to ${total - 1}${stepMin ? `, one every ${stepMin} minutes` : ""}</span></p>
+    <p class="try-steps"><strong>Change <span data-try-target>${esc(target)}</span> by:</strong> ${steps}</p>
+    ${t ? `<p class="try-note" data-testid="tamper-note">${esc(claimed ? TAMPER_NOTE_CLAIMED : TAMPER_NOTE)} <a href="${base}#try" data-nav>${esc(UNDO)}</a></p>` : ""}
+    <p class="try-result" data-testid="claimable-now"><strong>${esc(claimableText(m))}</strong></p>
+    ${forged ? `<p class="try-result" data-testid="forged-claim">${esc(`The edited copy would claim day ${forged.age_d}: ${range(forged.forged.low_mpa, forged.forged.high_mpa, "MPa", 1)}, against ${range(forged.signed.low_mpa, forged.signed.high_mpa, "MPa", 1)} from the signed readings. It is refused below, so neither number is used.`)}</p>` : ""}
+    ${sources}
+    <p data-testid="trust-note">${trustText(m.view)}</p>
+  </section>`;
 }
 
 function claimStatus(m: PourModel): string {
@@ -53,7 +141,7 @@ function claimStatus(m: PourModel): string {
     (r) =>
       `<li class="rejected" data-testid="rejected-claim">${esc(r.role || whoIs(r.account, roles))} tried claimSaving: ${r.revert ? `rejected, ${esc(r.revert.name)}${r.revert.name === "AlreadyClaimed" ? ` (first claimant ${esc(whoIs(String(r.revert.args[1]), roles))})` : ""}` : "would succeed"}${r.kind === "transaction" ? `, reverted transaction ${esc(short(r.txHash ?? ""))} in block ${esc(r.block ?? "")}` : ", simulated call (eth_call), nothing sent"}</li>`,
   );
-  return `<section class="card" data-testid="claim-status"><h2>Saving claim</h2><p class="status-line"><strong>${esc(head)}</strong></p>${body}${rows.length ? `<ul>${rows.join("")}</ul>` : ""}</section>`;
+  return `<section class="card" id="claim" data-testid="claim-status"><h2>Saving claim</h2><p class="status-line"><strong>${esc(head)}</strong></p>${body}${rows.length ? `<ul>${rows.join("")}</ul>` : ""}</section>`;
 }
 
 function describe(e: ChainEvent, roles: Map<string, string[]>): [string, string] {
@@ -171,24 +259,26 @@ export function pourView(m: PourModel, search: string): string {
   </div>
   ${verifyBanner(m, search)}
   ${m.verify.ok ? curingFlag(anomalyFlags, s.pour.strengthApproved) : ""}
+  ${tryIt(m, search)}
   <div class="grid2">
     <section class="card"><h2>Mix and volume</h2>
       <p><strong>Delivered:</strong> ${esc(m.delivered.mix_code)}, ${esc(m.delivered.label)}; ${esc(m.delivered.cement_type)}, ${m.delivered.cement_kg_per_m3} kg/m³ cement <span class="small">(${esc(m.delivered.cement_basis)})</span></p>
       <p><strong>Volume:</strong> ${vol} m³ on chain (createPour, ${s.pour.volumeDm3} dm³)${m.inputs.volume_basis ? ` <span class="small">${esc(m.inputs.volume_basis)}</span>` : ""}</p>
       <p><strong>Baseline:</strong> ${m.baseline ? `${esc(m.baseline.mix_code)}, ${esc(m.baseline.label)}; declared on chain by the contractor before the pour` : "none declared"}</p>
     </section>
-    <section class="card" data-testid="carbon"><h2>Embodied CO2</h2>
+    <section class="card" id="carbon" data-testid="carbon"><h2>Embodied CO2</h2>
       <p><strong>Delivered mix:</strong> ${esc(range(carbon.delivered.low_kg, carbon.delivered.high_kg, "kg CO2e"))} <span class="small">(${vol} m³ × ${esc(range(m.delivered.gwp_total_kg_per_m3[0], m.delivered.gwp_total_kg_per_m3[1], "kg CO2e/m³"))}; on chain ${s.pour.gwpLow} to ${s.pour.gwpHigh})</span></p>
       ${carbon.baseline ? `<p><strong>Baseline mix:</strong> ${esc(range(carbon.baseline.low_kg, carbon.baseline.high_kg, "kg CO2e"))} <span class="small">(on chain ${s.baseline.gwpLow} to ${s.baseline.gwpHigh} kg CO2e/m³)</span></p>` : ""}
       ${carbon.saving ? `<p data-testid="saving"><strong>Saving, baseline vs delivered:</strong> ${esc(range(carbon.saving.low_kg, carbon.saving.high_kg, "kg CO2e"))} <span class="small">(ledger savingRange: ${esc(range(onChainSaving[0], onChainSaving[1], "kg CO2e"))}; low = baseline low minus delivered high)</span></p>` : `<p>No saving: no baseline was declared before this pour.</p>`}
       <p class="small">Source: sample EPDs (<a href="${esc(publishedUrl(m.delivered.epd_doc))}" target="_blank" rel="noopener">${esc(m.delivered.mix_code)}</a>${m.baseline ? `, <a href="${esc(publishedUrl(m.baseline.epd_doc))}" target="_blank" rel="noopener">${esc(m.baseline.mix_code)}</a>` : ""}), cement GWP ${esc(m.delivered.cement_gwp_basis)}; other constituents ${esc(m.delivered.other_basis)}. Sample values, not a real product.</p>
     </section>
   </div>
-  <section class="card"><h2>Curing curve</h2>
-    ${curingChart(readings, { sourceLabel: deviceLabel(s.device.kind), note: SERIES_NOTE[m.inputs.device_series], marked: m.applied?.index ?? null })}
+  <section class="card" id="curing"><h2>Curing curve</h2>
+    ${curingChart(readings, { sourceLabel: deviceLabel(s.device.kind), note: SERIES_NOTE[m.inputs.device_series], marked: m.applied ? { from: m.applied.changed[0].index, to: m.applied.changed[m.applied.changed.length - 1].index } : null })}
     <p class="small">${readings.length} readings, every 30 min from ${esc(fmtTime(m.batches[0]?.readings[0]?.t_unix ?? pourStart))}; pour start on chain ${esc(fmtTime(pourStart))}.</p>
   </section>
-  <section class="card"><h2>Maturity and strength</h2>
+  <section class="card" id="strength"><h2>Maturity and strength</h2>
+    ${fit ? `<p data-testid="calibration-note">${esc(CALIBRATION_NOTE)}</p>` : ""}
     ${strength}
     <p><strong>Curing check (rules in packages/core, not AI; run when the batches were published):</strong> ${anomalyFlags.length ? anomalyFlags.map((f) => `<span class="no">${esc(FLAG_TEXT[f] ?? f)}</span>`).join("; ") : "no flags: heat rise over the air in the first 24 h, no gaps"}</p>
     ${m.ai?.explanation ? explanation(m.ai.explanation) : ""}

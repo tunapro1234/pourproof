@@ -8,7 +8,7 @@ import type { IncomingMessage, ServerResponse } from "node:http";
 import { dirname, extname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { defineConfig, type Plugin } from "vite";
-import { assertRecordedAi, findSecrets, injectNotice, readSnapshots, routeFiles, staticNotice } from "./scripts/static-site.ts";
+import { assertRecordedAi, findSecrets, injectNotice, readSnapshots, routeFiles, snapshotSha256, staticNotice } from "./scripts/static-site.ts";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const REPO = resolve(HERE, "../..");
@@ -85,7 +85,7 @@ export default defineConfig(({ mode }) => {
   return {
     base: "/",
     plugins: [published(), ...(snapshotSite ? [staticSite(join(HERE, outDir))] : [])],
-    define: { __POURPROOF_STATIC__: JSON.stringify(snapshotSite) },
+    define: { __POURPROOF_STATIC__: JSON.stringify(snapshotSite), __POURPROOF_SNAPSHOT_SHA256__: JSON.stringify(snapshotSha256(join(HERE, "public/snapshot"))) },
     server: { port: 5173, strictPort: false, fs: { allow: [REPO] } },
     preview: { port: 4317, strictPort: true },
     build: { outDir, emptyOutDir: true, target: "es2022", chunkSizeWarningLimit: 1200 },

@@ -295,7 +295,13 @@ the EPDs and the evidence package and compares them with `ticketHash`, `epdHash`
 Maturity and strength are computed again from the verified readings, and nothing is computed from a record that fails.
 
 `?tamper=reading:<i>` adds 5 degC to reading `i` (counted over the whole pour from 0) after the download, as someone editing the
-file would. The page turns red: "Reading <time> does not match the signed root".
+file would. The page turns red: "Reading <time> does not match the signed root". `?tamper=reading:<i>:<d>` changes it by `d`
+degC, and `?tamper=night:<n>:<d>` changes every reading of the pour's n-th night (18:00 to 06:00 local time); `d` is a whole
+number from -10 to 10, not 0, and anything else opens the page untouched. The passport's "Fake a warm night" card builds these
+links: it shows what the edited copy would claim (the same strength code on the edited readings, next to the signed ones),
+that the record then supports no saving, and that nothing on chain changed. Its trust note names the snapshot block and the
+snapshot file's sha256, computed when the site is built: on the static site the chain state and the readings come from the
+same server, so the check shows that an edited reading cannot match its signed root, not that the server is honest.
 
 Every screen shows the network (local Anvil or Base Sepolia), where the chain state comes from, the device label
 ("simulated device · replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)" or "measured by our sensor"), the
@@ -316,7 +322,7 @@ screen are `public/ai/outputs.json`, written by `npm run export-ai -w apps/web` 
 npm run dev -w apps/web          # http://localhost:5173
 npm test -w apps/web             # verification, tamper, ABI vs forge output, AI file, and a live read of a fresh Anvil run
 npm run build -w apps/web
-npm run e2e -w apps/web          # build + Playwright smoke test (passport green, tamper red, second claim refused)
+npm run e2e -w apps/web          # build + Playwright: passport green, tamper red, second claim refused, "Fake a warm night" card
 ```
 
 ### Running it: live mode and snapshot mode

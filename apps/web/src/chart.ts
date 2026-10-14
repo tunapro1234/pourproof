@@ -7,8 +7,8 @@ export interface ChartOptions {
   sourceLabel: string;
   /** optional second line */
   note?: string;
-  /** reading index to mark in red (tamper demo) */
-  marked?: number | null;
+  /** readings to mark in red (tamper demo): indices from..to, inclusive */
+  marked?: { from: number; to: number } | null;
 }
 
 const W = 760;
@@ -34,8 +34,22 @@ export function curingChart(readings: readonly Reading[], o: ChartOptions): stri
     grid.push(`<line x1="${M.l}" x2="${W - M.r}" y1="${y(c)}" y2="${y(c)}" class="grid"/>`);
     grid.push(`<text x="${M.l - 6}" y="${y(c) + 4}" text-anchor="end" class="tick">${c}</text>`);
   }
-  const m = o.marked != null && readings[o.marked] ? readings[o.marked] : null;
-  const mark = m ? `<circle cx="${x(m.t_h)}" cy="${y(m.temp_c)}" r="6" class="mark"/><text x="${x(m.t_h) + 9}" y="${y(m.temp_c) - 8}" class="mark-text">changed reading</text>` : "";
+  const a = o.marked ? readings[o.marked.from] : undefined;
+  const b = o.marked ? readings[o.marked.to] : undefined;
+  let mark = "";
+  if (a && b && o.marked!.from === o.marked!.to) {
+    mark = `<circle cx="${x(a.t_h)}" cy="${y(a.temp_c)}" r="6" class="mark"/><text x="${x(a.t_h) + 9}" y="${y(a.temp_c) - 8}" class="mark-text">changed reading</text>`;
+  } else if (a && b) {
+    const seg = readings.slice(o.marked!.from, o.marked!.to + 1).map((r) => `${x(r.t_h).toFixed(1)},${y(r.temp_c).toFixed(1)}`).join(" ");
+    const x0 = x(a.t_h) - 2;
+    const w = Math.max(4, x(b.t_h) - x(a.t_h) + 4);
+    const top = Math.min(...readings.slice(o.marked!.from, o.marked!.to + 1).map((r) => y(r.temp_c)));
+    // label on the right of the band, or on its left near the end of the chart
+    const right = x0 + w + 120 < W - M.r;
+    const tx = right ? x0 + w + 4 : x0 - 4;
+    const ty = Math.max(M.t + 12, top - 8);
+    mark = `<rect x="${x0.toFixed(1)}" y="${M.t}" width="${w.toFixed(1)}" height="${H - M.t - M.b}" class="mark-band" data-testid="chart-changed"/><polyline points="${seg}" class="mark-line"/><text x="${tx.toFixed(1)}" y="${ty.toFixed(1)}" text-anchor="${right ? "start" : "end"}" class="mark-text">changed readings</text>`;
+  }
   const lines = [o.sourceLabel, o.note].filter(Boolean) as string[];
   const box = lines.map((l, i) => `<text x="${M.l + 10}" y="${M.t + 18 + i * 17}" class="${i ? "chart-note" : "chart-label"}">${esc(l)}</text>`).join("");
 

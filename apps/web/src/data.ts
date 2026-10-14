@@ -51,11 +51,28 @@ async function getJson<T>(url: string): Promise<T> {
   return (await r.json()) as T;
 }
 
+// Published files do not change while the page is open: each is downloaded once, so trying a tamper (a new query
+// string, rendered again) sends no new request. Every render still parses and checks the bytes from scratch.
+const fileCache = new Map<string, Promise<Uint8Array>>();
+
+function fileBytes(url: string): Promise<Uint8Array> {
+  let p = fileCache.get(url);
+  if (!p) {
+    p = fetch(url).then(async (r) => {
+      if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
+      return new Uint8Array(await r.arrayBuffer());
+    });
+    fileCache.set(url, p);
+    p.catch(() => fileCache.delete(url));
+  }
+  return p;
+}
+
+const fileJson = async <T>(url: string): Promise<T> => JSON.parse(new TextDecoder().decode(await fileBytes(url))) as T;
+
 /** sha256 of a published file's bytes, as 0x-hex (the form the ledger stores). */
 export async function fileHash(url: string): Promise<Hex> {
-  const r = await fetch(url);
-  if (!r.ok) throw new Error(`${url}: HTTP ${r.status}`);
-  return toHex(sha256(new Uint8Array(await r.arrayBuffer())));
+  return toHex(sha256(await fileBytes(url)));
 }
 
 let chainCache: Promise<ChainView> | null = null;
@@ -79,11 +96,12 @@ export function loadChain(c: AppConfig, labels: string[]): Promise<ChainView> {
 let inputsCache: Promise<InputsFile> | null = null;
 export const loadInputs = (): Promise<InputsFile> => (inputsCache ??= getJson<InputsFile>(publishedUrl("data/scenario/inputs.json")));
 
-export const loadBatches = (label: string): Promise<BatchesFile> => getJson<BatchesFile>(publishedUrl(`data/pours/${label}/batches.json`));
+export const loadBatches = (label: string): Promise<BatchesFile> => fileJson<BatchesFile>(publishedUrl(`data/pours/${label}/batches.json`));
 
 export const evidencePath = (network: string, label: string): string => `scenario/${network}-evidence-${label}.json`;
 
 let aiCache: Promise<AiFile> | null = null;
 export const loadAi = (): Promise<AiFile> => (aiCache ??= getJson<AiFile>("/ai/outputs.json"));
 
-export const loadJson = getJson;
+/** A published JSON file (cached like the other published files). */
+export const loadJson = fileJson;

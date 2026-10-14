@@ -1,7 +1,11 @@
 // Numbers on the passport, computed in the browser with packages/core from the readings that passed verification.
 // Strength uses the calibration fit stored in the evidence package (whose sha256 the inspector put on chain).
+// One exception, forgedClaim: the same code run on a copy edited in this browser, shown only next to its refusal.
 import { embodiedCo2, maturityAt, maturitySeries, saving, strengthRange, type Co2Range, type MaturityPoint, type Reading, type StrengthFit, type StrengthRange } from "@pourproof/core";
+import { eventsOf } from "./chain.ts";
 import type { Mix } from "./data.ts";
+import type { PourModel } from "./model.ts";
+import { roleName, type Role } from "./roles.ts";
 import type { PublishedBatch } from "./verify.ts";
 
 export const CHECKPOINT_DAYS = [3, 7, 14, 28];
@@ -59,4 +63,48 @@ export function carbonView(volume_m3: number, delivered: Mix, baseline: Mix | nu
     baseline: baseline ? embodiedCo2(volume_m3, gwp(baseline)) : null,
     saving: baseline ? saving(gwp(baseline), gwp(delivered), volume_m3) : null,
   };
+}
+
+/** The saving the curing record supports right now. Every number comes from the chain; nothing new is computed. */
+export type Claimable =
+  | { status: "claimed"; by: Role | "unknown role"; saving: Co2Range }
+  | { status: "supported"; saving: Co2Range }
+  | { status: "unsupported"; reason: string };
+
+export function claimableNow(m: Pick<PourModel, "verify" | "view" | "chain">): Claimable {
+  if (!m.verify.ok) return { status: "unsupported", reason: "the curing record does not verify" };
+  const claim = eventsOf(m.view, m.chain.pourId, "SavingClaimed")[0];
+  if (claim) {
+    return { status: "claimed", by: roleName(String(claim.args.role)) ?? "unknown role", saving: { low_kg: Number(claim.args.savingLow_kg), high_kg: Number(claim.args.savingHigh_kg) } };
+  }
+  const s = m.chain.state;
+  if (!s.pour.strengthApproved) return { status: "unsupported", reason: "the inspector has not approved strength" };
+  if (/^0x0+$/i.test(s.baseline.mixHash)) return { status: "unsupported", reason: "no baseline was declared before the pour" };
+  return { status: "supported", saving: { low_kg: Number(s.savingRange[0]), high_kg: Number(s.savingRange[1]) } };
+}
+
+/** What the edited copy would claim: strength at the first checkpoint after the last changed reading. */
+export interface ForgedClaim {
+  age_d: number;
+  /** from the edited readings */
+  forged: StrengthRange;
+  /** from the signed (published, unedited) readings */
+  signed: StrengthRange;
+}
+
+/**
+ * With a tamper on a pour whose evidence package carries a strength fit: the same strength code run on the edited
+ * readings and on the signed ones, side by side. The edited numbers are what a forged record would claim, not an
+ * estimate; the page shows them only next to the refusal.
+ */
+export function forgedClaim(m: Pick<PourModel, "applied" | "batches" | "file" | "chain" | "evidence">): ForgedClaim | null {
+  const fit = m.evidence?.pkg?.strength.fit;
+  if (!m.applied || !fit) return null;
+  const pourStart = Number(m.chain.state.pour.pourStart);
+  const forged = strengthView(readingsOf(m.batches, pourStart), fit);
+  const signed = strengthView(readingsOf(m.file.batches, pourStart), fit);
+  const lastChangedH = (m.applied.changed[m.applied.changed.length - 1].t_unix - pourStart) / 3600;
+  const at = forged.checkpoints.find((c) => c.age_d * 24 >= lastChangedH) ?? forged.checkpoints[forged.checkpoints.length - 1];
+  const before = at && signed.checkpoints.find((c) => c.age_d === at.age_d);
+  return at && before ? { age_d: at.age_d, forged: at.strength, signed: before.strength } : null;
 }

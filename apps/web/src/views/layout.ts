@@ -16,11 +16,14 @@ export function demoCard(): string {
   return `<aside class="demo-card" data-testid="demo-card"><strong>${esc(DEMO_CARD_TITLE)}.</strong> ${esc(DEMO_CARD_TEXT)}</aside>`;
 }
 
-export function page(search: string, body: string, v: ChainView | null): string {
+/** A page: header, then the hero (home page) so a visitor first reads what this is, then the source bar and the demo
+ * card (on every screen), then the page itself. */
+export function page(search: string, body: string, v: ChainView | null, hero = ""): string {
   return `<header class="top">
     <a href="${link("/", search)}" data-nav class="brand">PourProof</a>
     <span class="tag">a signed passport for every concrete pour</span>
   </header>
+  ${hero}
   ${v ? sourceBar(v) : ""}
   ${demoCard()}
   <main>${body}</main>

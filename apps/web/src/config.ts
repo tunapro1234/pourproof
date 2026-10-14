@@ -21,6 +21,11 @@ declare const __POURPROOF_STATIC__: boolean | undefined;
 /** True in the static snapshot build (vite.config.ts defines it); false in dev, the normal build and tests. */
 export const STATIC_SITE: boolean = typeof __POURPROOF_STATIC__ === "boolean" && __POURPROOF_STATIC__;
 
+declare const __POURPROOF_SNAPSHOT_SHA256__: Record<string, string> | undefined;
+
+/** sha256 (hex) of each recorded snapshot file by network, computed at build time from public/snapshot/ (vite.config.ts). */
+export const SNAPSHOT_SHA256: Record<string, string> = typeof __POURPROOF_SNAPSHOT_SHA256__ === "object" && __POURPROOF_SNAPSHOT_SHA256__ ? __POURPROOF_SNAPSHOT_SHA256__ : {};
+
 const env = (k: string): string | undefined => (import.meta as unknown as { env?: Record<string, string | undefined> }).env?.[k];
 
 export function readConfig(search: string, staticSite = STATIC_SITE): AppConfig {

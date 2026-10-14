@@ -6,7 +6,7 @@ import { eventsOf, type ChainPour, type ChainView } from "./chain.ts";
 import type { AppConfig } from "./config.ts";
 import { evidencePath, fileHash, loadAi, loadBatches, loadChain, loadInputs, loadJson, publishedUrl, type InputsFile, type Mix, type PourInputs } from "./data.ts";
 import type { EvidencePackage } from "./compute.ts";
-import { applyTamper, parseTamper, type Tamper, type TamperApplied } from "./tamper.ts";
+import { applyTamper, nightsOf, parseTamper, type Night, type Tamper, type TamperApplied } from "./tamper.ts";
 import { verifyBatches, type BatchesFile, type OnChainBatch, type PublishedBatch, type VerifyResult } from "./verify.ts";
 
 export interface DocCheck {
@@ -30,6 +30,8 @@ export interface PourModel {
   batches: PublishedBatch[];
   tamper: Tamper | null;
   applied: TamperApplied | null;
+  /** the pour's nights in the published file (for the tamper card) */
+  nights: Night[];
   onChain: OnChainBatch[];
   verify: VerifyResult;
   /** problems with the published file itself (signed for another chain or ledger) */
@@ -51,14 +53,8 @@ async function checkDoc(what: string, path: string, onChain: Hex): Promise<DocCh
   }
 }
 
-export async function loadPour(cfg: AppConfig, label: string, search: string): Promise<PourModel> {
-  const inputsFile: InputsFile = await loadInputs();
-  const view = await loadChain(cfg, Object.keys(inputsFile.pours));
-  const chain = view.pours[label];
-  const inputs = inputsFile.pours[label];
-  if (!chain || !inputs) throw new Error(`pour ${label} is not on this chain view`);
-  const file = await loadBatches(label);
-
+/** The batch part of a pour page: the published file (optionally tampered) checked against the chain view. No I/O. */
+export function checkPour(view: ChainView, chain: ChainPour, file: BatchesFile, search: string): Pick<PourModel, "batches" | "tamper" | "applied" | "nights" | "onChain" | "verify" | "contextProblems"> {
   const contextProblems: string[] = [];
   if (file.context.chainId !== view.chainId || file.context.ledger.toLowerCase() !== view.ledger.toLowerCase()) {
     contextProblems.push(
@@ -67,7 +63,8 @@ export async function loadPour(cfg: AppConfig, label: string, search: string): P
   }
   if (file.pourId.toLowerCase() !== chain.pourId.toLowerCase()) contextProblems.push(`The published batches are for pour id ${file.pourId}, not ${chain.pourId}`);
 
-  const tamper = parseTamper(search);
+  const pourStart = Number(chain.state.pour.pourStart);
+  const tamper = parseTamper(search, { batches: file.batches, pourStart });
   const t = tamper ? applyTamper(file.batches, tamper) : null;
   const batches = t?.batches ?? file.batches;
 
@@ -88,6 +85,17 @@ export async function loadPour(cfg: AppConfig, label: string, search: string): P
     published: batches,
   });
   if (contextProblems.length) verify.ok = false;
+  return { batches, tamper: t ? tamper : null, applied: t?.applied ?? null, nights: nightsOf(file.batches, pourStart), onChain, verify, contextProblems };
+}
+
+export async function loadPour(cfg: AppConfig, label: string, search: string): Promise<PourModel> {
+  const inputsFile: InputsFile = await loadInputs();
+  const view = await loadChain(cfg, Object.keys(inputsFile.pours));
+  const chain = view.pours[label];
+  const inputs = inputsFile.pours[label];
+  if (!chain || !inputs) throw new Error(`pour ${label} is not on this chain view`);
+  const file = await loadBatches(label);
+  const checked = checkPour(view, chain, file, search);
 
   const delivered = inputsFile.mixes[inputs.delivered_mix];
   const baseline = inputs.baseline_mix ? inputsFile.mixes[inputs.baseline_mix] : null;
@@ -112,12 +120,7 @@ export async function loadPour(cfg: AppConfig, label: string, search: string): P
     delivered,
     baseline,
     file,
-    batches,
-    tamper,
-    applied: t?.applied ?? null,
-    onChain,
-    verify,
-    contextProblems,
+    ...checked,
     docs: await Promise.all(docs),
     evidence,
     ai,

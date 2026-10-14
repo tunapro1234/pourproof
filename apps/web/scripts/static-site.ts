@@ -5,6 +5,7 @@
 //  - every HTML file carries the "recorded on-chain state, block N" label in its markup, before any script runs
 //  - each route has its own index.html (pour/<id>/, verify/<id>/) and 404.html is the app shell for anything else
 //  - the build fails if an AI output is not recorded or if any file looks like it holds a secret
+import { createHash } from "node:crypto";
 import { existsSync, readdirSync, readFileSync, statSync } from "node:fs";
 import { join, relative } from "node:path";
 
@@ -28,6 +29,17 @@ export function readSnapshots(dir: string): SnapshotInfo[] {
       if (!/^recorded on-chain state, block \d+$/.test(s.label)) throw new Error(`${f}: unexpected label "${s.label}"`);
       return { network: s.network, networkLabel: s.networkLabel, label: s.label, block: s.block, pours: Object.keys(s.pours) };
     });
+}
+
+/** sha256 (hex) of each recorded snapshot file by network, computed when the app is built; the trust note shows it. */
+export function snapshotSha256(dir: string): Record<string, string> {
+  if (!existsSync(dir)) return {};
+  return Object.fromEntries(
+    readdirSync(dir)
+      .filter((f) => f.endsWith(".json"))
+      .sort()
+      .map((f) => [f.slice(0, -".json".length), createHash("sha256").update(readFileSync(join(dir, f))).digest("hex")]),
+  );
 }
 
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");

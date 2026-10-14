@@ -69,6 +69,8 @@ export interface ChainView {
   source: "snapshot" | "live";
   /** shown on every screen: "recorded on-chain state, block N" or "live read from <rpc>, block N" */
   sourceLabel: string;
+  /** live mode: the JSON-RPC endpoint the state was read from */
+  rpcUrl?: string;
   network: NetworkName;
   networkLabel: string;
   timeMode: TimeMode;

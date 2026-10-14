@@ -68,6 +68,7 @@ export async function readLive(c: LiveConfig, client: PublicClient = liveClient(
   return {
     source: "live",
     sourceLabel: `live read from ${c.rpcUrl}, block ${head.number}`,
+    rpcUrl: c.rpcUrl,
     network: c.network,
     networkLabel: NETWORK_LABEL[c.network],
     timeMode: TIME_MODE[c.network],
