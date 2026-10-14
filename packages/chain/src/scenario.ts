@@ -369,7 +369,7 @@ export async function runScenario(o: ScenarioOptions) {
   const actions: Action[] = [];
   const plan = (t: number, run: () => Promise<unknown>) => actions.push({ at: t, run });
 
-  // ---- P-001: honest low-clinker pour; the contractor declares the baseline before the pour exists on chain
+  // ---- P-001: honest leaner pour; the contractor declares the baseline before the pour exists on chain
   const in1 = inputs.pours["P-001"];
   const base = mixOf(in1.baseline_mix!);
   // In backdated mode `at` only orders the actions, so each pour's setup is keyed just before its (past) pourStart.

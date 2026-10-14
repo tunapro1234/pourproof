@@ -8,7 +8,7 @@ each one carries the watermark "SAMPLE - NOT A REAL DOCUMENT".
 | `delivery-ticket-P-001.png` | Delivery ticket for pour P-001, made to look like a phone photo (Mix B, 8.0 m3, plate 34 XX 0000) |
 | `delivery-ticket-P-002.png` | Same for pour P-002, the tamper case (plate 34 XX 0001) |
 | `sample-epd-mix-a.pdf` | Sample EPD for Mix A, the contractor's declared baseline (Portland cement Type I/II, 380 kg/m3) |
-| `sample-epd-mix-b.pdf` | Sample EPD for Mix B, the delivered low-clinker mix (Portland-limestone cement Type IL, 320 kg/m3) |
+| `sample-epd-mix-b.pdf` | Sample EPD for Mix B, the delivered leaner mix (Portland-limestone cement Type IL, 320 kg/m3) |
 | `make_sample_docs.py` | Builds all four files from the values below |
 | `test_sample_docs.py` | Checks that the files match the generator and carry the watermark on every page |
 

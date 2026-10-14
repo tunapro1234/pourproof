@@ -18,7 +18,7 @@ export const ATTRIBUTION =
   "Curing data: Utepov et al., Complex Maturity Method for Estimating the Concrete Strength Based on Curing Temperature, Ambient Temperature and Relative Humidity, Applied Sciences 11(16):7712, 2021; dataset doi 10.17632/nmr8pjx8d8.1, CC BY 4.0.";
 
 export const SERIES_NOTE: Record<string, string> = {
-  box1: "curing curve: published dataset (class B25), not Mix B",
+  box1: "curing curve: published dataset, class B25, not the delivered mix",
   ambient: "this device logged the dataset's ambient air series (tamper case)",
 };
 

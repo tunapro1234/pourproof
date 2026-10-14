@@ -329,6 +329,7 @@ export function pourView(m: PourModel, search: string): string {
   </div>
   <section class="card" id="curing"><h2>Curing curve</h2>
     ${curingChart(readings, { sourceLabel: deviceLabel(s.device.kind), note: SERIES_NOTE[m.inputs.device_series], marked: m.applied ? { from: m.applied.changed[0].index, to: m.applied.changed[m.applied.changed.length - 1].index } : null })}
+    ${SERIES_NOTE[m.inputs.device_series] ? `<p data-testid="curve-note"><strong>${esc(sentence(SERIES_NOTE[m.inputs.device_series]))}.</strong></p>` : ""}
     <p class="small">${readings.length} readings, every 30 min from ${esc(fmtTime(m.batches[0]?.readings[0]?.t_unix ?? pourStart))}; pour start on chain ${esc(fmtTime(pourStart))}.</p>
   </section>
   <section class="card" id="strength"><h2>Maturity and strength</h2>

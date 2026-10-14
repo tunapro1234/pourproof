@@ -3,7 +3,7 @@
 PourProof gives every concrete pour a signed passport. The ready-mix supplier, the contractor, the building inspector and the owner
 all read the same record. A device inside the pour logs curing temperature and signs the readings in batches with a P-256 key, and
 the ledger contract verifies each batch signature on chain. Maturity (Nurse-Saul, ASTM C1074) and an estimated strength range are
-computed in code from those readings. When a lower-clinker mix is used, the carbon saving against the baseline mix the contractor
+computed in code from those readings. When a leaner mix is used, the carbon saving against the baseline mix the contractor
 declared before the pour can be claimed on chain exactly once, by one party. Claude reads the delivery ticket photo and the EPD PDF
 and proposes field values with their source, and a person confirms them. The AI flags; it never approves.
 
@@ -61,7 +61,7 @@ Base Sepolia is wired up but has not run yet: the role accounts have no test ETH
 - **The carbon saving.** It is a testnet event that shows the single-claim rule. It is not a credit and has no market value.
 - **Mixes, volumes and tickets.** The two mixes (GWP ranges from a published cement EPD plus labelled assumptions), the 8 m3
   volumes and the fictional "Sample Ready-Mix Co." tickets are sample values in `data/scenario/inputs.json`; each value names its
-  source or says "assumption". The curing curve is the dataset's own concrete (class B25), not the sample mix.
+  source or says "assumption". The curing curve is from the published dataset, class B25, not the delivered mix.
 
 ## Repository layout
 
@@ -284,7 +284,7 @@ wallet.
 | Page | What it shows |
 |---|---|
 | `/` | the pours, their curing record, strength approval and claim status |
-| `/pour/:id` | the passport: delivered and baseline mix, volume, embodied CO2 range and its EPD source, saving range (baseline vs delivered, next to the ledger's `savingRange`), curing curve, maturity and strength ranges ("estimated range, inspector decides"), the rule-based curing flags with the AI explanation, saving claim status ("Already claimed by supplier" and the refused second claim), roles and signatures timeline, document hashes, AI fields with their source quotes, and a QR code for the page URL |
+| `/pour/:id` | the passport: delivered and baseline mix, volume, embodied CO2 range and its EPD source, saving range (baseline vs delivered, next to the ledger's `savingRange`), curing curve (published dataset, class B25, not the delivered mix), maturity and strength ranges ("estimated range, inspector decides"), the rule-based curing flags with the AI explanation, saving claim status ("Already claimed by supplier" and the refused second claim), roles and signatures timeline, document hashes, AI fields with their source quotes, and a QR code for the page URL |
 | `/verify/:id` | every batch: root rebuilt from the readings vs the root on chain, and the P-256 signature |
 
 Verification runs in the browser with `packages/core`. It downloads the published device batches
