@@ -468,9 +468,10 @@ One npm workspaces monorepo (Node 22, strict TypeScript) and one Foundry project
 - `packages/ai`: the Claude calls and the deterministic checks around them.
 - `apps/web`: Vite and plain TypeScript, tested with Vitest and Playwright.
 
-Most of the code was written with an AI coding assistant; its commits carry the author name `pourproof-builder`. A student team
-set the plan, made the design decisions and checked each part: every piece of work came with acceptance checks (tests, page
-checks, a scan for keys) that had to pass before it counted as done. Inside the product the Claude API (`claude-haiku-5-5`) has
+Most of the code was written with an AI coding assistant; its commits carry the author name `pourproof-builder`. Much of the
+research, planning and review was also done with AI assistants (Claude). The student team approved the direction and the key
+decisions. Every piece of work came with acceptance checks (tests, page checks, a scan for keys) that had to pass before it
+counted as done. Inside the product the Claude API (`claude-haiku-5-5`) has
 two narrow jobs, reading fields from the delivery ticket and the EPDs and putting a curing flag into words. Its answers were
 recorded once from live calls and are replayed ([AI layer](#ai-layer)).
 
