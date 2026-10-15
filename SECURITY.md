@@ -1,7 +1,8 @@
 # Security
 
-PourProof is a hackathon prototype running on a local Anvil chain and the Base Sepolia testnet. It has had no external
-audit. Testnet demo, no real claim: do not use it to make a real carbon claim or a structural decision.
+PourProof is a hackathon prototype. Everything has run only on a local Anvil chain; Base Sepolia is wired up but has not
+run. It has had no external audit. Testnet demo, no real claim: do not use it to make a real carbon claim or a structural
+decision.
 
 This file says what the system protects, where trust sits, what a signature does and does not prove, how keys are held,
 and what we know is missing. The threat table is in [docs/threat-model.md](docs/threat-model.md). Static analysis output
@@ -16,9 +17,9 @@ To report a problem, open an issue on the repository. Do not put keys or persona
 | Curing record (readings) | Device, then `data/pours/<pour>/batches.json`; on chain only the Merkle root per batch | The maturity and strength range are computed from it |
 | Device key (P-256) | Simulated device: `$POURPROOF_SECRETS/devices/<pour>.json`, mode 600, outside the repo. ESP32: flash | Anyone holding it can sign batches as the device |
 | Role keys (supplier, contractor, inspector, owner, admin) | Anvil: the node's dev accounts. Base Sepolia: `$POURPROOF_SECRETS/roles.json`, mode 600 | They create pours, register devices, approve strength, claim the saving |
-| Saving claim | `PourLedger.claimSaving`, once per pour | The one thing that must not be counted twice |
+| Saving claim | `PourLedger.claimSaving`, once per pour record on this ledger | The one thing that must not be counted twice |
 | Evidence package | `scenario/<network>-evidence-<pour>.json`, sha256 on chain in `approveStrength` | Records what the inspector approved, including the AI prompt hashes |
-| Passport credential | `scenario/<network>-passport-<pour>.json` (W3C VC 2.0) | Portable copy of the record, signed by the inspector |
+| Passport credential | `scenario/<network>-passport-<pour>.json` (W3C VC 2.0 data model, our own EIP-712 proof) | Portable copy of the record, signed with the inspector role's key |
 
 ## Trust boundaries
 
@@ -27,11 +28,12 @@ To report a problem, open an issue on the repository. Do not put keys or persona
 3. **Device to chain.** Anyone may relay a batch (`appendBatch` has no role check). The contract accepts it only with a
    valid P-256 signature from the key the inspector registered for that pour, the next counter, and a time window inside
    `[pourStart, block.timestamp]`.
-4. **Documents to AI to people.** Claude reads the delivery ticket photo and the EPD PDF and proposes field values with
-   the quote they came from. Code checks each PDF quote against `pdftotext` output; image fields always wait for a person.
-   The AI approves nothing and never produces a number on its own: an explanation that contains a number not in the
+4. **Documents to AI to people.** Claude reads the sample ticket photo and sample EPD PDFs and proposes fields with source
+   quotes. Code checks each EPD quote against the PDF text (`pdftotext`); photo fields wait for a person, and the AI approves
+   nothing. It never produces a number on its own: an explanation that contains a number not in the
    computed stats is rejected.
-5. **People to chain.** Each role acts with its own key. The admin can grant and revoke roles.
+5. **People to chain.** Each role acts with its own key. The admin can grant and revoke roles. In the committed Anvil run the
+   roles are Anvil's default dev accounts, whose keys are public, and one script of ours sent every role's transactions.
 6. **Chain to reader.** The web app reads public RPC or a recorded snapshot and verifies roots and signatures in the
    browser. It has no wallet and signs nothing.
 
@@ -39,8 +41,11 @@ To report a problem, open an issue on the repository. Do not put keys or persona
 same server: one snapshot file and the published batch files. The browser check proves that an edited reading cannot
 match its signed root. It does not prove that the server is honest, because the server could replace readings, roots and
 key together. The page names the snapshot's block and sha256 so the file can be compared with the one in the repository.
-To remove that trust, run the scenario on your own Anvil and open the app with `?mode=live`; the roots, the device key,
-the approval and the claim then come from your node (README, "Trust model").
+
+**Re-running it yourself.** `npm run scenario` on your own Anvil, then `npm run dev` with `?mode=live`, re-runs the whole
+pipeline with your own device and role keys. It checks that the code does what the README says. It does not check our
+recorded record, which came from a local Anvil node that is now stopped. Only a run on a public chain (Base Sepolia: wired
+up, not run yet) would give a reader a record we cannot swap (README, "Trust model").
 
 ## The oracle problem
 
@@ -57,7 +62,8 @@ Three measures, in the order they act:
 1. **Physics check on the signed curve.** `packages/core` `anomaly()` looks for the hydration heat peak in the first 24
    hours and for a curve that follows ambient air (correlation 0.95 or more). Either one raises `no_hydration_signature`;
    missing time raises `gap`. P-002 is flagged this way and is never approved, so its saving cannot be claimed. A heated
-   bucket can imitate a peak, so this check catches the lazy case, not a careful one.
+   bucket can imitate a peak: the check catches open air, not a heated bucket. Nothing on chain reads its flag: the
+   inspector decides.
 2. **Binding the device to the pour on site.** Only the inspector role can register a device, one per pour, before the
    readings start; a swap is a separate inspector transaction with a `DeviceReplaced` event. In the field the inspector
    records the device serial and its position before the concrete goes in (tied to the rebar, cable sealed). The chain
@@ -80,9 +86,9 @@ Three measures, in the order they act:
   digest with no extra hashing), so the message format and the contract stay the same. Microchip's pre-provisioned variants ship
   with a device certificate, which would let the inspector register only keys that live in such a chip.
 - **Role keys.** On Anvil the roles are the node's unlocked dev accounts from Anvil's public test mnemonic; they protect
-  nothing and exist only on a local chain. On Base Sepolia they come from `$POURPROOF_SECRETS/roles.json` (mode 600,
-  testnet only, created by `npm run roles-keygen -w packages/chain`). A real deployment would put the inspector and admin
-  keys on hardware wallets and the admin role behind a multisig.
+  nothing and exist only on a local chain. One script of ours sent every role's transactions. On Base Sepolia they come
+  from `$POURPROOF_SECRETS/roles.json` (mode 600, testnet only, created by `npm run roles-keygen -w packages/chain`). A real
+  deployment would put the inspector and admin keys on hardware wallets and the admin role behind a multisig.
 - **Rotation.** Role keys rotate with `grantRole` and `revokeRole` (admin). A device key is rotated with `replaceDevice`
   (inspector); the counter continues and the old key stops working at once (`test_replaceDevice_oldKeyStops_counterContinues`).
 - **Secrets never enter the repository.** `.env.example` holds names only. `ANTHROPIC_API_KEY` is read from the process
@@ -125,8 +131,11 @@ has that document, and role addresses are pseudonymous but link all pours of the
 
 ## Passport credential (W3C VC 2.0)
 
-`packages/core/src/vc.ts` turns an approved pour into a Verifiable Credential 2.0
-(`@context` `https://www.w3.org/ns/credentials/v2`, type `VerifiableCredential` and `ConcretePourPassport`).
+`packages/core/src/vc.ts` turns an approved pour into a credential that uses the W3C VC 2.0 data model with our own
+EIP-712 proof (`@context` `https://www.w3.org/ns/credentials/v2`, type `VerifiableCredential` and `ConcretePourPassport`).
+It is signed with the inspector test account's key. In the committed Anvil run the inspector is Anvil dev account
+0x90f7...b906, whose key comes from Anvil's public test mnemonic, so anyone can make this signature. It shows the
+credential format, not who approved.
 `npm run passport -w packages/chain -- --network anvil` writes `scenario/anvil-passport-P-001.json` from the deployment
 record, the transaction log and the evidence package; nothing is typed in by hand.
 
@@ -172,6 +181,10 @@ model.
 - **One admin key.** The admin can grant any role, including inspector, to any address. A multisig and a timelock would
   be the first change for real use.
 - **The inspector is trusted.** The contract checks that the inspector role approved, not that the approval was right.
+- **Once per pour record.** A second pour carrying the same ticket hash is refused (`TicketReused`), but any owner-role
+  account can claim any pour, and claims made in other registries are invisible to it.
+- **No delivery deadline.** A batch can be appended any time after its readings, so the chain shows when a batch was
+  committed, not when it was measured. A maximum-delay check is a next step.
 - **Batches after approval are still accepted.** The approved evidence package lists the roots it covered, so later
   batches do not change what was approved, but the contract does not close the pour.
 - **Revocation.** The passport has no `credentialStatus`; a verifier must check the inspector role on chain. Revoking a
@@ -180,4 +193,4 @@ model.
   Mix B values and both EPDs are labelled samples.
 - **AI fields from photos** stay `needs_review` until a person confirms them; the stored AI responses in this repository
   were recorded once from live `claude-haiku-5-5` calls and are replayed, labelled "recorded response".
-- **No audit, no mainnet.** Local Anvil and Base Sepolia only.
+- **No audit, no mainnet.** Only a local Anvil chain has run; Base Sepolia is wired up but has not run.

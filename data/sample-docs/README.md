@@ -29,7 +29,7 @@ sample-values.json. Each entry there names its source or says "assumption".
 | Value | Mix A (baseline) | Mix B (delivered) | Source |
 |---|---|---|---|
 | Cement GWP per tonne | 974.92 kg CO2e/t (Type I/II) | 892.95 kg CO2e/t (Type IL) | Akcansa cement EPD, NRMCA EPD No. 20243, pages 5 and 6 (link below) |
-| Cement content | 380 kg/m3 | 320 kg/m3 | assumption: typical over-designed C30/37 mix (A); optimized mix (B) |
+| Cement content | 380 kg/m3 | 320 kg/m3 | assumption: over-designed C30/37 mix (A); optimized mix (B) |
 | Cement GWP per m3 | 370.5 kg CO2e/m3 | 285.7 kg CO2e/m3 | cement content x GWP per tonne |
 | Other constituents | 20 to 40 kg CO2e/m3 | 20 to 40 kg CO2e/m3 | assumption: aggregates, water, admixture, batching; not modeled |
 | **GWP-total, A1-A3** | **390 to 411 kg CO2e/m3** | **306 to 326 kg CO2e/m3** | sum of the two rows above, in the whole kg declared on chain |

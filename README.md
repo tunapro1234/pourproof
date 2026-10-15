@@ -1,18 +1,20 @@
 # PourProof
 
 PourProof gives every concrete pour a signed passport. The ready-mix supplier, the contractor, the building inspector and the owner
-all read the same record. A device inside the pour logs curing temperature and signs the readings in batches with a P-256 key, and
-the ledger contract verifies each batch signature on chain. Maturity (Nurse-Saul, ASTM C1074) and an estimated strength range are
-computed in code from those readings. When a leaner mix is used, the carbon saving against the baseline mix the contractor
-declared before the pour can be claimed on chain exactly once, by one party. Claude reads the delivery ticket photo and the EPD PDF
-and proposes field values with their source, and a person confirms them. The AI flags; it never approves.
+all read the same record. In the design, a device cast into the pour logs curing temperature and signs the readings in
+batches with a P-256 key, and the ledger contract verifies each batch signature on chain. In this demo the device is simulated:
+software replays a published lab dataset (Mendeley nmr8pjx8d8, CC BY 4.0), on a local test chain. Maturity (Nurse-Saul,
+ASTM C1074) and an estimated strength range are computed in code from those readings. When a leaner mix is used, the carbon
+saving against the baseline mix the contractor declared before the pour can be claimed once per pour record on this ledger, by
+its supplier, its contractor or an owner. Claude reads the sample ticket photo and sample EPD PDFs and proposes fields with
+source quotes. Code checks each EPD quote against the PDF text; photo fields wait for a person, and the AI approves nothing.
 
 **Live demo (static, recorded on-chain state):** https://pourproof.tunapro.xyz/ . Open a pour, then its verify page; add
 `?tamper=reading:42` to the verify URL to see a changed reading fail against the signed root.
 
 > **Testnet demo, no real claim.**
-> Everything in this repository runs on a local Anvil chain or on Base Sepolia testnet. No carbon saving has been claimed, sold or
-> registered anywhere. Strength is shown as an estimated range; the inspector decides.
+> Everything has run only on a local Anvil chain; Base Sepolia is wired up but has not run. No carbon saving has been claimed,
+> sold or registered anywhere. Strength is shown as an estimated range; the inspector decides.
 
 ## Status
 
@@ -21,7 +23,8 @@ Working: the contracts with their tests, the dataset import and the maturity, st
 replay with its tamper cases (`packages/device`), and the end-to-end chain scenario on a local Anvil (`packages/chain`), whose
 recorded state the web app reads, the sample delivery tickets and EPDs (`data/sample-docs`), and the AI layer with its
 deterministic checks (`packages/ai`), the web passport with in-browser verification (`apps/web`) and its static snapshot build, and the
-passport export as a W3C Verifiable Credential 2.0 signed by the inspector ([Security](#security)).
+passport export, which uses the W3C VC 2.0 data model with our own EIP-712 proof, signed with the inspector test account's key
+([Passport credential](#passport-credential-w3c-vc-20)).
 Base Sepolia is wired up but has not run yet: the role accounts have no test ETH. The demo's AI answers were taken once from
 `claude-haiku-5-5` in live calls and stored; the app replays them without a key and labels them "recorded response" (see
 [AI layer](#ai-layer)).
@@ -54,7 +57,8 @@ Base Sepolia is wired up but has not run yet: the role accounts have no test ETH
 - **Time.** Replay runs faster than real time. Each reading's timestamp is the pour's recorded start plus the hour in the dataset.
   On local Anvil the scenario moves the chain clock forward; on Base Sepolia the readings are time-shifted into the past (see
   [Chain scenario](#chain-scenario)).
-- **The parties.** Supplier, contractor, inspector and owner are test accounts on a testnet or local chain.
+- **The parties.** Supplier, contractor, inspector and owner are test accounts. On Anvil they are Anvil's default dev accounts,
+  whose keys are public. One script of ours sent every role's transactions.
 - **AI responses.** Without an `ANTHROPIC_API_KEY`, the AI package answers from `packages/ai/recorded_responses/` and every
   output says "recorded response". Those files are real `claude-haiku-5-5` answers, recorded once from live calls with
   `npm run record -w packages/ai`; the demo makes no live call.
@@ -62,6 +66,17 @@ Base Sepolia is wired up but has not run yet: the role accounts have no test ETH
 - **Mixes, volumes and tickets.** The two mixes (GWP ranges from a published cement EPD plus labelled assumptions), the 8 m3
   volumes and the fictional "Sample Ready-Mix Co." tickets are sample values in `data/scenario/inputs.json`; each value names its
   source or says "assumption". The curing curve is from the published dataset, class B25, not the delivered mix.
+
+## Carbon accounting
+
+- Inventory, delivered mix: absolute A1-A3 footprint (cradle-to-gate).
+- The saving is an avoided-emissions estimate against the contractor's declared baseline (A1-A3 only, not checked against a
+  market-average mix), reported separately from the inventory and never subtracted from it.
+- What must not be counted twice is a saving that gets sold or awarded: the saving against baseline in a tender, an award or a
+  certificate. The ledger records that claim once. (This is our rule; WBCSD's 2023 guidance allows several value-chain companies
+  to report the same avoided emissions.)
+- If the saving is ever issued as a certificate, the buyer of the concrete reports the delivered mix at the baseline value
+  (Isometric draft protocol rule).
 
 ## Repository layout
 
@@ -87,12 +102,12 @@ docs              STRIDE threat model, Slither output, forge gas report
 | Step | Who | Rule |
 |---|---|---|
 | `declareBaseline` | contractor | the mix it would have used (GWP range, kg CO2e/m3); only before the pour starts and before any batch (`NotBeforePour`); once |
-| `createPour` | supplier | ticket hash, EPD hash, volume (dm3), GWP range of the delivered mix, pour start |
+| `createPour` | supplier | ticket hash, EPD hash, volume (dm3), GWP range of the delivered mix, pour start; a ticket hash already used by another pour reverts `TicketReused(ticketHash, firstPourId)` |
 | `acceptPour` | contractor | if a baseline exists, only the contractor who declared it |
 | `registerDevice` / `replaceDevice` | inspector only | one P-256 key per pour, kind `esp32` or `simulated` (carried in the event) |
 | `appendBatch` | anyone (relay) | device signature checked on chain (`BadSignature`), counter must be the next one (`CounterGap`), batch window inside the pour (`BadBatchWindow`), last reading not after the block time (`FutureBatch`) |
 | `approveStrength` | inspector | evidence hash (maturity calculation, break tests if any); needs at least one batch |
-| `claimSaving` | the pour's supplier, its contractor, or an owner | needs approval (`StrengthNotApproved`); once per pour, every later call reverts `AlreadyClaimed(pourId, firstClaimant)` |
+| `claimSaving` | the pour's supplier, its contractor, or an owner | needs approval (`StrengthNotApproved`); once per pour record, every later call reverts `AlreadyClaimed(pourId, firstClaimant)` |
 
 Saving on chain: low = (baselineLow - gwpHigh) x m3, high = (baselineHigh - gwpLow) x m3, in kg CO2e, rounded down, negative ends
 shown as 0 (volume is stored in dm3, 1 m3 = 1000 dm3). The off-chain `saving()` in `packages/core` keeps a negative low end
@@ -168,8 +183,8 @@ One run deploys `PourLedger`, grants the four roles, replays both devices for th
 
 | Pour | Steps |
 |---|---|
-| P-001 | contractor declares the baseline mix, supplier creates the pour, inspector registers the simulated device, contractor accepts, 112 batches, inspector approves strength, supplier claims the saving, the contractor's second claim reverts `AlreadyClaimed` |
-| P-002 | poured the next day: create, register, accept, batch 0; when batch 1 closes, a batch 1 signed by the P-001 device reverts `BadSignature`; when batch 2 closes, batch 2 sent with batch 1 withheld reverts `CounterGap`; then the honest batch 1 and the other 110 batches. The curing check flags the record, so it gets no approval and no claim |
+| P-001 | contractor declares the baseline mix, supplier creates the pour, inspector registers the simulated device, contractor accepts; a second pour record (P-003) carrying P-001's delivery ticket reverts `TicketReused`; 112 batches, inspector approves strength, supplier claims the saving, the contractor's second claim reverts `AlreadyClaimed` |
+| P-002 | poured the next day: the contractor declares the same baseline mix, then create, register, accept, batch 0; when batch 1 closes, a batch 1 signed by the P-001 device reverts `BadSignature`; when batch 2 closes, batch 2 sent with batch 1 withheld reverts `CounterGap`; then the honest batch 1 and the other 110 batches. The curing check flags the record, so it gets no approval, and the supplier's claim reverts `StrengthNotApproved` |
 
 Calls meant to fail are simulated first and then sent anyway, so the revert is on chain with its own transaction hash. The
 inspector's `evidenceHash` is the sha256 of `scenario/<network>-evidence-P-001.json`: maturity and the strength range computed by
@@ -184,7 +199,7 @@ Output:
 | `deployments/<network>.json` | ledger address, deploy tx and block, role addresses |
 | `scenario/<network>-log.json` | every step: role, account, function, arguments, tx hash, block, time, gas, decoded events, revert name and arguments |
 | `scenario/<network>-evidence-P-001.json` | the evidence package behind `approveStrength` |
-| `scenario/<network>-passport-P-001.json` | the approved pour as a W3C Verifiable Credential 2.0, signed by the inspector (`npm run passport`, below) |
+| `scenario/<network>-passport-P-001.json` | the approved pour as a credential in the W3C VC 2.0 data model with our own EIP-712 proof, signed with the inspector test account's key (`npm run passport`, below) |
 | `apps/web/public/snapshot/<network>.json` | what the web app needs without an RPC: all ledger events, both pours' on-chain state, their signed batches and readings, refused (reverted) transactions, block number |
 
 On Anvil the scenario starts a private node on a free local port at a fixed genesis time (2026-09-10 05:00 UTC) with 12 s per
@@ -203,57 +218,65 @@ exists. Mainnet is not supported.
 npm run passport -w packages/chain -- --network anvil    # after the scenario; writes scenario/anvil-passport-P-001.json
 ```
 
-`packages/core/src/vc.ts` turns an approved pour into a Verifiable Credential 2.0 (`@context`
-`https://www.w3.org/ns/credentials/v2`, type `VerifiableCredential` and `ConcretePourPassport`). The subject holds the pour id,
-both mixes, the volume, the embodied CO2 range, the saving range and who claimed it, a curing summary (batches, maturity, strength
-checkpoints as ranges labelled "estimated range, inspector decides") and the chain references: chain id, ledger, and the
+`packages/core/src/vc.ts` turns an approved pour into a credential that uses the W3C VC 2.0 data model with our own EIP-712 proof
+(`@context` `https://www.w3.org/ns/credentials/v2`, type `VerifiableCredential` and `ConcretePourPassport`). The subject holds the
+pour id, both mixes, the volume, the embodied CO2 range, the saving range and who claimed it, a curing summary (batches, maturity,
+strength checkpoints as ranges labelled "estimated range, inspector decides") and the chain references: chain id, ledger, and the
 transaction hashes from baseline to claim. Every value is read from the deployment record, the scenario log and the evidence
-package. The inspector signs it with EIP-712 typed data whose domain is the chain and the ledger, the same signature a wallet
-makes with `eth_signTypedData_v4`; `verifyPassport` checks it. The method is described in [SECURITY.md](SECURITY.md#passport-credential-w3c-vc-20).
+package. It is signed with the inspector test account's key as EIP-712 typed data whose domain is the chain and the ledger, the
+same signature a wallet makes with `eth_signTypedData_v4`; `verifyPassport` checks it. The method is described in
+[SECURITY.md](SECURITY.md#passport-credential-w3c-vc-20).
+
+In the committed Anvil run the inspector is Anvil dev account 0x90f7...b906, whose key comes from Anvil's public test mnemonic, so
+anyone can make this signature. It shows the credential format, not who approved.
 
 ## Gas
 
 Two measurements, neither from a public chain.
 
-**Local Anvil scenario, P-256 precompile.** Anvil's default hardfork has the P-256 precompile at 0x100, and OpenZeppelin's
-`P256.verify` uses it when it is there. `gasUsed` of every transaction in `scenario/anvil-log.json` (the committed run, 241
-transactions):
+**Local Anvil scenario, P-256 precompile.** The scenario starts Anvil with `--hardfork osaka`, which has the P-256 verification
+precompile at address 0x100 (EIP-7951). OpenZeppelin's `P256.verify` calls the precompile first and falls back to its Solidity
+implementation when the precompile is absent. The scenario stops if its first `appendBatch` uses more than 150,000 gas, so a run
+on a chain without the precompile does not pass quietly. `gasUsed` of every transaction in `scenario/anvil-log.json` (the
+committed run, 244 transactions):
 
 | Function | Transactions | Median gas | Max gas |
 |---|---:|---:|---:|
-| deploy PourLedger | 1 | 2,374,938 | 2,374,938 |
-| grantRole | 4 | 51,521 | 51,521 |
-| declareBaseline | 1 | 74,787 | 74,787 |
-| createPour | 2 | 118,618 | 118,618 |
+| deploy PourLedger | 1 | 2,404,351 | 2,404,351 |
+| grantRole | 4 | 51,543 | 51,543 |
+| declareBaseline | 2 | 74,787 | 74,787 |
+| createPour | 2 | 140,880 | 140,880 |
+| createPour, reverts `TicketReused` | 1 | 30,939 | 30,939 |
 | registerDevice | 2 | 98,750 | 98,756 |
-| acceptPour | 2 | 35,571 | 35,587 |
-| appendBatch (12 readings) | 224 | 73,086 | 90,174 |
-| appendBatch, reverts `BadSignature` | 1 | 52,591 | 52,591 |
-| appendBatch, reverts `CounterGap` | 1 | 36,257 | 36,257 |
-| approveStrength | 1 | 55,940 | 55,940 |
-| claimSaving | 1 | 40,243 | 40,243 |
-| claimSaving, reverts `AlreadyClaimed` | 1 | 26,495 | 26,495 |
+| acceptPour | 2 | 35,565 | 35,565 |
+| appendBatch (12 readings) | 224 | 73,064 | 90,152 |
+| appendBatch, reverts `BadSignature` | 1 | 52,569 | 52,569 |
+| appendBatch, reverts `CounterGap` | 1 | 36,235 | 36,235 |
+| approveStrength | 1 | 55,985 | 55,985 |
+| claimSaving | 1 | 40,221 | 40,221 |
+| claimSaving, reverts `AlreadyClaimed` | 1 | 26,473 | 26,473 |
+| claimSaving, reverts `StrengthNotApproved` | 1 | 26,457 | 26,457 |
 
 The first batch of a pour costs the most because it writes the pour's counter for the first time. A refused transaction still
 pays for the work done before the revert.
 
-**Contract tests, Solidity P-256.** `forge test --gas-report` on the happy path and device tests (forge 1.8.5, solc 0.8.28,
-optimizer 200 runs); the command and its full output are in [docs/gas-report.txt](docs/gas-report.txt). Forge's test EVM has
-no P-256 precompile, so `appendBatch` here pays for OpenZeppelin's Solidity P-256 verification, about four times the
-precompile cost above.
+**Contract tests, Solidity P-256.** `forge test --gas-report` on the happy path and device tests (forge 1.5.1, solc 0.8.28,
+optimizer 200 runs); the command and its full output are in [docs/gas-report.txt](docs/gas-report.txt). The contract tests
+compile and run for the Prague hardfork (`evm_version = "prague"` in contracts/foundry.toml), which has no P-256 precompile, so
+they take OpenZeppelin's Solidity path. `appendBatch` here costs about four times the precompile cost above.
 
 | Function | Median gas | Max gas |
 |---|---:|---:|
 | declareBaseline | 74,787 | 74,787 |
-| createPour | 118,594 | 118,594 |
-| acceptPour | 35,587 | 35,587 |
+| createPour | 140,856 | 140,856 |
+| acceptPour | 35,565 | 35,565 |
 | registerDevice | 98,756 | 98,756 |
 | replaceDevice | 45,721 | 45,721 |
-| appendBatch (12 readings, Solidity P-256) | 313,146 | 333,022 |
-| approveStrength | 55,940 | 55,940 |
-| claimSaving | 40,429 | 40,429 |
+| appendBatch (12 readings, Solidity P-256) | 313,124 | 333,000 |
+| approveStrength | 55,985 | 55,985 |
+| claimSaving | 40,407 | 40,407 |
 
-Contract size: PourLedger 10,603 bytes runtime, 10,893 bytes initcode (the report's deployment size, 10,925 bytes, adds the
+Contract size: PourLedger 10,739 bytes runtime, 11,029 bytes initcode (the report's deployment size, 11,061 bytes, adds the
 32-byte constructor argument).
 
 ## Security
@@ -360,7 +383,7 @@ npm run e2e -w apps/web          # build + Playwright: passport green, tamper re
 **Live mode** reads a running chain over JSON-RPC. Against a local Anvil:
 
 ```sh
-anvil --chain-id 31337 --timestamp 1789016400 --accounts 6          # terminal 1, http://127.0.0.1:8545
+anvil --chain-id 31337 --timestamp 1789016400 --hardfork osaka --accounts 6   # terminal 1, http://127.0.0.1:8545
 npm run scenario -w packages/chain -- --network anvil --rpc http://127.0.0.1:8545   # terminal 2
 npm run dev -w apps/web
 # open http://localhost:5173/?mode=live
@@ -403,10 +426,14 @@ What you have to trust depends on where the page gets the chain state.
   checks every P-256 signature against the key registered on chain, so it proves that the readings on screen are the ones that
   key signed. Change one reading and its batch no longer matches its signed root; the "Fake a warm night" card shows this. It does
   not prove that the server is honest: whoever serves the site could replace readings, roots and key together with a fake that
-  agrees with itself. The page names the snapshot's block and sha256, so the file can be compared with the one in this repository.
-- **A chain you run yourself (live mode).** To stop trusting the server, run the scenario on your own Anvil (`npm run scenario`,
-  see [Running it](#running-it-live-mode-and-snapshot-mode)), start the app with `npm run dev` and open `?mode=live`. Roots,
-  device key, approval and claim then come from your node over RPC, and the published readings are checked against them.
+  agrees with itself. The page names the snapshot's block and sha256, so the file can be compared with the one in this repository:
+  the committed `apps/web/public/snapshot/anvil.json` is block 244, sha256
+  `bcd77819fc08e3318d195b4e0eaaf545b30f04444684021728c7ba9a7a6cde42`.
+- **Re-running it yourself.** `npm run scenario` on your own Anvil, then `npm run dev` with `?mode=live`, re-runs the whole
+  pipeline with your own device and role keys. It checks that the code does what this README says. It does not check our
+  recorded record, which came from a local Anvil node that is now stopped. Only a run on a public chain (Base Sepolia: wired up,
+  not run yet) would give a reader a record we cannot swap. The commands are in
+  [Running it](#running-it-live-mode-and-snapshot-mode).
 - **In both modes** a valid signature proves the key, not the concrete: see the oracle problem in
   [SECURITY.md](SECURITY.md#the-oracle-problem). Approving strength stays with the inspector, and acceptance with the 28-day
   specimens.
@@ -427,6 +454,12 @@ What you have to trust depends on where the page gets the chain state.
   market. A European claim would need EN 15804 EPDs.
 - **Local chain only.** Everything has run on a local Anvil chain. Base Sepolia is wired up but has not run, so there is no
   public testnet record yet.
+- **Once per pour record.** A second pour carrying the same ticket hash is refused (`TicketReused`), but any owner-role account
+  can claim any pour, and claims made in other registries are invisible to it.
+- **No delivery deadline.** A batch can be appended any time after its readings, so the chain shows when a batch was committed,
+  not when it was measured. A maximum-delay check is a next step.
+- **The curing check is a filter.** The rule-based curing check catches open air, not a heated bucket; nothing on chain reads its
+  flag: the inspector decides.
 
 Security limits (one admin key, a trusted inspector, no audit) are in [SECURITY.md](SECURITY.md#known-limits).
 
@@ -468,27 +501,30 @@ One npm workspaces monorepo (Node 22, strict TypeScript) and one Foundry project
 - `packages/ai`: the Claude calls and the deterministic checks around them.
 - `apps/web`: Vite and plain TypeScript, tested with Vitest and Playwright.
 
-Most of the code was written with an AI coding assistant; its commits carry the author name `pourproof-builder`. Much of the
-research, planning and review was also done with AI assistants (Claude). The student team approved the direction and the key
-decisions. Every piece of work came with acceptance checks (tests, page checks, a scan for keys) that had to pass before it
-counted as done. Inside the product the Claude API (`claude-haiku-5-5`) has
-two narrow jobs, reading fields from the delivery ticket and the EPDs and putting a curing flag into words. Its answers were
-recorded once from live calls and are replayed ([AI layer](#ai-layer)).
+The code was written with an AI coding assistant; every commit in this repository carries its author name, `pourproof-builder`.
+Much of the research, planning and review was also done with AI assistants (Claude).
+The student team reviews and approves the submission before it is sent. Every piece of work came with acceptance checks
+(tests, page checks, a scan for keys) that had to pass before it counted as done. Inside the product the Claude API (`claude-haiku-5-5`) has two narrow jobs, reading fields from
+the delivery ticket and the EPDs and putting a curing flag into words. Its answers were recorded once from live calls and are
+replayed ([AI layer](#ai-layer)).
 
 ## Next steps
 
-- **Link the 28-day specimens.** Acceptance rests on specimen tests at 28 days. In Turkey those specimens are already followed
-  from site to lab in EBIS, the electronic concrete tracking system; the next step is to put that result's hash into the
-  evidence package next to the maturity estimate, not to replace it.
+- **Link the 28-day specimens.** Acceptance rests on specimen tests at 28 days. In Turkey, specimens from buildings inspected
+  under the building inspection law (Law 4708) are already tracked from site to lab in EBIS, the ministry's electronic concrete
+  monitoring system: each specimen carries an electronic tag, and the lab approves its test report in the system. The next step
+  is to put that result's hash into the evidence package next to the maturity estimate, not to replace it.
 - **Cap the baseline.** Today the contractor's declared baseline is used as is. A regional benchmark for the same strength class
   would cap it, so an inflated baseline cannot inflate the saving.
+- **A delivery deadline for batches.** Refuse a batch whose last reading is older than a set delay, so the chain bounds how
+  long a record can wait before it is committed.
 - **A public testnet run.** Fund the role accounts and run the scenario on Base Sepolia, so anyone can read the record from a
   public chain instead of a snapshot.
 - **A real device.** An ESP32 with a DS18B20 probe signing with P-256, then a secure element so the key never leaves the chip
   ([SECURITY.md](SECURITY.md#key-management)).
-- **IEEE P3828.** The passport is a W3C VC 2.0 credential, kept close to the direction of IEEE P3828 (Digital Product Passport,
-  reference architecture and technical requirements, in development). We claim no conformance; that needs the final text and a
-  test against it.
+- **IEEE P3828.** The passport uses the W3C VC 2.0 data model and is kept close to the direction of IEEE P3828
+  (Draft Standard for Digital Product Passport - Reference Architecture and Technical Requirements; an active project, not
+  yet a published standard). We claim no conformance; that needs the final text and a test against it.
 
 ## License
 
