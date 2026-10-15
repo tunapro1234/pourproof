@@ -30,7 +30,7 @@ export const FLAG_TEXT: Record<string, string> = {
 // Embodied CO2 card: the pour's own footprint, the saving beside it and what backs each part, the scope of the factors.
 // Every number is passed in, computed from the chain or the scenario inputs.
 export const inventoryText = (lo: string, hi: string): string =>
-  `Inventory, delivered mix: ${lo} to ${hi} kg CO2e (absolute, A1-A3, GWP-total). This is the pour's own footprint; the saving below is an avoided-emissions claim and sits outside the inventory.`;
+  `Inventory, delivered mix: ${lo} to ${hi} kg CO2e (absolute, A1-A3, GWP-total). This is the pour's own footprint. The saving below is an avoided-emissions estimate against the contractor's declared baseline (A1-A3 only, not checked against a market-average mix). It sits outside the inventory and is never subtracted from it.`;
 export const lessCementText = (q: string, qa: string, vol: string, cA: string, cB: string): string =>
   `Less cement: about ${q} kg CO2e/m³ (${qa} kg for ${vol} m³), from ${cA} vs ${cB} kg/m³ cement. The strength record backs this part.`;
 export const cementTypeText = (t: string, ta: string): string =>
@@ -42,7 +42,7 @@ export const SCOPE_NOTE =
   "Scope: A1-A3, GWP-total. Cement factors from a US-PCR EPD (ISO 21930, NSF PCR v3.2, not EN 15804) that includes transport to the US market.";
 export const BASELINE_CAP_NOTE = "Baseline cap against a regional benchmark: not yet. The contractor's declared baseline is used as is.";
 export const ONE_CLAIM_NOTE =
-  "Reduction claim recorded once, by the supplier. If it is ever sold as a certificate, the delivered mix is reported at baseline intensity.";
+  "Saving claim recorded once, by the supplier. If the saving is ever issued as a certificate, the buyer of the concrete reports the delivered mix at the baseline value (Isometric draft protocol rule).";
 /** The one-claim note for the role that actually claimed (the text above when it is the supplier). */
 export const oneClaimNote = (role: string): string => ONE_CLAIM_NOTE.replace("by the supplier", `by the ${role}`);
 /** Mix and volume card: a strength class written in a sample mix's text is an assumption, said next to it. */
@@ -60,10 +60,15 @@ export const TRY_TITLE = "Fake a warm night";
 export const TRY_TEXT =
   "A cold night slows curing. Raise one night's readings and the edited copy would claim a higher early strength, so formwork could come off sooner. This browser rebuilds the Merkle root of every batch and checks each P-256 signature against the roots and device key recorded on chain.";
 export const trustNote = (block: string, sha: string): string =>
-  `On this static page the recorded chain state comes from the same server as the readings (snapshot file, block ${block}, sha256 ${sha}). So this shows that one edited reading cannot match its signed root. It does not show that the server is honest. To check against a chain you run yourself: npm run scenario, then npm run dev and open ?mode=live (README).`;
+  `On this static page the recorded chain state comes from the same server as the readings (snapshot file, block ${block}, sha256 ${sha}). So this shows that one edited reading cannot match its signed root. It does not show that the server is honest. Re-running the scenario yourself re-signs everything with your own keys: it checks the code, not this record. A run on a public testnet would let you check this record; it has not run yet.`;
+/** Source bar on a local Anvil chain: who holds the role keys. */
+export const ROLES_NOTE = "Roles are test accounts we run (Anvil's default dev accounts, whose keys are public).";
 export const liveNote = (rpc: string): string => `Live mode: chain state read from ${rpc}`;
-export const TAMPER_NOTE_CLAIMED = "Nothing on chain changed. Only your copy in this browser did; the claim already made used the untouched record.";
-export const TAMPER_NOTE = "Nothing on chain changed. Only your copy in this browser did.";
+export const TAMPER_NOTE_CLAIMED = "The recorded chain state did not change. Only your copy in this browser did; the claim already made used the untouched record.";
+export const TAMPER_NOTE = "The recorded chain state did not change. Only your copy in this browser did.";
 export const UNDO = "Undo the change";
+/** The headline strength line on the passport; the numbers are computed from the verified readings. */
+export const strengthLine = (day: number, rangeMpa: string): string =>
+  `Estimated strength at day ${day}: ${rangeMpa}, from a curve fitted on the dataset's own B25 cylinders, not the delivered mix`;
 export const CALIBRATION_NOTE =
   "Calibration: the dataset's class B25 concrete, not the delivered mix. A real supplier calibrates each mix first (ASTM C1074). Acceptance stays with the 28-day specimens.";

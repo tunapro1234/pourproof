@@ -6,6 +6,15 @@ const MINUS = "\u2212";
 const RANGE_KG = /(\d[\d,]*) to (\d[\d,]*) kg CO2e/;
 const FORGED = /The edited copy would claim day \d+: (\d+\.\d) to (\d+\.\d) MPa, against (\d+\.\d) to (\d+\.\d) MPa from the signed readings\. It is refused below, so neither number is used\./;
 
+/** The night the card opens on, as the card names it: "Night <n> (<lo> to <hi> °C) is the coldest night ...". */
+async function coldNight(page: Page): Promise<string> {
+  const note = page.getByTestId("try-cold-night");
+  await expect(note).toContainText(/^Night \d+ \(\d+\.\d to \d+\.\d °C\) is the coldest night in the first \d+ days after the hydration peak \(night \d+, \d+\.\d to \d+\.\d °C\), so the card opens on it\.$/);
+  const [, n, peak] = (await note.textContent())!.match(/^Night (\d+) .* \(night (\d+), /)!;
+  expect(Number(n)).toBeGreaterThan(Number(peak));
+  return n;
+}
+
 async function green(page: Page, path: string): Promise<void> {
   await page.goto(path);
   await expect(page.getByTestId("verify-status")).toHaveAttribute("data-ok", "true");
@@ -15,7 +24,10 @@ test("(1) P-001 as signed: green, the card, the saving already claimed once by t
   await green(page, "/pour/P-001");
   const card = page.getByTestId("try");
   await expect(card.locator("h2")).toHaveText("Fake a warm night");
-  await expect(card.getByTestId("try-night").first()).toHaveAttribute("aria-current", "true");
+  const n = await coldNight(page);
+  await expect(card.getByTestId("try-night").filter({ hasText: new RegExp(`^${n}$`) })).toHaveAttribute("aria-current", "true");
+  await expect(card.getByTestId("try-night").first()).not.toHaveAttribute("aria-current", "true");
+  await expect(card.locator("[data-try-target]")).toContainText(new RegExp(`^night ${n}: \\d+ readings, .+ to .+, \\d+\\.\\d to \\d+\\.\\d °C as signed$`));
   const claimed = (await page.getByTestId("claim-status").textContent())!.match(RANGE_KG)!;
   const claimable = page.getByTestId("claimable-now");
   await expect(claimable).toContainText(`Saving this record supports: ${claimed[1]} to ${claimed[2]} kg CO2e, already claimed once by supplier. A second claim reverts on chain.`);
@@ -24,30 +36,37 @@ test("(1) P-001 as signed: green, the card, the saving already claimed once by t
     "Calibration: the dataset's class B25 concrete, not the delivered mix. A real supplier calibrates each mix first (ASTM C1074). Acceptance stays with the 28-day specimens.",
   );
   await expect(page.getByTestId("trust-note")).toContainText(/\(snapshot file, block \d+, sha256 [0-9a-f]{12}\)\. So this shows that one edited reading cannot match its signed root\. It does not show that the server is honest\./);
+  await expect(page.getByTestId("trust-note")).toContainText(
+    "Re-running the scenario yourself re-signs everything with your own keys: it checks the code, not this record. A run on a public testnet would let you check this record; it has not run yet.",
+  );
   await expect(card.getByTestId("try-sources")).toContainText("Where the numbers come from: readings from the published dataset (class B25)");
   await expect(card.getByTestId("try-sources").getByRole("link", { name: "the two sample EPDs shown in the passport" })).toHaveAttribute("href", "#carbon");
 });
 
-test("(2) night 1, +5 °C: red, the changed batches named, the forged claim beside its refusal, nothing claimable, no new request", async ({ page }) => {
+test("(2) the cold night, +5 °C: red, the changed batches named, the forged claim beside its refusal, nothing claimable, no new request", async ({ page }) => {
   await green(page, "/pour/P-001");
+  const n = await coldNight(page);
   const requests: string[] = [];
   page.on("request", (r) => {
     if (!r.url().endsWith("/favicon.ico")) requests.push(r.url());
   });
   const card = page.getByTestId("try");
   await card.getByRole("link", { name: "+5 °C", exact: true }).click();
-  await expect(page).toHaveURL(/\/pour\/P-001\?tamper=night%3A1%3A5#try$/);
+  await expect(page).toHaveURL(new RegExp(`/pour/P-001\\?tamper=night%3A${n}%3A5#try$`));
   const status = page.getByTestId("verify-status");
   await expect(status).toHaveAttribute("data-ok", "false");
-  await expect(status).toContainText(/Tamper demo: night 1: \d+ readings from .+ to .+ \(batches \d+(, \d+)+\) were changed in this browser by \+5 °C before checking\./);
+  await expect(status).toContainText(new RegExp(`Tamper demo: night ${n}: `));
+  await expect(status).toContainText(/Tamper demo: night \d+: \d+ readings from .+ to .+ \(batches \d+(, \d+)+\) were changed in this browser by \+5 °C before checking\./);
   await expect(status).toContainText(/Reading 2026-\d\d-\d\d \d\d:\d\d UTC\+3 does not match the signed root/);
   await expect(page.getByTestId("claimable-now")).toHaveText("Saving this record supports: none. The curing record does not verify.");
   const forged = page.getByTestId("forged-claim");
   await expect(forged).toContainText(FORGED);
+  // a small edit: the claimed range moves up by a fraction of an MPa, and it is still caught
   const [, lo, hi, lo0, hi0] = (await forged.textContent())!.match(FORGED)!.map(Number);
-  expect(hi).toBeGreaterThan(hi0);
+  expect(hi).toBeGreaterThanOrEqual(hi0);
   expect(lo).toBeGreaterThanOrEqual(lo0);
-  await expect(page.getByTestId("tamper-note")).toContainText("Nothing on chain changed. Only your copy in this browser did; the claim already made used the untouched record.");
+  expect(hi + lo).toBeGreaterThan(hi0 + lo0);
+  await expect(page.getByTestId("tamper-note")).toContainText("The recorded chain state did not change. Only your copy in this browser did; the claim already made used the untouched record.");
   await expect(page.getByTestId("strength")).toHaveCount(0);
   await expect(page.getByTestId("chart-changed")).toHaveCount(1);
   await expect(card.getByRole("link", { name: "+5 °C", exact: true })).toHaveAttribute("aria-current", "true");
@@ -93,10 +112,14 @@ for (const [w, h] of [
     await expect(button).toBeInViewport({ ratio: 1 });
     await expect(page.getByTestId("hero-open")).toBeVisible();
     await button.click();
-    await expect(page).toHaveURL(/\/pour\/P-001\?tamper=night%3A1%3A5#try$/);
+    await expect(page).toHaveURL(/\/pour\/P-001\?tamper=night%3A\d+%3A5#try$/);
     const status = page.getByTestId("verify-status");
     await expect(status).toHaveAttribute("data-ok", "false");
     await expect(status).toBeInViewport();
+    // the button edits the night the card opens on
+    const n = new URL(page.url()).searchParams.get("tamper")!.split(":")[1];
+    await page.goto("/pour/P-001");
+    expect(await coldNight(page)).toBe(n);
   });
 }
 
@@ -113,12 +136,12 @@ test("(6) 390x844: the passport with a changed night does not scroll sideways; t
 test("(7) P-002: the card, nothing claimable for the real reason, the flag band and the refused batches; no forged claim", async ({ page }) => {
   await green(page, "/pour/P-002");
   await expect(page.getByTestId("try")).toBeVisible();
-  await expect(page.getByTestId("claimable-now")).toHaveText("Saving this record supports: none. The inspector has not approved strength.");
+  await expect(page.getByTestId("claimable-now")).toHaveText("Saving this record supports: none. The inspector has not approved this pour's curing record.");
   await expect(page.getByTestId("curing-flag")).toBeVisible();
   await expect(page.getByTestId("rejected-tx")).toHaveCount(3);
   await page.getByTestId("try").getByRole("link", { name: "+5 °C", exact: true }).click();
   await expect(page.getByTestId("verify-status")).toHaveAttribute("data-ok", "false");
-  await expect(page.getByTestId("tamper-note")).toHaveText(/^Nothing on chain changed\. Only your copy in this browser did\./);
+  await expect(page.getByTestId("tamper-note")).toHaveText(/^The recorded chain state did not change\. Only your copy in this browser did\./);
   await expect(page.getByTestId("tamper-note")).not.toContainText("the claim already made");
   await expect(page.getByTestId("forged-claim")).toHaveCount(0);
   await expect(page.getByTestId("rejected-tx")).toHaveCount(3);

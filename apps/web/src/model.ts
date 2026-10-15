@@ -6,7 +6,7 @@ import { eventsOf, type ChainPour, type ChainView } from "./chain.ts";
 import type { AppConfig } from "./config.ts";
 import { evidencePath, fileHash, loadAi, loadBatches, loadChain, loadInputs, loadJson, publishedUrl, type InputsFile, type Mix, type PourInputs } from "./data.ts";
 import type { EvidencePackage } from "./compute.ts";
-import { applyTamper, nightsOf, parseTamper, type Night, type Tamper, type TamperApplied } from "./tamper.ts";
+import { applyTamper, nightTemps, parseTamper, type NightTemps, type Tamper, type TamperApplied } from "./tamper.ts";
 import { verifyBatches, type BatchesFile, type OnChainBatch, type PublishedBatch, type VerifyResult } from "./verify.ts";
 
 export interface DocCheck {
@@ -31,7 +31,7 @@ export interface PourModel {
   tamper: Tamper | null;
   applied: TamperApplied | null;
   /** the pour's nights in the published file (for the tamper card) */
-  nights: Night[];
+  nights: NightTemps[];
   onChain: OnChainBatch[];
   verify: VerifyResult;
   /** problems with the published file itself (signed for another chain or ledger) */
@@ -85,7 +85,7 @@ export function checkPour(view: ChainView, chain: ChainPour, file: BatchesFile, 
     published: batches,
   });
   if (contextProblems.length) verify.ok = false;
-  return { batches, tamper: t ? tamper : null, applied: t?.applied ?? null, nights: nightsOf(file.batches, pourStart), onChain, verify, contextProblems };
+  return { batches, tamper: t ? tamper : null, applied: t?.applied ?? null, nights: nightTemps(file.batches, pourStart), onChain, verify, contextProblems };
 }
 
 export async function loadPour(cfg: AppConfig, label: string, search: string): Promise<PourModel> {

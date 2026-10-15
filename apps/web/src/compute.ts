@@ -10,6 +10,8 @@ import type { PublishedBatch } from "./verify.ts";
 
 export const CHECKPOINT_DAYS = [3, 7, 14, 28];
 export const STRENGTH_LABEL = "estimated range, inspector decides";
+/** The decision day of the headline strength line (formwork stripping); the last checkpoint if the record is shorter. */
+export const HEADLINE_DAY = 7;
 
 export interface EvidencePackage {
   format: "pourproof.evidence/1";
@@ -110,6 +112,16 @@ export type Claimable =
   | { status: "supported"; saving: Co2Range }
   | { status: "unsupported"; reason: string };
 
+/**
+ * Why the ledger would refuse a claim right now, before anyone tries: no baseline declared before the pour first, then
+ * no strength approval. null when neither stops it.
+ */
+export function notClaimableReason(s: PourModel["chain"]["state"]): string | null {
+  if (/^0x0+$/i.test(s.baseline.mixHash)) return "no baseline was declared before the pour";
+  if (!s.pour.strengthApproved) return "the inspector has not approved this pour's curing record";
+  return null;
+}
+
 export function claimableNow(m: Pick<PourModel, "verify" | "view" | "chain">): Claimable {
   if (!m.verify.ok) return { status: "unsupported", reason: "the curing record does not verify" };
   const claim = eventsOf(m.view, m.chain.pourId, "SavingClaimed")[0];
@@ -117,12 +129,15 @@ export function claimableNow(m: Pick<PourModel, "verify" | "view" | "chain">): C
     return { status: "claimed", by: roleName(String(claim.args.role)) ?? "unknown role", saving: { low_kg: Number(claim.args.savingLow_kg), high_kg: Number(claim.args.savingHigh_kg) } };
   }
   const s = m.chain.state;
-  if (!s.pour.strengthApproved) return { status: "unsupported", reason: "the inspector has not approved strength" };
-  if (/^0x0+$/i.test(s.baseline.mixHash)) return { status: "unsupported", reason: "no baseline was declared before the pour" };
+  const reason = notClaimableReason(s);
+  if (reason) return { status: "unsupported", reason };
   return { status: "supported", saving: { low_kg: Number(s.savingRange[0]), high_kg: Number(s.savingRange[1]) } };
 }
 
-/** What the edited copy would claim: strength at the first checkpoint after the last changed reading. */
+/**
+ * What the edited copy would claim: strength at the first checkpoint (decision day) after the last changed reading
+ * whose shown range (0.1 MPa) the edit changes; the next checkpoint when it does not change that one.
+ */
 export interface ForgedClaim {
   age_d: number;
   /** from the edited readings */
@@ -143,7 +158,11 @@ export function forgedClaim(m: Pick<PourModel, "applied" | "batches" | "file" | 
   const forged = strengthView(readingsOf(m.batches, pourStart), fit);
   const signed = strengthView(readingsOf(m.file.batches, pourStart), fit);
   const lastChangedH = (m.applied.changed[m.applied.changed.length - 1].t_unix - pourStart) / 3600;
-  const at = forged.checkpoints.find((c) => c.age_d * 24 >= lastChangedH) ?? forged.checkpoints[forged.checkpoints.length - 1];
-  const before = at && signed.checkpoints.find((c) => c.age_d === at.age_d);
-  return at && before ? { age_d: at.age_d, forged: at.strength, signed: before.strength } : null;
+  const shown = (r: StrengthRange) => `${r.low_mpa.toFixed(1)}/${r.high_mpa.toFixed(1)}`;
+  const pairs = forged.checkpoints
+    .map((c) => ({ c, before: signed.checkpoints.find((x) => x.age_d === c.age_d) }))
+    .filter((p): p is { c: (typeof forged.checkpoints)[number]; before: (typeof signed.checkpoints)[number] } => !!p.before);
+  const after = pairs.filter((p) => p.c.age_d * 24 >= lastChangedH);
+  const at = after.find((p) => shown(p.c.strength) !== shown(p.before.strength)) ?? after[0] ?? pairs[pairs.length - 1];
+  return at ? { age_d: at.c.age_d, forged: at.c.strength, signed: at.before.strength } : null;
 }

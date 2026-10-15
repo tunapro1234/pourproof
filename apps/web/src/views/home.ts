@@ -1,11 +1,12 @@
 import type { ChainView } from "../chain.ts";
+import { notClaimableReason } from "../compute.ts";
 import { link } from "../config.ts";
 import type { InputsFile } from "../data.ts";
 import { esc, range } from "../format.ts";
 import { deviceLabel, HERO_OPEN, HERO_POUR, heroTitle, ROLE_LINE, TRY_TITLE } from "../labels.ts";
 import { roleName } from "../roles.ts";
 import { eventsOf } from "../chain.ts";
-import { TAMPER_DELTA_MILLIC, tamperHref, tamperParam } from "../tamper.ts";
+import { coldNight, TAMPER_DELTA_MILLIC, tamperHref, tamperParam } from "../tamper.ts";
 import type { BatchesFile } from "../verify.ts";
 
 const chainPhrase = (v: ChainView): string => (v.network === "anvil" ? "a local test chain" : `the ${v.networkLabel} test network`);
@@ -29,6 +30,9 @@ export function homeHero(v: ChainView, inputs: InputsFile, search: string, file:
     ? `The ${roleName(String(claim.args.role)) ?? "unknown role"} claimed the saving, ${range(Number(claim.args.savingLow_kg), Number(claim.args.savingHigh_kg), "kg CO2e")}, once; the record is what that claim rests on.`
     : "No one has claimed the saving yet; the record is what a claim would rest on.";
   const pour = (hash: string) => `${link(`/pour/${HERO_POUR}`, search)}#${hash}`;
+  // the first cold night after the hydration peak, the night the passport card opens on
+  const cold = file ? coldNight(file.batches, Number(p.state.pour.pourStart)) : null;
+  const tryHref = cold ? tamperHref(link(`/pour/${HERO_POUR}`, search), tamperParam({ kind: "night", n: cold.n }, TAMPER_DELTA_MILLIC / 1000)) : pour("try");
   const roles = esc(ROLE_LINE).replace("the site engineer", `<a href="${pour("curing")}" data-nav>the site engineer</a>`)
     .replace("the supplier", `<a href="${pour("claim")}" data-nav>the supplier</a>`)
     .replace("the inspector", `<a href="${pour("strength")}" data-nav>the inspector</a>`);
@@ -38,7 +42,7 @@ export function homeHero(v: ChainView, inputs: InputsFile, search: string, file:
     <p>${roles}</p>
     <p class="actions">
       <a class="button" href="${link(`/pour/${HERO_POUR}`, search)}" data-nav data-testid="hero-open">${esc(HERO_OPEN(HERO_POUR))}</a>
-      <a class="button primary" href="${tamperHref(link(`/pour/${HERO_POUR}`, search), tamperParam({ kind: "night", n: 1 }, TAMPER_DELTA_MILLIC / 1000))}" data-nav data-testid="hero-try">${esc(TRY_TITLE)}</a>
+      <a class="button primary" href="${tryHref}" data-nav data-testid="hero-try">${esc(TRY_TITLE)}</a>
     </p>
   </section>`;
 }
@@ -50,9 +54,9 @@ export function homeView(v: ChainView, inputs: InputsFile, search: string): stri
     const claim = eventsOf(v, p.pourId, "SavingClaimed")[0];
     const claimText = claim
       ? `Already claimed by ${roleName(String(claim.args.role)) ?? "unknown role"}`
-      : p.state.pour.strengthApproved
-        ? "not claimed"
-        : "not claimable: strength not approved";
+      : notClaimableReason(p.state)
+        ? `not claimable: ${notClaimableReason(p.state)}`
+        : "not claimed";
     return `<tr data-testid="pour-row-${esc(p.label)}">
       <td><a href="${link(`/pour/${p.label}`, search)}" data-nav><strong>${esc(p.label)}</strong></a><div class="small">${esc(inp?.story ?? "")}</div></td>
       <td>${esc(mix ? `${mix.mix_code}, ${mix.label}` : "")}<div class="small">${esc(p.state.pour.volumeDm3 / 1000)} m³ on chain</div></td>

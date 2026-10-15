@@ -8,7 +8,9 @@ test("P-001: inventory, saving and its two cement parts, range note, scope, one-
   await page.goto("/pour/P-001");
   await expect(page.getByTestId("verify-status")).toHaveAttribute("data-ok", "true");
   const card = page.getByTestId("carbon");
-  await expect(card.getByTestId("inventory")).toContainText(/^Inventory, delivered mix: [\d,]+ to [\d,]+ kg CO2e \(absolute, A1-A3, GWP-total\)\. This is the pour's own footprint; the saving below is an avoided-emissions claim and sits outside the inventory\./);
+  await expect(card.getByTestId("inventory")).toContainText(
+    /^Inventory, delivered mix: [\d,]+ to [\d,]+ kg CO2e \(absolute, A1-A3, GWP-total\)\. This is the pour's own footprint\. The saving below is an avoided-emissions estimate against the contractor's declared baseline \(A1-A3 only, not checked against a market-average mix\)\. It sits outside the inventory and is never subtracted from it\./,
+  );
   const [, lo, hi] = (await card.getByTestId("saving").textContent())!.match(/([\d,]+) to ([\d,]+) kg CO2e/)!;
 
   const split = card.getByTestId("saving-split");
@@ -29,9 +31,10 @@ test("P-001: inventory, saving and its two cement parts, range note, scope, one-
   );
   await expect(card.getByTestId("baseline-cap")).toHaveText("Baseline cap against a regional benchmark: not yet. The contractor's declared baseline is used as is.");
   await expect(page.getByTestId("one-claim")).toHaveText(
-    "Reduction claim recorded once, by the supplier. If it is ever sold as a certificate, the delivered mix is reported at baseline intensity.",
+    "Saving claim recorded once, by the supplier. If the saving is ever issued as a certificate, the buyer of the concrete reports the delivered mix at the baseline value (Isometric draft protocol rule).",
   );
   await expect(page.getByTestId("mix")).toContainText("C30/37 (assumed strength class, sample)");
+  await expect(page.getByTestId("mix")).not.toContainText(/typical|proven|clinker/i);
 });
 
 test("P-002: the same declared baseline and saving rows as P-001; no claim, the supplier's claim refused without approval", async ({ page }) => {
@@ -49,6 +52,8 @@ test("P-002: the same declared baseline and saving rows as P-001; no claim, the 
   await expect(card).not.toContainText("no baseline");
   await expect(page.getByTestId("one-claim")).toHaveCount(0);
   const claim = page.getByTestId("claim-status");
-  await expect(claim).toContainText("the inspector has not approved strength");
+  await expect(claim.locator(".status-line")).toHaveText("Not claimable: the inspector has not approved this pour's curing record");
+  await expect(page.locator("body")).not.toContainText("no baseline");
+  await expect(mix).not.toContainText(/typical|proven|clinker/i);
   await expect(claim.getByTestId("rejected-claim")).toContainText("supplier tried claimSaving: rejected, StrengthNotApproved");
 });

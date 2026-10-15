@@ -1,12 +1,13 @@
 import type { ChainView } from "../chain.ts";
 import { link } from "../config.ts";
 import { esc } from "../format.ts";
-import { ATTRIBUTION, DEMO_CARD_TEXT, DEMO_CARD_TITLE } from "../labels.ts";
+import { ATTRIBUTION, DEMO_CARD_TEXT, DEMO_CARD_TITLE, ROLES_NOTE } from "../labels.ts";
 
 /** The bar on every screen: network, where the chain state comes from, how the clock was handled. */
 export function sourceBar(v: ChainView): string {
   return `<div class="source-bar" data-testid="source-bar">
     <span class="pill net" data-testid="network-label">network: ${esc(v.networkLabel)}</span>
+    ${v.network === "anvil" ? `<span class="pill roles" data-testid="roles-note">${esc(ROLES_NOTE)}</span>` : ""}
     <span class="pill ${v.source}" data-testid="state-label">${esc(v.sourceLabel)}</span>
     <span class="pill time" data-testid="time-label">${esc(v.timeMode === "backdated" ? "readings time-shifted into the past from the published dataset" : v.timeNote)}</span>
   </div>`;

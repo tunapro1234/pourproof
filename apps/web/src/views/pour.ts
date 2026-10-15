@@ -1,7 +1,7 @@
 import { aiLabel, STATUS_TEXT, type AiExplanation, type AiExtraction } from "../ai.ts";
 import { eventsOf, type ChainEvent } from "../chain.ts";
 import { curingChart } from "../chart.ts";
-import { about10, carbonView, claimableNow, forgedClaim, readingsOf, savingSplit, strengthView, STRENGTH_LABEL } from "../compute.ts";
+import { about10, carbonView, claimableNow, forgedClaim, HEADLINE_DAY, notClaimableReason, readingsOf, savingSplit, strengthView, STRENGTH_LABEL, type StrengthView } from "../compute.ts";
 import { link, SNAPSHOT_SHA256 } from "../config.ts";
 import { publishedUrl, type Mix } from "../data.ts";
 import { esc, fmtTime, range, short } from "../format.ts";
@@ -20,6 +20,7 @@ import {
   rangeNote,
   SCOPE_NOTE,
   SERIES_NOTE,
+  strengthLine,
   TAMPER_NOTE,
   TAMPER_NOTE_CLAIMED,
   TRY_TEXT,
@@ -30,7 +31,7 @@ import {
 import type { DocCheck, PourModel } from "../model.ts";
 import { qrSvg } from "../qr.ts";
 import { accountRoles, roleName, whoIs } from "../roles.ts";
-import { paramOf, TAMPER_STEPS_C, tamperHref, tamperParam, type TamperApplied } from "../tamper.ts";
+import { COLD_NIGHT_WITHIN_D, coldNightOf, paramOf, peakNight, TAMPER_STEPS_C, tamperHref, tamperParam, type NightTemps, type TamperApplied } from "../tamper.ts";
 import { ok } from "./layout.ts";
 
 const signed = (c: number): string => (c > 0 ? `+${c}` : c < 0 ? `\u2212${-c}` : "0");
@@ -104,15 +105,18 @@ export function tryIt(m: PourModel, search: string): string {
   const total = all.length;
   const stepMin = all.length > 1 ? Math.round((all[1].t_unix - all[0].t_unix) / 60) : null;
   const picked = Number(q.get("night"));
-  const night = t?.kind === "range" ? t.night : t ? null : m.nights.some((x) => x.n === picked) ? picked : (m.nights[0]?.n ?? null);
+  const cold = coldNightOf(m.nights, Number(m.chain.state.pour.pourStart));
+  const peak = peakNight(m.nights);
+  const night = t?.kind === "range" ? t.night : t ? null : m.nights.some((x) => x.n === picked) ? picked : (cold?.n ?? null);
   const nightOf = (n: number) => m.nights.find((x) => x.n === n)!;
+  const temps = (x: NightTemps) => range(x.min_c, x.max_c, "°C", 1);
   const deltaC = t ? t.delta_milliC / 1000 : null;
 
   const target =
     t?.kind === "reading"
       ? `reading ${t.index} (${fmtTime(m.applied!.changed[0].t_unix)})`
       : night !== null
-        ? `night ${night}: ${plural(nightOf(night).to - nightOf(night).from + 1, "reading")}, ${fmtTime(nightOf(night).from_unix)} to ${fmtTime(nightOf(night).to_unix)}`
+        ? `night ${night}: ${plural(nightOf(night).to - nightOf(night).from + 1, "reading")}, ${fmtTime(nightOf(night).from_unix)} to ${fmtTime(nightOf(night).to_unix)}, ${temps(nightOf(night))} as signed`
         : "";
   const hrefFor = (d: number) => (t?.kind === "reading" ? tamperHref(base, tamperParam({ kind: "reading", index: t.index }, d)) : night !== null ? tamperHref(base, tamperParam({ kind: "night", n: night }, d)) : "");
   const nightHref = (n: number) => (t && deltaC !== null ? tamperHref(base, tamperParam({ kind: "night", n }, deltaC)) : `${link(`/pour/${m.label}`, search, { night: String(n) })}#try`);
@@ -135,6 +139,7 @@ export function tryIt(m: PourModel, search: string): string {
     <h2>${esc(TRY_TITLE)}</h2>
     <p>${esc(TRY_TEXT)}</p>
     <p class="try-pick"><strong>Night:</strong> <span class="chips">${nights}</span></p>
+    ${cold && peak && cold.n !== peak.n ? `<p class="small" data-testid="try-cold-night">Night ${cold.n} (${esc(temps(cold))}) is the coldest night in the first ${COLD_NIGHT_WITHIN_D} days after the hydration peak (night ${peak.n}, ${esc(temps(peak))}), so the card opens on it.</p>` : ""}
     <p class="try-pick"><label>Or one reading, number <input type="number" inputmode="numeric" min="0" max="${total - 1}" step="1" data-try-reading data-testid="try-reading" value="${t?.kind === "reading" ? t.index : ""}" aria-describedby="try-reading-help"></label> <span class="small" id="try-reading-help">0 to ${total - 1}${stepMin ? `, one every ${stepMin} minutes` : ""}</span></p>
     <p class="try-steps"><strong>Change <span data-try-target>${esc(target)}</span> by:</strong> ${steps}</p>
     ${t ? `<p class="try-note" data-testid="tamper-note">${esc(claimed ? TAMPER_NOTE_CLAIMED : TAMPER_NOTE)} <a href="${base}#try" data-nav>${esc(UNDO)}</a></p>` : ""}
@@ -200,9 +205,10 @@ export function claimStatus(m: Pick<PourModel, "view" | "chain">): string {
     head = `Already claimed by ${role}`;
     body = `<p>${esc(role)} (${esc(short(String(claim.args.claimant)))}) claimed the saving of ${esc(range(Number(claim.args.savingLow_kg), Number(claim.args.savingHigh_kg), "kg CO2e"))} at ${esc(fmtTime(claim.timestamp))}, block ${esc(claim.block)}. The ledger accepts one claim per pour, from one role; any later claim reverts with AlreadyClaimed.</p>
     <p data-testid="one-claim">${esc(oneClaimNote(role))}</p>`;
-  } else if (!m.chain.state.pour.strengthApproved) head = "Not claimable yet: the inspector has not approved strength";
-  else if (/^0x0+$/.test(m.chain.state.baseline.mixHash)) head = "Not claimable: no baseline mix was declared before the pour";
-  else head = "Not claimed yet";
+  } else {
+    const reason = notClaimableReason(m.chain.state);
+    head = reason ? `Not claimable: ${reason}` : "Not claimed yet";
+  }
   const rows = rejected.map(
     (r) =>
       `<li class="rejected" data-testid="rejected-claim">${esc(r.role || whoIs(r.account, roles))} tried claimSaving: ${r.revert ? `rejected, ${esc(r.revert.name)}${r.revert.name === "AlreadyClaimed" ? ` (first claimant ${esc(whoIs(String(r.revert.args[1]), roles))})` : ""}` : "would succeed"}${r.kind === "transaction" ? `, reverted transaction ${esc(short(r.txHash ?? ""))} in block ${esc(r.block ?? "")}` : ", simulated call (eth_call), nothing sent"}</li>`,
@@ -293,6 +299,12 @@ function explanation(x: AiExplanation): string {
   ${x.status === "accepted" ? `<blockquote>${esc(x.text)}</blockquote><p class="small">Every number in this text appears in the stats computed by code; a text with any other number is rejected and not shown.</p>` : `<p class="no">The AI explanation was rejected: it contains numbers not computed by code (${esc(x.unknown_numbers.join(", "))}).</p>`}</div>`;
 }
 
+/** The headline strength line: the estimate at HEADLINE_DAY (the last checkpoint on a shorter record), from the code. */
+export function strengthHeadline(sv: StrengthView): string {
+  const c = sv.checkpoints.find((x) => x.age_d === HEADLINE_DAY) ?? sv.checkpoints[sv.checkpoints.length - 1];
+  return c ? `<p data-testid="strength-line"><strong>${esc(strengthLine(c.age_d, range(c.strength.low_mpa, c.strength.high_mpa, "MPa", 1)))}</strong>.</p>` : "";
+}
+
 export function pourView(m: PourModel, search: string): string {
   const s = m.chain.state;
   const pourStart = Number(s.pour.pourStart);
@@ -304,7 +316,8 @@ export function pourView(m: PourModel, search: string): string {
   const anomalyFlags = m.file.anomaly?.flags ?? [];
 
   const strength = sv
-    ? `<div class="table-wrap"><table class="ranges" data-testid="strength"><thead><tr><th>Age</th><th>Maturity</th><th>Strength (${STRENGTH_LABEL})</th></tr></thead><tbody>
+    ? `${strengthHeadline(sv)}
+      <div class="table-wrap"><table class="ranges" data-testid="strength"><thead><tr><th>Age</th><th>Maturity</th><th>Strength (${STRENGTH_LABEL})</th></tr></thead><tbody>
       ${sv.checkpoints.map((c) => `<tr><td>day ${c.age_d}</td><td>${esc(Math.round(c.maturity_ch).toLocaleString("en-US"))} °C·h</td><td><strong>${esc(range(c.strength.low_mpa, c.strength.high_mpa, "MPa", 1))}</strong>${c.strength.extrapolated ? ' <span class="small">(outside the calibrated maturity span)</span>' : ""}</td></tr>`).join("")}
       </tbody></table></div>
       <p class="small">Maturity: Nurse-Saul (ASTM C1074, datum -10 °C), computed in this browser from the ${readings.length} verified readings: ${esc(Math.round(sv.lastM).toLocaleString("en-US"))} °C·h at day ${(sv.lastH / 24).toFixed(0)}. Strength: S = a + b ln(M) from the evidence package calibration, shown as prediction ± 2σ. ${ref ? `Reference only: class B25 standard strength ${ref.standard_28d_mpa} MPa at 28 days (paper p.8).` : ""}</p>`

@@ -2,6 +2,7 @@
 // note, the scope, the one-claim note and the baseline cap. No signature check here; the cards read chain state and inputs.
 import { describe, expect, it } from "vitest";
 import { about10, carbonView, savingSplit } from "../src/compute.ts";
+import { oneClaimNote } from "../src/labels.ts";
 import type { PourModel } from "../src/model.ts";
 import { carbonCard, claimStatus, mixCard } from "../src/views/pour.ts";
 import { inputs, view } from "./fixtures.ts";
@@ -87,7 +88,7 @@ describe("Embodied CO2 card", () => {
 
   it("the inventory is the delivered mix's absolute footprint, computed", () => {
     expect(textOf(html, "inventory")).toContain(
-      `Inventory, delivered mix: ${n(c.delivered.low_kg)} to ${n(c.delivered.high_kg)} kg CO2e (absolute, A1-A3, GWP-total). This is the pour's own footprint; the saving below is an avoided-emissions claim and sits outside the inventory.`,
+      `Inventory, delivered mix: ${n(c.delivered.low_kg)} to ${n(c.delivered.high_kg)} kg CO2e (absolute, A1-A3, GWP-total). This is the pour's own footprint. The saving below is an avoided-emissions estimate against the contractor's declared baseline (A1-A3 only, not checked against a market-average mix). It sits outside the inventory and is never subtracted from it.`,
     );
   });
 
@@ -134,6 +135,10 @@ describe("Mix and volume card", () => {
     expect(html.match(/\(assumed strength class, sample\)/g)).toHaveLength(html.match(/C\d\d\/\d\d/g)!.length);
   });
 
+  it("the cement bases come from inputs.json as written there: no 'typical', 'proven' or 'clinker'", () => {
+    for (const label of ["P-001", "P-002"]) expect(mixCard(cardModel(label))).not.toMatch(/typical|proven|clinker/i);
+  });
+
   it("P-002: the same baseline mix as P-001, declared on chain before the pour", () => {
     const h2 = mixCard(cardModel("P-002"));
     expect(h2).not.toContain("none declared");
@@ -143,16 +148,17 @@ describe("Mix and volume card", () => {
 });
 
 describe("Saving claim card", () => {
-  it("P-001: one claim, by the supplier, and what that means if it is ever sold", () => {
+  it("P-001: one claim, by the supplier, and what that means if it is ever issued as a certificate", () => {
     expect(textOf(claimStatus(p1), "one-claim")).toBe(
-      "Reduction claim recorded once, by the supplier. If it is ever sold as a certificate, the delivered mix is reported at baseline intensity.",
+      "Saving claim recorded once, by the supplier. If the saving is ever issued as a certificate, the buyer of the concrete reports the delivered mix at the baseline value (Isometric draft protocol rule).",
     );
+    expect(oneClaimNote("contractor")).toMatch(/^Saving claim recorded once, by the contractor\. /);
   });
 
   it("P-002: no claim, no note; the supplier's claim was refused for the missing approval, not for a missing baseline", () => {
     const h2 = claimStatus(cardModel("P-002"));
     expect(h2).not.toContain('data-testid="one-claim"');
-    expect(h2).toContain("Not claimable yet: the inspector has not approved strength");
+    expect(h2.replace(/&#39;/g, "'")).toContain("Not claimable: the inspector has not approved this pour's curing record");
     expect(h2).not.toContain("no baseline");
     expect(textOf(h2, "rejected-claim")).toMatch(/^supplier tried claimSaving: rejected, StrengthNotApproved, reverted transaction /);
   });

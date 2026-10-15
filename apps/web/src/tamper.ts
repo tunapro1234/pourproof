@@ -73,6 +73,47 @@ export function nightsOf(batches: readonly PublishedBatch[], pourStart: number):
   return nights;
 }
 
+/** A night with its readings' mean, lowest and highest temperature (°C). */
+export interface NightTemps extends Night {
+  mean_c: number;
+  min_c: number;
+  max_c: number;
+}
+
+/** Days after the pour start within which the default night is picked. */
+export const COLD_NIGHT_WITHIN_D = 7;
+
+export function nightTemps(batches: readonly PublishedBatch[], pourStart: number): NightTemps[] {
+  const temps = batches.flatMap((b) => b.readings.map((r) => r.temp_milliC / 1000));
+  return nightsOf(batches, pourStart).map((n) => {
+    const t = temps.slice(n.from, n.to + 1);
+    return { ...n, mean_c: t.reduce((a, x) => a + x, 0) / t.length, min_c: Math.min(...t), max_c: Math.max(...t) };
+  });
+}
+
+/**
+ * The night the "Fake a warm night" card opens on: the first cold night after the hydration peak. The peak night is
+ * the warmest night (highest mean); of the nights after it that end within the first COLD_NIGHT_WITHIN_D days, the
+ * one with the lowest mean (the earlier one on a tie). A record without such a night gives its first night; no
+ * nights at all, null.
+ */
+export function coldNight(batches: readonly PublishedBatch[], pourStart: number): NightTemps | null {
+  return coldNightOf(nightTemps(batches, pourStart), pourStart);
+}
+
+/** The warmest night (highest mean), where the hydration heat peaks; the earlier one on a tie. */
+export function peakNight(nights: readonly NightTemps[]): NightTemps | null {
+  return nights.length ? nights.reduce((a, n) => (n.mean_c > a.mean_c ? n : a)) : null;
+}
+
+/** coldNight, for nights already measured with nightTemps. */
+export function coldNightOf(nights: readonly NightTemps[], pourStart: number): NightTemps | null {
+  const peak = peakNight(nights);
+  if (!peak) return null;
+  const after = nights.filter((n) => n.n > peak.n && n.to_unix - pourStart <= COLD_NIGHT_WITHIN_D * 86400);
+  return after.length ? after.reduce((a, n) => (n.mean_c < a.mean_c ? n : a)) : nights[0];
+}
+
 export interface TamperContext {
   batches: readonly PublishedBatch[];
   pourStart: number;
