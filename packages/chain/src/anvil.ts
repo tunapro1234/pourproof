@@ -1,11 +1,14 @@
 // Starts a private local Anvil for one scenario run and stops it afterwards. The node starts at a fixed genesis time
-// and every block advances the clock by 12 s, so the same run produces the same blocks, hashes and files.
+// and every block advances the clock by 12 s, so the same run produces the same blocks, hashes and files. The hardfork is
+// set explicitly: the P-256 precompile at 0x100 (EIP-7951, as on Base) exists from Osaka on, and Anvil's default may be
+// older, in which case the ledger falls back to verifying P-256 in Solidity at about four times the gas.
 import { spawn, type ChildProcess } from "node:child_process";
 import { createServer } from "node:net";
 import { foundryBin } from "./foundry.ts";
 
 export const ANVIL_GENESIS_TS = 1_789_016_400; // 2026-09-10T05:00:00Z, so the first pour starts 08:31 local time (UTC+3)
 export const ANVIL_BLOCK_INTERVAL_S = 12;
+export const ANVIL_HARDFORK = "osaka";
 
 export interface AnvilNode {
   url: string;
@@ -35,7 +38,7 @@ export async function startAnvil(chainId = 31337): Promise<AnvilNode> {
   const url = `http://127.0.0.1:${port}`;
   const child: ChildProcess = spawn(
     foundryBin("anvil"),
-    ["--host", "127.0.0.1", "--port", String(port), "--chain-id", String(chainId), "--timestamp", String(ANVIL_GENESIS_TS), "--accounts", "6", "--silent"],
+    ["--host", "127.0.0.1", "--port", String(port), "--chain-id", String(chainId), "--timestamp", String(ANVIL_GENESIS_TS), "--hardfork", ANVIL_HARDFORK, "--accounts", "6", "--silent"],
     { stdio: ["ignore", "ignore", "pipe"] },
   );
   let stderr = "";

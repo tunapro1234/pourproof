@@ -15,7 +15,7 @@ describe("AI outputs shown by the web app", () => {
 
   it("every output carries model, prompt_sha256 and mode, and is labelled recorded or live", () => {
     const all = Object.values(file.pours).flatMap((p) => [p.ticket, ...p.epds, ...(p.explanation ? [p.explanation] : [])]);
-    expect(all.length).toBe(6);
+    expect(all.length).toBe(7);
     for (const o of all) {
       expect(o.prompt_sha256).toMatch(/^[0-9a-f]{64}$/);
       expect(["live", "recorded"]).toContain(o.mode);
@@ -37,7 +37,12 @@ describe("AI outputs shown by the web app", () => {
     const p = file.pours["P-002"];
     expect(p.explanation?.flags).toEqual(["no_hydration_signature"]);
     expect(p.explanation?.status).toBe("accepted");
-    expect(p.epds.map((e) => e.counts.unverified)).toEqual([0]);
+    expect(p.epds.map((e) => [e.role, e.counts.unverified])).toEqual([
+      ["baseline", 0],
+      ["delivered", 0],
+    ]);
+    // the same declared baseline as P-001: the same EPD and the same recorded output
+    expect(p.epds[0].prompt_sha256).toBe(file.pours["P-001"].epds[0].prompt_sha256);
     expect(p.ticket.counts.needs_review).toBe(Object.keys(p.ticket.fields).length);
   });
 });

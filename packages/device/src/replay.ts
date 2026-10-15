@@ -28,8 +28,8 @@ export const ANVIL_CHAIN_ID = 31337;
 export const REPLAY_MARGIN_S = 3600;
 
 export const SCENARIO_TEXT = {
-  "P-001": "Low-clinker pour. The device replays Box 1 (a 50 x 50 x 50 cm block) from the dataset; readings are signed as logged.",
-  "P-002": "Tamper case. The device sat in open air: the dataset's ambient series is replayed as if it were concrete. Signatures are valid; the curing check flags it.",
+  "P-001": "Leaner-mix pour. The device replays Box 1 (a 50 x 50 x 50 cm block) from the dataset; readings are signed as logged.",
+  "P-002": "Tamper case. The device sat in open air: the dataset's ambient series is replayed as if it were concrete. Signatures are valid; the rule-based curing check flags it, the inspector does not approve, and without approval the ledger refuses the saving claim.",
 };
 
 export const MESSAGE_FORMAT = {

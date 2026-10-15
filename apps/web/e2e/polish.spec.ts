@@ -11,11 +11,12 @@ test("P-002: amber curing-flag band right under the green verification banner, i
   await expect(flag).toContainText("No strength approval, no saving claim.");
   const box = (await flag.boundingBox())!;
   expect(box.y + box.height).toBeLessThanOrEqual(900);
-  // the refused tamper attempts are red rows in the roles and signatures table
+  // the refused tamper attempts and the claim without approval are red rows in the roles and signatures table
   const rejected = page.getByTestId("rejected-tx");
-  await expect(rejected).toHaveCount(2);
+  await expect(rejected).toHaveCount(3);
   await expect(rejected.nth(0)).toContainText("appendBatch rejected on chain: BadSignature");
   await expect(rejected.nth(1)).toContainText("appendBatch rejected on chain: CounterGap");
+  await expect(rejected.nth(2)).toContainText("claimSaving rejected on chain: StrengthNotApproved");
 });
 
 test("P-001 has no curing-flag band", async ({ page }) => {

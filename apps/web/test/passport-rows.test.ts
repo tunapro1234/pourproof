@@ -116,12 +116,11 @@ describe("Embodied CO2 card", () => {
     expect(textOf(html, "baseline-cap")).toBe("Baseline cap against a regional benchmark: not yet. The contractor's declared baseline is used as is.");
   });
 
-  it("P-002 (no baseline): inventory and scope, no split, no range note, no cap", () => {
+  it("P-002 has the same declared baseline: the same carbon rows as P-001, no 'no baseline' line", () => {
     const h2 = carbonCard(cardModel("P-002"));
-    expect(h2).toContain('data-testid="inventory"');
-    expect(h2).toContain('data-testid="scope"');
-    expect(h2).toContain("No saving: no baseline was declared before this pour.");
-    for (const id of ["saving-split", "range-note", "baseline-cap", "saving"]) expect(h2).not.toContain(`data-testid="${id}"`);
+    for (const id of ["inventory", "scope", "baseline-cap", "saving", "saving-split", "range-note"]) expect(h2).toContain(`data-testid="${id}"`);
+    expect(h2).not.toContain("no baseline");
+    for (const id of ["saving", "saving-split", "range-note"]) expect(textOf(h2, id)).toBe(textOf(html, id));
   });
 });
 
@@ -135,8 +134,11 @@ describe("Mix and volume card", () => {
     expect(html.match(/\(assumed strength class, sample\)/g)).toHaveLength(html.match(/C\d\d\/\d\d/g)!.length);
   });
 
-  it("P-002: no baseline", () => {
-    expect(mixCard(cardModel("P-002"))).toContain("<strong>Baseline:</strong> none declared");
+  it("P-002: the same baseline mix as P-001, declared on chain before the pour", () => {
+    const h2 = mixCard(cardModel("P-002"));
+    expect(h2).not.toContain("none declared");
+    expect(h2.match(/<strong>Baseline:<\/strong>[^]*?<\/p>/)![0]).toBe(mixCard(p1).match(/<strong>Baseline:<\/strong>[^]*?<\/p>/)![0]);
+    expect(h2).toContain("declared on chain by the contractor before the pour");
   });
 });
 
@@ -147,7 +149,11 @@ describe("Saving claim card", () => {
     );
   });
 
-  it("P-002: no claim, no note", () => {
-    expect(claimStatus(cardModel("P-002"))).not.toContain('data-testid="one-claim"');
+  it("P-002: no claim, no note; the supplier's claim was refused for the missing approval, not for a missing baseline", () => {
+    const h2 = claimStatus(cardModel("P-002"));
+    expect(h2).not.toContain('data-testid="one-claim"');
+    expect(h2).toContain("Not claimable yet: the inspector has not approved strength");
+    expect(h2).not.toContain("no baseline");
+    expect(textOf(h2, "rejected-claim")).toMatch(/^supplier tried claimSaving: rejected, StrengthNotApproved, reverted transaction /);
   });
 });

@@ -20,10 +20,10 @@
   "mix": {
    "delivered": {
     "mixCode": "MIX-B-IL320",
-    "label": "Mix B (delivered low-clinker mix)",
+    "label": "Mix B (delivered leaner mix)",
     "cementType": "Portland-limestone cement Type IL",
     "cementKgPerM3": 320,
-    "cementBasis": "assumption: optimized mix; strength gain proven by maturity record",
+    "cementBasis": "assumption: optimized mix; the maturity record supports early-age decisions, acceptance stays with the 28-day specimens",
     "gwpTotalKgCo2ePerM3": {
      "low": 306,
      "high": 326,
@@ -72,13 +72,13 @@
    "claimedOnce": {
     "role": "supplier",
     "account": "0x70997970c51812dc3a010c7d01b50e0d17dc79c8",
-    "txHash": "0x73d2e80fc451ac9a6a13417d3b97af30df95eace837a323bab5b0454dd6526c9"
+    "txHash": "0xc2c023ae873d3f229eb43e1a6c6b72213540d46666fab144a7130655590085f6"
    },
    "laterClaimsRefused": [
     {
      "role": "contractor",
      "account": "0x3c44cdddb6a900fa2b585dd299e03d12fa4293bc",
-     "txHash": "0xba12cc8e02576f3c0e75fc537d9ab19588fce483605b6906a5852305257aa285"
+     "txHash": "0x0e55211df868cde2709dd2c03c1a68fbacffacae26e202b6fbb36c987bdeace1"
     }
    ]
   },
@@ -139,7 +139,7 @@
    "baselineMixHash": "0x19d9579e4bdc95dfd2178b16204db73d16c8409f53431f18a244719ee2df7794",
    "evidence": {
     "path": "scenario/anvil-evidence-P-001.json",
-    "sha256": "0xfd9473c7fd7687d55eb624c975259cfa78c7d18c33c0590f7d03489f588a1c05"
+    "sha256": "0xa08d8af1b3ad2ae202722024f0c87999b3d54efaf02f9eb99f39066ad56779e9"
    }
   },
   "dataset": {
@@ -153,7 +153,7 @@
    "chainId": 31337,
    "ledger": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
    "timeMode": "advanced",
-   "approvedAtBlock": 234,
+   "approvedAtBlock": 236,
    "txs": {
     "declareBaseline": "0x336e44e597c73b4cd5ae3f40bfa70f99ad24dd96c1999d7d4cf557a5dbea8a3b",
     "createPour": "0x2ed5fda7d239b9c57f77e161f90e2c147c248cef215c595f575a96cb92631e65",
@@ -161,8 +161,8 @@
     "acceptPour": "0x3705d55e8c45b18be5e908aee32e9c87fe29bce5c9cf50443e198d3b52dd12f3",
     "firstBatch": "0x33142c9d9aa33d8e9a62683b655cb8e8df860d8f19cdfdde31c9c480d92d4e6d",
     "lastBatch": "0x92fb802a09e77c4b62dbaa365f4c70dd5e8710bc4e7d2d72cc9a78e8e554275e",
-    "approveStrength": "0x46e7c08df632967c34de7fe24ca99eb810a36541d5ebbb2872fae00280324601",
-    "claimSaving": "0x73d2e80fc451ac9a6a13417d3b97af30df95eace837a323bab5b0454dd6526c9"
+    "approveStrength": "0x942d1c36cea22f0a9f99837b4b8321deba0db8d13dc2f6bcfc8ac6ea2a321789",
+    "claimSaving": "0xc2c023ae873d3f229eb43e1a6c6b72213540d46666fab144a7130655590085f6"
    }
   }
  },
@@ -181,7 +181,7 @@
    },
    "primaryType": "PourPassport"
   },
-  "credentialHash": "0x4ce2c65f36fb5f8cb7daf67aefa61de3bb0af7f4eb6d9540a200b756d0ac2ea5",
-  "proofValue": "0xb5752bf820f4f3520eb38025c0c53f5023d0b9cd8d6962f5d22024e18f1107a25b363fa6405fd0103690421e51d47a2b9456b3a575d9679f3668f8960606b7ef1c"
+  "credentialHash": "0x47f668243d9a71259a70f7b63a7d719e19eff9f0033e60a6a0a78b425e75b8f6",
+  "proofValue": "0x0e17d555b6b62acde2c7716bfbf631a52be975c6d21d9aec467ee7d640a5665428ddaf73d1db3a9d58e94a618f528fdc181fa7e12c7abfde37cb4902cc2a19651b"
  }
 }

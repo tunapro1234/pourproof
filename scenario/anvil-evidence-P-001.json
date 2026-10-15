@@ -201,7 +201,7 @@
    "label": "Mix A (contractor's declared baseline, standard spec)",
    "cement_type": "Portland cement Type I/II (CEM I equivalent)",
    "cement_kg_per_m3": 380,
-   "cement_basis": "assumption: typical over-designed C30/37 mix",
+   "cement_basis": "assumption: over-designed C30/37 mix",
    "cement_gwp_kg_per_m3": [
     370.5,
     370.5
@@ -220,10 +220,10 @@
    "epd_doc": "data/sample-docs/sample-epd-mix-a.pdf"
   },
   "delivered": {
-   "label": "Mix B (delivered low-clinker mix)",
+   "label": "Mix B (delivered leaner mix)",
    "cement_type": "Portland-limestone cement Type IL",
    "cement_kg_per_m3": 320,
-   "cement_basis": "assumption: optimized mix; strength gain proven by maturity record",
+   "cement_basis": "assumption: optimized mix; the maturity record supports early-age decisions, acceptance stays with the 28-day specimens",
    "cement_gwp_kg_per_m3": [
     285.7,
     285.7

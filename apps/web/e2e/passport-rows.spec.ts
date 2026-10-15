@@ -34,12 +34,21 @@ test("P-001: inventory, saving and its two cement parts, range note, scope, one-
   await expect(page.getByTestId("mix")).toContainText("C30/37 (assumed strength class, sample)");
 });
 
-test("P-002: inventory and scope, no split, no range note, no one-claim note", async ({ page }) => {
+test("P-002: the same declared baseline and saving rows as P-001; no claim, the supplier's claim refused without approval", async ({ page }) => {
+  await page.goto("/pour/P-001");
+  await expect(page.getByTestId("verify-status")).toHaveAttribute("data-ok", "true");
+  const rows1 = await page.getByTestId("carbon").getByTestId("saving-split").textContent();
   await page.goto("/pour/P-002");
   await expect(page.getByTestId("verify-status")).toHaveAttribute("data-ok", "true");
+  const mix = page.getByTestId("mix");
+  await expect(mix).toContainText("declared on chain by the contractor before the pour");
+  await expect(mix).not.toContainText("none declared");
   const card = page.getByTestId("carbon");
-  await expect(card.getByTestId("inventory")).toBeVisible();
-  await expect(card.getByTestId("scope")).toBeVisible();
-  for (const id of ["saving-split", "range-note", "baseline-cap"]) await expect(card.getByTestId(id)).toHaveCount(0);
+  for (const id of ["inventory", "scope", "baseline-cap", "saving", "saving-split", "range-note"]) await expect(card.getByTestId(id)).toBeVisible();
+  await expect(card.getByTestId("saving-split")).toHaveText(rows1!);
+  await expect(card).not.toContainText("no baseline");
   await expect(page.getByTestId("one-claim")).toHaveCount(0);
+  const claim = page.getByTestId("claim-status");
+  await expect(claim).toContainText("the inspector has not approved strength");
+  await expect(claim.getByTestId("rejected-claim")).toContainText("supplier tried claimSaving: rejected, StrengthNotApproved");
 });

@@ -338,6 +338,37 @@ contract PourLedgerTest is LedgerBase {
         ledger.claimSaving(P1);
     }
 
+    function test_RevertWhen_ticketReused() public {
+        bytes32 ticket = keccak256("delivery ticket 0001");
+        vm.startPrank(supplier);
+        ledger.createPour(P1, ticket, keccak256("epd"), 8000, 220, 250, pourStart);
+        vm.expectRevert(abi.encodeWithSelector(PourLedger.TicketReused.selector, ticket, P1));
+        ledger.createPour(P2, ticket, keccak256("epd"), 8000, 220, 250, pourStart);
+        vm.stopPrank();
+        assertEq(ledger.pourOfTicket(ticket), P1);
+        assertEq(ledger.pour(P2).supplier, address(0));
+    }
+
+    function test_otherTicketOpensASecondPour() public {
+        bytes32 t1 = keccak256("delivery ticket 0001");
+        bytes32 t2 = keccak256("delivery ticket 0002");
+        vm.startPrank(supplier);
+        ledger.createPour(P1, t1, keccak256("epd"), 8000, 220, 250, pourStart);
+        ledger.createPour(P2, t2, keccak256("epd"), 8000, 220, 250, pourStart);
+        vm.stopPrank();
+        assertEq(ledger.pourOfTicket(t1), P1);
+        assertEq(ledger.pourOfTicket(t2), P2);
+        assertEq(ledger.pour(P2).ticketHash, t2);
+    }
+
+    function test_zeroTicketIsNotTracked() public {
+        vm.startPrank(supplier);
+        ledger.createPour(P1, 0, 0, 8000, 220, 250, pourStart);
+        ledger.createPour(P2, 0, 0, 8000, 220, 250, pourStart);
+        vm.stopPrank();
+        assertEq(ledger.pourOfTicket(bytes32(0)), bytes32(0));
+    }
+
     function test_savingRangeClampsToZero() public {
         vm.prank(contractor);
         ledger.declareBaseline(P1, 0, 240, 260);

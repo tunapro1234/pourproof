@@ -24,12 +24,20 @@ describe("snapshot view", () => {
     expect(eventsOf(view, view.pours["P-002"].pourId, "SavingClaimed")).toEqual([]);
   });
 
-  it("keeps the refused second claim (a reverted transaction has no event) and P-002's refused batches", () => {
+  it("keeps the refused calls (a reverted transaction has no event): P-001's reused ticket and second claim, P-002's batches and claim", () => {
     const r1 = view.pours["P-001"].rejected;
-    expect(r1).toHaveLength(1);
-    expect(r1[0]).toMatchObject({ kind: "transaction", role: "contractor", fn: "claimSaving", revert: { name: "AlreadyClaimed" } });
-    expect(String(r1[0].revert!.args[1]).toLowerCase()).toBe(view.pours["P-001"].state.pour.claimant.toLowerCase());
-    expect(view.pours["P-002"].rejected.map((r) => r.revert?.name)).toEqual(["BadSignature", "CounterGap"]);
+    expect(r1.map((r) => [r.role, r.fn, r.revert?.name])).toEqual([
+      ["supplier", "createPour", "TicketReused"],
+      ["contractor", "claimSaving", "AlreadyClaimed"],
+    ]);
+    expect(r1.every((r) => r.kind === "transaction")).toBe(true);
+    expect(String(r1[0].revert!.args[0])).toBe(view.pours["P-001"].state.pour.ticketHash);
+    expect(String(r1[1].revert!.args[1]).toLowerCase()).toBe(view.pours["P-001"].state.pour.claimant.toLowerCase());
+    expect(view.pours["P-002"].rejected.map((r) => [r.fn, r.revert?.name])).toEqual([
+      ["appendBatch", "BadSignature"],
+      ["appendBatch", "CounterGap"],
+      ["claimSaving", "StrengthNotApproved"],
+    ]);
   });
 });
 

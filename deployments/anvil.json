@@ -6,14 +6,14 @@
  "ledger": {
   "contract": "PourLedger (includes DeviceRegistry)",
   "address": "0x5fbdb2315678afecb367f032d93f642f64180aa3",
-  "txHash": "0x62c39582f5992083f68a8164f4cbe57e92c5f0d1626a575a9ee7454dca3f3d72",
+  "txHash": "0xf25f9518e2e8066f4a06fcf9968a6f4d13fca57ef499bed4b6ec27b87dba279c",
   "block": "1"
  },
  "compiler": {
   "solc": "0.8.28",
   "evmVersion": "prague",
   "optimizer": true,
-  "codeHash": "0x0c1df68b38b248abc56a1287380026cf71798541c91e1c45da87eecb6e9529d6"
+  "codeHash": "0x7e8882a0ccd2a86a74c32f704c2dbba73d4250f083c5532eb547dd87c9ad44a5"
  },
  "roles": {
   "admin": "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",

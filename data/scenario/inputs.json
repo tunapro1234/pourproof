@@ -15,7 +15,7 @@
    }
   },
   "mit_cshub_overdesign": {
-   "quote": "optimizing concrete overdesign can lead to savings of 80kg CO2e/m3, a 25% reduction in the GHG emissions of concrete mixtures",
+   "quote": "savings of over 80 kg CO2e /m3, a 25 percent reduction",
    "note": "context for the saving range, not used in calculation"
   }
  },
@@ -24,7 +24,7 @@
    "label": "Mix A (contractor's declared baseline, standard spec)",
    "cement_type": "Portland cement Type I/II (CEM I equivalent)",
    "cement_kg_per_m3": 380,
-   "cement_basis": "assumption: typical over-designed C30/37 mix",
+   "cement_basis": "assumption: over-designed C30/37 mix",
    "cement_gwp_kg_per_m3": [
     370.5,
     370.5
@@ -43,10 +43,10 @@
    "epd_doc": "data/sample-docs/sample-epd-mix-a.pdf"
   },
   "mix_b_actual": {
-   "label": "Mix B (delivered low-clinker mix)",
+   "label": "Mix B (delivered leaner mix)",
    "cement_type": "Portland-limestone cement Type IL",
    "cement_kg_per_m3": 320,
-   "cement_basis": "assumption: optimized mix; strength gain proven by maturity record",
+   "cement_basis": "assumption: optimized mix; the maturity record supports early-age decisions, acceptance stays with the 28-day specimens",
    "cement_gwp_kg_per_m3": [
     285.7,
     285.7
@@ -67,7 +67,7 @@
  },
  "pours": {
   "P-001": {
-   "story": "Low-clinker pour with a declared baseline; curing record from Box 1 of the dataset; strength approved by the inspector; saving claimed once.",
+   "story": "Leaner-mix pour with a declared baseline; curing record from Box 1 of the dataset; strength approved by the inspector; saving claimed once.",
    "baseline_mix": "mix_a_baseline",
    "delivered_mix": "mix_b_actual",
    "volume_m3": 8,
@@ -88,8 +88,8 @@
    "ticket_doc": "data/sample-docs/delivery-ticket-P-001.png"
   },
   "P-002": {
-   "story": "Tamper case: the device logged open air (the dataset's ambient series) instead of concrete. Signatures are valid; the curing check flags it, so no strength approval and no claim.",
-   "baseline_mix": null,
+   "story": "Tamper case: the simulated device replayed the dataset's open-air series instead of concrete. Same declared baseline as P-001. Signatures are valid; the rule-based curing check flags it, the inspector does not approve, and without approval the ledger refuses the saving claim.",
+   "baseline_mix": "mix_a_baseline",
    "delivered_mix": "mix_b_actual",
    "volume_m3": 8,
    "volume_basis": "assumption: same volume as P-001",

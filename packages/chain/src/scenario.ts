@@ -1,7 +1,8 @@
-// End-to-end scenario on a real chain (local Anvil or Base Sepolia): deploy, roles, two pours, every device batch,
-// strength approval, one saving claim and the rejected second claim, plus the P-002 tamper attempts. Rejected calls are
-// sent as real transactions so the chain itself records the revert; the revert name comes from the same call simulated
-// on the state just before it.
+// End-to-end scenario on a real chain (local Anvil or Base Sepolia): deploy, roles, two pours with the same declared
+// baseline, every device batch, strength approval, one saving claim and the rejected second claim, plus the refused
+// calls: a second pour record with P-001's delivery ticket, the P-002 tamper attempts and P-002's claim without
+// approval. Rejected calls are sent as real transactions so the chain itself records the revert; the revert name comes
+// from the same call simulated on the state just before it.
 //
 // Time. On Anvil the scenario moves the chain clock forward ("advanced"): the baseline, the pour record, the device and
 // the acceptance are mined before pourStart, each batch a little after its last reading, the approval after the last
@@ -25,7 +26,7 @@ import {
   type Hash,
   type PublicClient,
 } from "viem";
-import type { Hex } from "@pourproof/core";
+import { pourIdOf, type Hex } from "@pourproof/core";
 import {
   REPO_ROOT,
   SCENARIO_TEXT,
@@ -73,14 +74,21 @@ export const TIMING = {
 /** Seconds per block when nothing sets the next timestamp (the Anvil node is started with this interval). */
 export const BLOCK_INTERVAL_S = 12;
 
+/** The pour label of the refused second record that reuses P-001's delivery ticket. */
+export const REUSED_TICKET_POUR = "P-003";
+
 /** Gas limits for sent transactions. Fixed limits skip estimation, which would fail for the calls meant to revert. */
 export const GAS = { appendBatch: 800_000n, default: 400_000n };
+
+/** With the P-256 precompile at 0x100 an appendBatch costs well under this; the Solidity fallback costs about four times
+ * more. The run stops after the first batch above it, so a chain without the precompile does not pass unnoticed. */
+export const P256_PRECOMPILE_MAX_GAS = 150_000n;
 
 /** Rough gas per role for the whole scenario, used to check testnet balances before the first transaction. */
 export const GAS_BUDGET: Record<RoleName, bigint> = {
   admin: 3_000_000n + 4n * 60_000n,
-  supplier: 2n * 160_000n + 80_000n,
-  contractor: 120_000n + 2n * 60_000n + 60_000n,
+  supplier: 3n * 160_000n + 2n * 80_000n,
+  contractor: 2n * 120_000n + 2n * 60_000n + 60_000n,
   inspector: 2n * 130_000n + 80_000n,
   owner: 0n,
   relay: 226n * 400_000n,
@@ -345,19 +353,36 @@ export async function runScenario(o: ScenarioOptions) {
     if (!m) throw new Error(`mix ${name} not in inputs`);
     return m;
   };
-  const append = (f: BatchesFile, b: PublishedBatch, opt: { at?: number; expect?: string; note?: string } = {}) =>
-    send("relay", "appendBatch", [f.pourId, BigInt(b.counter), BigInt(b.fromTs), BigInt(b.toTs), b.root, b.r, b.s], f.pourLabel, opt);
-  const createPour = async (label: string, f: BatchesFile, at?: number) => {
+  let precompileChecked = false;
+  const append = async (f: BatchesFile, b: PublishedBatch, opt: { at?: number; expect?: string; note?: string } = {}) => {
+    const s = await send("relay", "appendBatch", [f.pourId, BigInt(b.counter), BigInt(b.fromTs), BigInt(b.toTs), b.root, b.r, b.s], f.pourLabel, opt);
+    if (s.status === "success" && !precompileChecked) {
+      precompileChecked = true;
+      if (s.gasUsed > P256_PRECOMPILE_MAX_GAS)
+        throw new Error(`first appendBatch used ${s.gasUsed} gas (over ${P256_PRECOMPILE_MAX_GAS}): no P-256 precompile at 0x100 on this chain (hardfork?)`);
+    }
+    return s;
+  };
+  const createPourArgs = (label: string, pourId: Hex, pourStart: number) => {
     const p = inputs.pours[label];
     const mix = mixOf(p.delivered_mix);
     const [lo, hi] = mix.gwp_total_kg_per_m3;
-    return send(
-      "supplier",
-      "createPour",
-      [f.pourId, bytes32OfHex(docHash(p.ticket_doc)), bytes32OfHex(docHash(mix.epd_doc)), Math.round(p.volume_m3 * 1000), lo, hi, BigInt(f.pourStart)],
-      label,
-      { at, note: `ticketHash = sha256 of ${p.ticket_doc}, epdHash = sha256 of ${mix.epd_doc}` },
-    );
+    return [pourId, bytes32OfHex(docHash(p.ticket_doc)), bytes32OfHex(docHash(mix.epd_doc)), Math.round(p.volume_m3 * 1000), lo, hi, BigInt(pourStart)];
+  };
+  const createPour = async (label: string, f: BatchesFile, at?: number) => {
+    const p = inputs.pours[label];
+    return send("supplier", "createPour", createPourArgs(label, f.pourId, f.pourStart), label, {
+      at,
+      note: `ticketHash = sha256 of ${p.ticket_doc}, epdHash = sha256 of ${mixOf(p.delivered_mix).epd_doc}`,
+    });
+  };
+  /** The contractor fixes the pour's baseline before the pour exists on chain; baselineMixHash = sha256 of its EPD. */
+  const declareBaseline = (label: string, f: BatchesFile, at?: number) => {
+    const b = mixOf(inputs.pours[label].baseline_mix!);
+    return send("contractor", "declareBaseline", [f.pourId, bytes32OfHex(docHash(b.epd_doc)), b.gwp_total_kg_per_m3[0], b.gwp_total_kg_per_m3[1]], label, {
+      at,
+      note: `declared before the pour exists on chain; baselineMixHash = sha256 of ${b.epd_doc}`,
+    });
   };
   const register = (f: BatchesFile, k: DeviceKey) => send("inspector", "registerDevice", [f.pourId, k.qx, k.qy, f.deviceKind], f.pourLabel);
   const sent = (b: PublishedBatch) => b.toTs + TIMING.sendDelayS;
@@ -374,15 +399,13 @@ export async function runScenario(o: ScenarioOptions) {
   const base = mixOf(in1.baseline_mix!);
   // In backdated mode `at` only orders the actions, so each pour's setup is keyed just before its (past) pourStart.
   plan(advanced ? now : p1.pourStart - TIMING.pourLeadS, async () => {
-    for (const s of [
-      await send("contractor", "declareBaseline", [p1.pourId, bytes32OfHex(docHash(base.epd_doc)), base.gwp_total_kg_per_m3[0], base.gwp_total_kg_per_m3[1]], "P-001", {
-        note: `declared before the pour exists on chain; baselineMixHash = sha256 of ${base.epd_doc}`,
-      }),
-      await createPour("P-001", p1),
-      await register(p1, k1),
-      await send("contractor", "acceptPour", [p1.pourId], "P-001"),
-    ])
+    for (const s of [await declareBaseline("P-001", p1), await createPour("P-001", p1), await register(p1, k1), await send("contractor", "acceptPour", [p1.pourId], "P-001")])
       before(s, p1);
+    // One delivery ticket opens one pour record: a second record with P-001's ticket is refused.
+    await send("supplier", "createPour", createPourArgs("P-001", pourIdOf(REUSED_TICKET_POUR), p1.pourStart), "P-001", {
+      expect: "TicketReused",
+      note: `a second pour record (${REUSED_TICKET_POUR}) with P-001's delivery ticket ${in1.ticket_doc}`,
+    });
   });
   for (const b of p1.batches) plan(sent(b), () => append(p1, b, { at: sent(b) }));
   const ev = evidencePackage({
@@ -403,12 +426,14 @@ export async function runScenario(o: ScenarioOptions) {
     await send("contractor", "claimSaving", [p1.pourId], "P-001", { at: tApprove + 2 * TIMING.claimAfterS, expect: "AlreadyClaimed", note: "second claim on the same pour" });
   });
 
-  // ---- P-002: tamper case. Batch 0, then the forged batch 1 (other device's key) when batch 1 closes, then batch 2
-  // sent with batch 1 withheld when batch 2 closes; the honest batch 1 and the rest follow.
+  // ---- P-002: tamper case with the same declared baseline as P-001. Batch 0, then the forged batch 1 (other device's
+  // key) when batch 1 closes, then batch 2 sent with batch 1 withheld when batch 2 closes; the honest batch 1 and the rest
+  // follow. The inspector does not approve, so the supplier's claim is refused.
   const tamperResults: { id: string; description: string; expectRevert: string; step: number; txHash: Hash; block: bigint; revert: Revert | null }[] = [];
   const tSetup2 = p2.pourStart - TIMING.pourLeadS;
   plan(tSetup2, async () => {
-    for (const s of [await createPour("P-002", p2, tSetup2), await register(p2, k2), await send("contractor", "acceptPour", [p2.pourId], "P-002")]) before(s, p2);
+    for (const s of [await declareBaseline("P-002", p2, tSetup2), await createPour("P-002", p2), await register(p2, k2), await send("contractor", "acceptPour", [p2.pourId], "P-002")])
+      before(s, p2);
   });
   plan(sent(p2.batches[0]), () => append(p2, p2.batches[0], { at: sent(p2.batches[0]) }));
   const attempt = (id: "other_device_key" | "skipped_batch", counter: number) => {
@@ -426,6 +451,9 @@ export async function runScenario(o: ScenarioOptions) {
     const t = Math.max(sent(b), tSkip);
     plan(t, () => append(p2, b, { at: t }));
   }
+  // Same timing as P-001's claim, but no approval came.
+  const tClaim2 = Math.max(sent(p2.batches.at(-1)!), tSkip) + TIMING.approveAfterS + TIMING.claimAfterS;
+  plan(tClaim2, () => send("supplier", "claimSaving", [p2.pourId], "P-002", { at: tClaim2, expect: "StrengthNotApproved", note: "claim on P-002 without a strength approval" }));
 
   const ordered = actions.map((a, i) => ({ ...a, i })).sort((x, y) => x.at - y.at || x.i - y.i);
   for (const a of ordered) await a.run();

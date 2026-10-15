@@ -36,6 +36,8 @@ contract PourLedger is DeviceRegistry {
     mapping(bytes32 pourId => Pour) private _pours;
     mapping(bytes32 pourId => Baseline) private _baselines;
     mapping(bytes32 pourId => mapping(uint64 counter => bytes32 root)) public batchRoot;
+    /// @notice The pour a delivery ticket was first recorded for: one ticket, one pour record.
+    mapping(bytes32 ticketHash => bytes32 pourId) public pourOfTicket;
 
     event PourCreated(
         bytes32 indexed pourId,
@@ -73,6 +75,7 @@ contract PourLedger is DeviceRegistry {
     error NoBatches(bytes32 pourId);
     error AlreadyApproved(bytes32 pourId);
     error NotAClaimant(bytes32 pourId, address account);
+    error TicketReused(bytes32 ticketHash, bytes32 firstPourId);
 
     constructor(address admin) {
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
@@ -106,6 +109,12 @@ contract PourLedger is DeviceRegistry {
     ) external onlyRole(SUPPLIER_ROLE) {
         if (_pours[pourId].supplier != address(0)) revert PourExists(pourId);
         if (volumeDm3 == 0 || gwpHigh == 0 || gwpLow > gwpHigh) revert InvalidRange();
+        // A non-zero ticket hash can open one pour record only, so one delivery cannot be claimed under two pours.
+        if (ticketHash != bytes32(0)) {
+            bytes32 first = pourOfTicket[ticketHash];
+            if (first != bytes32(0)) revert TicketReused(ticketHash, first);
+            pourOfTicket[ticketHash] = pourId;
+        }
         Pour storage p = _pours[pourId];
         p.supplier = msg.sender;
         p.ticketHash = ticketHash;

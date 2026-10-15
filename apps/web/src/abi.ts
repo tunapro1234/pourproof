@@ -37,6 +37,7 @@ export const LEDGER_ERRORS = parseAbi([
   "error NotAClaimant(bytes32 pourId, address account)",
   "error FutureBatch(uint64 toTs, uint256 blockTime)",
   "error UnknownPour(bytes32 pourId)",
+  "error TicketReused(bytes32 ticketHash, bytes32 firstPourId)",
 ]);
 
 export const LEDGER_ABI = [...LEDGER_EVENTS, ...LEDGER_READS, ...LEDGER_ERRORS];

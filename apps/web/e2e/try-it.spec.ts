@@ -115,11 +115,11 @@ test("(7) P-002: the card, nothing claimable for the real reason, the flag band 
   await expect(page.getByTestId("try")).toBeVisible();
   await expect(page.getByTestId("claimable-now")).toHaveText("Saving this record supports: none. The inspector has not approved strength.");
   await expect(page.getByTestId("curing-flag")).toBeVisible();
-  await expect(page.getByTestId("rejected-tx")).toHaveCount(2);
+  await expect(page.getByTestId("rejected-tx")).toHaveCount(3);
   await page.getByTestId("try").getByRole("link", { name: "+5 °C", exact: true }).click();
   await expect(page.getByTestId("verify-status")).toHaveAttribute("data-ok", "false");
   await expect(page.getByTestId("tamper-note")).toHaveText(/^Nothing on chain changed\. Only your copy in this browser did\./);
   await expect(page.getByTestId("tamper-note")).not.toContainText("the claim already made");
   await expect(page.getByTestId("forged-claim")).toHaveCount(0);
-  await expect(page.getByTestId("rejected-tx")).toHaveCount(2);
+  await expect(page.getByTestId("rejected-tx")).toHaveCount(3);
 });

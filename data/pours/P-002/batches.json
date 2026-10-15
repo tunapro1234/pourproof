@@ -4,7 +4,7 @@
  "pourId": "0x8df115874c1be4d7a0dd96a62c68099365eeb75f56eb8b303bb5790e87aa0eb7",
  "deviceKind": "simulated",
  "source": "replayed from published dataset (Mendeley nmr8pjx8d8, CC BY 4.0)",
- "scenario": "Tamper case. The device sat in open air: the dataset's ambient series is replayed as if it were concrete. Signatures are valid; the curing check flags it.",
+ "scenario": "Tamper case. The device sat in open air: the dataset's ambient series is replayed as if it were concrete. Signatures are valid; the rule-based curing check flags it, the inspector does not approve, and without approval the ledger refuses the saving claim.",
  "dataset": {
   "series": "ambient",
   "doi": "10.17632/nmr8pjx8d8.1",

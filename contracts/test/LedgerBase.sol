@@ -45,7 +45,7 @@ abstract contract LedgerBase is Test {
         vm.prank(contractor);
         ledger.declareBaseline(id, keccak256("baseline CEM I mix"), 300, 340);
         vm.prank(supplier);
-        ledger.createPour(id, keccak256("ticket"), keccak256("epd"), 8000, 220, 250, pourStart);
+        ledger.createPour(id, keccak256(abi.encode("ticket", id)), keccak256("epd"), 8000, 220, 250, pourStart);
         vm.prank(contractor);
         ledger.acceptPour(id);
         vm.prank(inspector);

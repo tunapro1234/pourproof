@@ -2,11 +2,13 @@ import { chmodSync, mkdtempSync, readFileSync, rmSync, statSync, writeFileSync }
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterAll, describe, expect, it } from "vitest";
-import { BaseError, ContractFunctionRevertedError, encodeErrorResult, type Abi, type PublicClient } from "viem";
+import { BaseError, ContractFunctionRevertedError, encodeErrorResult, zeroAddress, type Abi, type PublicClient } from "viem";
 import { privateKeyToAccount } from "viem/accounts";
-import { batchDigest, merkleRoot, leafHash, saving, verifyDigest, type Hex } from "@pourproof/core";
+import { batchDigest, merkleRoot, leafHash, pourIdOf, saving, verifyDigest, type Hex } from "@pourproof/core";
 import { REPO_ROOT, type BatchesFile } from "@pourproof/device";
 import {
+  P256_PRECOMPILE_MAX_GAS,
+  REUSED_TICKET_POUR,
   TIMING,
   aiEvidence,
   TIME_NOTE,
@@ -93,6 +95,7 @@ describe("committed Anvil scenario", () => {
     args: string[];
     block: string;
     timestamp: string;
+    gasUsed: string;
     status: string;
     events: { name: string; args: Record<string, string> }[];
     revert: { name: string; args: string[] } | null;
@@ -132,11 +135,12 @@ describe("committed Anvil scenario", () => {
       "supplier:createPour:success",
       "inspector:registerDevice:success",
       "contractor:acceptPour:success",
+      "supplier:createPour:reverted",
       "inspector:approveStrength:success",
       "supplier:claimSaving:success",
       "contractor:claimSaving:reverted",
     ]);
-    const claims = log.steps.filter((s) => s.fn === "claimSaving");
+    const claims = log.steps.filter((s) => s.pour === "P-001" && s.fn === "claimSaving");
     expect(claims[0].events.map((e) => e.name)).toEqual(["SavingClaimed"]);
     expect(claims[1].revert?.name).toBe("AlreadyClaimed");
     expect(claims[1].revert?.args[1]).toBe(claims[0].events[0].args.claimant);
@@ -145,13 +149,31 @@ describe("committed Anvil scenario", () => {
     expect(reg.events[0]).toMatchObject({ name: "DeviceRegistered", args: { deviceKind: "simulated" } });
   });
 
-  it("P-002: the batch signed by another device and the skipped batch are rejected, the honest record is complete", () => {
+  it("a second pour record with P-001's delivery ticket is rejected with TicketReused and leaves no pour behind", () => {
+    const reuse = log.steps.filter((s) => s.fn === "createPour" && s.status === "reverted");
+    expect(reuse).toHaveLength(1);
+    const [r] = reuse;
+    expect(r.pour).toBe("P-001");
+    expect(r.args[0]).toBe(pourIdOf(REUSED_TICKET_POUR));
+    expect(r.args[1]).toBe(snap.pours["P-001"].chain.pour.ticketHash);
+    expect(r.revert).toEqual({ name: "TicketReused", args: [snap.pours["P-001"].chain.pour.ticketHash, p1.pourId] });
+    expect(r.events).toEqual([]);
+    expect(snap.events.filter((e) => e.name === "PourCreated").map((e) => e.args.pourId)).toEqual([p1.pourId, p2.pourId]);
+  });
+
+  it("P-002: same declared baseline as P-001; the forged and skipped batches and the claim without approval are rejected", () => {
     const bad = log.steps.filter((s) => s.pour === "P-002" && s.status === "reverted");
-    expect(bad.map((s) => s.revert?.name)).toEqual(["BadSignature", "CounterGap"]);
+    expect(bad.map((s) => s.revert?.name)).toEqual(["BadSignature", "CounterGap", "StrengthNotApproved"]);
+    expect(bad[2]).toMatchObject({ role: "supplier", fn: "claimSaving" });
     expect(bad.every((s) => s.events.length === 0)).toBe(true);
     expect(snap.pours["P-002"].chain.nextCounter).toBe(String(p2.batches.length));
     expect(snap.pours["P-002"].chain.pour.strengthApproved).toBe(false);
+    expect(snap.pours["P-002"].chain.pour.claimant).toBe(zeroAddress);
     expect(p2.anomaly.flags).toContain("no_hydration_signature");
+    const declared = snap.events.filter((e) => e.name === "BaselineDeclared");
+    expect(declared.map((e) => e.args.pourId)).toEqual([p1.pourId, p2.pourId]);
+    expect(declared[1].args.baselineMixHash).toBe(declared[0].args.baselineMixHash);
+    expect(snap.pours["P-002"].chain.savingRange).toEqual(snap.pours["P-001"].chain.savingRange);
   });
 
   describe("time advanced on Anvil", () => {
@@ -174,11 +196,11 @@ describe("committed Anvil scenario", () => {
 
     it("baseline, pour record, device and acceptance are mined before pourStart, acceptance at a fixed lead before it", () => {
       for (const f of [p1, p2]) {
-        const setup = log.steps.filter((s) => s.pour === f.pourLabel && ["declareBaseline", "createPour", "registerDevice", "acceptPour"].includes(s.fn));
-        expect(setup.map((s) => s.fn)).toEqual(f === p1 ? ["declareBaseline", "createPour", "registerDevice", "acceptPour"] : ["createPour", "registerDevice", "acceptPour"]);
+        const setup = log.steps.filter((s) => s.pour === f.pourLabel && s.status === "success" && ["declareBaseline", "createPour", "registerDevice", "acceptPour"].includes(s.fn));
+        expect(setup.map((s) => s.fn)).toEqual(["declareBaseline", "createPour", "registerDevice", "acceptPour"]);
         for (const s of setup) expect(ts(s)).toBeLessThan(f.pourStart);
       }
-      expect(ts(of("P-001", "declareBaseline")[0])).toBeLessThan(ts(of("P-001", "createPour")[0]));
+      for (const label of ["P-001", "P-002"]) expect(ts(of(label, "declareBaseline")[0])).toBeLessThan(ts(of(label, "createPour")[0]));
       expect(p1.pourStart - ts(of("P-001", "acceptPour")[0])).toBeGreaterThan(TIMING.pourLeadS / 2);
     });
 
@@ -217,10 +239,24 @@ describe("committed Anvil scenario", () => {
       // 28 days of curing between the pour and the approval
       expect(appr - p1.pourStart).toBeGreaterThan(27 * 86400);
     });
+
+    it("P-002's claim comes at the time of P-001's claim relative to its last batch, with no approval before it, and is the last step", () => {
+      const lastBatch = Math.max(...of("P-002", "appendBatch").map(ts));
+      const [c] = of("P-002", "claimSaving");
+      expect(ts(c) - lastBatch).toBe(TIMING.approveAfterS + TIMING.claimAfterS);
+      expect(of("P-002", "approveStrength")).toHaveLength(0);
+      expect(c.step).toBe(log.steps.length - 1);
+    });
+  });
+
+  it("every accepted batch was verified by the P-256 precompile, not the Solidity fallback (Anvil runs Osaka)", () => {
+    const gas = log.steps.filter((s) => s.fn === "appendBatch" && s.status === "success").map((s) => BigInt(s.gasUsed));
+    expect(gas.length).toBeGreaterThan(0);
+    for (const g of gas) expect(g < P256_PRECOMPILE_MAX_GAS).toBe(true);
   });
 
   it("every other transaction succeeded", () => {
-    const expected = new Set(["AlreadyClaimed", "BadSignature", "CounterGap"]);
+    const expected = new Set(["AlreadyClaimed", "BadSignature", "CounterGap", "StrengthNotApproved", "TicketReused"]);
     for (const s of log.steps) expect(s.status === "success" || expected.has(s.revert?.name ?? "")).toBe(true);
   });
 
@@ -265,8 +301,11 @@ describe("committed Anvil scenario", () => {
       expect(snap.pours[label].chain.pour.ticketHash).toBe(docHash(p.ticket_doc));
       expect(snap.pours[label].chain.pour.epdHash).toBe(docHash(inputs.mixes[p.delivered_mix].epd_doc));
     }
+    for (const label of ["P-001", "P-002"]) {
+      const base = inputs.mixes[inputs.pours[label].baseline_mix!];
+      expect((snap.pours[label].chain as unknown as { baseline: { mixHash: Hex } }).baseline.mixHash).toBe(docHash(base.epd_doc));
+    }
     const base = inputs.mixes[inputs.pours["P-001"].baseline_mix!];
-    expect((snap.pours["P-001"].chain as unknown as { baseline: { mixHash: Hex } }).baseline.mixHash).toBe(docHash(base.epd_doc));
     expect(docHash(base.epd_doc)).not.toBe(docHash(inputs.mixes.mix_b_actual.epd_doc));
   });
 
