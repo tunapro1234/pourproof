@@ -3,7 +3,7 @@
 PourProof gives every concrete pour a signed passport. The ready-mix supplier, the contractor, the building inspector and the owner
 all read the same record. In the design, a device cast into the pour logs curing temperature and signs the readings in
 batches with a P-256 key, and the ledger contract verifies each batch signature on chain. In this demo the device is simulated:
-software replays a published lab dataset (Mendeley nmr8pjx8d8, CC BY 4.0), on a local test chain. Maturity (Nurse-Saul,
+software replays a published dataset (Mendeley nmr8pjx8d8, CC BY 4.0), on a local test chain. Maturity (Nurse-Saul,
 ASTM C1074) and an estimated strength range are computed in code from those readings. When a leaner mix is used, the carbon
 saving against the baseline mix the contractor declared before the pour can be claimed once per pour record on this ledger, by
 its supplier, its contractor or an owner. Claude reads the sample ticket photo and sample EPD PDFs and proposes fields with
@@ -468,7 +468,7 @@ Security limits (one admin key, a trusted inspector, no audit) are in [SECURITY.
 Requirements: Node 22, npm, git, Foundry, `pdftotext` and `pdfinfo` (poppler-utils, for the EPD check).
 
 ```sh
-git clone --recurse-submodules <repo-url> pourproof && cd pourproof
+git clone --recurse-submodules <url-of-this-repository> pourproof && cd pourproof
 # if already cloned: git submodule update --init --recursive
 curl -L https://foundry.paradigm.xyz | bash && foundryup
 npm install
